@@ -1,0 +1,745 @@
+﻿/*
+// ===================================================================================================
+//                           _  __     _ _
+//                          | |/ /__ _| | |_ _  _ _ _ __ _
+//                          | ' </ _` | |  _| || | '_/ _` |
+//                          |_|\_\__,_|_|\__|\_,_|_| \__,_|
+//
+// This file is part of the Kaltura Collaborative Media Suite which allows users
+// to do with audio, video, and animation what Wiki platfroms allow them to do with
+// text.
+//
+// Copyright (C) 2006-2008  Kaltura Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//o
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// @ignore
+// ===================================================================================================
+*/
+package com.kaltura.recording.controller
+{
+	import com.kaltura.devicedetection.DeviceDetectionEvent;
+	import com.kaltura.devicedetection.DeviceDetector;
+	import com.kaltura.net.streaming.ExNetConnection;
+	import com.kaltura.net.streaming.RecordNetStream;
+	import com.kaltura.net.streaming.events.ExNetConnectionEvent;
+	import com.kaltura.net.streaming.events.FlushStreamEvent;
+	import com.kaltura.net.streaming.events.RecordNetStreamEvent;
+	import com.kaltura.recording.business.AddEntryDelegate;
+	import com.kaltura.recording.business.BaseRecorderParams;
+	import com.kaltura.recording.business.interfaces.IResponder;
+	import com.kaltura.recording.controller.events.AddEntryEvent;
+	import com.kaltura.recording.controller.events.RecorderEvent;
+
+	import flash.events.Event;
+	import flash.events.EventDispatcher;
+	import flash.events.NetStatusEvent;
+	import flash.media.Camera;
+	import flash.media.Microphone;
+	import flash.media.Video;
+	import flash.utils.getTimer;
+
+	import mx.utils.ObjectUtil;
+	import mx.utils.UIDUtil;
+
+	[Event(name="detectedMicrophone", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name="detectedCamera", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name="errorMicrophone", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name="errorCamera", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name="netconnectionConnectClosed", type="com.kaltura.net.streaming.events.ExNetConnectionEvent")]
+	[Event(name="netconnectionConnectFailed", type="com.kaltura.net.streaming.events.ExNetConnectionEvent")]
+	[Event(name="netconnectionConnectSuccess", type="com.kaltura.net.streaming.events.ExNetConnectionEvent")]
+	[Event(name="netconnectionConnectRejected", type="com.kaltura.net.streaming.events.ExNetConnectionEvent")]
+	[Event(name="netconnectionConnectInvalidapp", type="com.kaltura.net.streaming.events.ExNetConnectionEvent")]
+	[Event(name="netstreamRecordStart", type="com.kaltura.net.streaming.events.RecordNetStreamEvent")]
+	[Event(name="netstreamPlayStop", type="com.kaltura.net.streaming.events.RecordNetStreamEvent")]
+	[Event(name="flushStart", type="com.kaltura.net.streaming.events.FlushStreamEvent")]
+	[Event(name="flushProgress", type="com.kaltura.net.streaming.events.FlushStreamEvent")]
+	[Event(name="flushComplete", type="com.kaltura.net.streaming.events.FlushStreamEvent")]
+	[Event(name="addEntryResult", type="com.kaltura.recording.controller.events.AddEntryEvent")]
+	[Event(name="addEntryFault", type="com.kaltura.recording.controller.events.AddEntryEvent")]
+	/**
+	 * KRECORDER - Flash Video and Audio Recording and Contributing Application.
+	 * <p>Goals:
+	 *	1. Simplified Media Device Detection (Active Camera and Microphone).
+	 *	2. Simplified Media Selection Interface (Functions for manually choosing devices from available devices array).
+	 *	3. Server Connection and Error Handling.
+	 *	4. Video and Audio Recording on Red5, Handling of internal NetStream Events and Errors.
+	 *	5. Preview Mechanism - Live Preview using RTMP (Before addentry).
+	 *	6. Simplified addentry function to Kaltura Network Servers.
+	 *	7. Full JavaScript interaction layer.
+	 *	8. Dispatching of Events by Single Object to simplify Development of Recording Applications.</p>
+	 * KRecorder does NOT provide any visual elements beyond a native flash video component attached to the recording NetStream.
+	 *
+	 * @author Zohar Babin
+	 */
+	public class KRecordControl extends EventDispatcher implements IResponder, IRecordControl
+	{
+
+		/**
+		 *partner and application settings.
+		 */
+		protected var _initRecorderParameters:BaseRecorderParams;
+
+		/**
+		 * when we need to wait for some operation to start we are connecting.
+		 */
+		private var _connecting : Boolean = false;
+
+		private var _timeOutId : uint;
+
+		public function get connecting() : Boolean
+		{
+			return _connecting;
+		}
+
+		public function set connecting( value : Boolean ) : void
+		{
+			_connecting = value;
+
+			if(_connecting)
+				dispatchEvent( new Event( RecorderEvent.CONNECTING, true  ) );
+			else
+				dispatchEvent( new Event( RecorderEvent.CONNECTING_FINISH, true   ) );
+		}
+
+		private var _autoPreview : Boolean = true;
+
+		public function get autoPreview() : Boolean
+		{
+			return _autoPreview;
+		}
+
+		public function set autoPreview( value : Boolean ) : void
+		{
+			_autoPreview = value;
+		}
+
+
+		/**
+		 * the initialization recorder partner and application parameters.
+		 */
+		public function get initRecorderParameters ():BaseRecorderParams
+		{
+			return _initRecorderParameters;
+		}
+		public function set initRecorderParameters (recorder_parameters:BaseRecorderParams):void
+		{
+			_initRecorderParameters = recorder_parameters;
+		}
+
+		/**
+		 *monitors the connection status to the RTMP recording server.
+		 */
+		public var isConnected:Boolean = false;
+
+		/**
+		 *microphone device.
+		 */
+		protected var microphone:Microphone;
+		/**
+		 *camera device.
+		 */
+		protected var camera:Camera;
+		public var video:Video = new Video ();
+		/**
+		 * sets the camera to use, and attaches it to the video component.
+		 */
+		protected function setCamera (_camera:Camera):void
+		{
+			camera = _camera;
+			video.attachCamera(camera);
+		}
+		/**
+		 *connection channel to the streaming server.
+		 */
+		protected var netConnection:ExNetConnection;
+		/**
+		 *stream to record on.
+		 */
+		protected var netStream:RecordNetStream;
+
+		protected var _streamUid:String = "";
+		/**
+		 *the uid of the stream recorded.
+		 */
+		public function get streamUid ():String
+		{
+			return _streamUid;
+		}
+
+		/**
+		 * internal implicit setter to change the published stream uid.
+		 * @param value		the new strea uid.
+		 */
+		private function setStreamUid (value:String):void
+		{
+			_streamUid = value;
+			dispatchEvent(new RecorderEvent(RecorderEvent.STREAM_ID_CHANGE, _streamUid ));
+		}
+
+		/**
+		 * the timestamp of when the recording started.
+		 */
+		private var _recordStartTime:uint;
+
+		private var _recordedTime:uint;
+
+		private var _bufferTime:Number = 70;
+
+		/**
+		*the duration of the recording in milliseconds.
+		*/
+		public function get recordedTime ():uint
+		{
+			return _recordedTime;
+		}
+
+		private var _waitForBufferFlush : Boolean = false;
+		private var _firstPreviewPause : Boolean = true;
+
+		/**
+		 *sets camera recording quality.
+		 * @param quality		An integer that specifies the required level of picture quality,
+		 * 						as determined by the amount of compression being applied to each video frame. Acceptable values range from 1
+		 * 						(lowest quality, maximum compression) to 100 (highest quality, no compression).
+		 * 						To specify that picture quality can vary as needed to avoid exceeding bandwidth, pass 0 for quality.
+		 * @param bw			Specifies the maximum amount of bandwidth that the current outgoing video feed can use,
+		 * 						in bytes per second. To specify that Flash Player video can use as much bandwidth as needed to
+		 * 						maintain the value of quality, pass 0 for bandwidth. The default value is 16384.
+		 * @param w				the width of the frame.
+		 * @param h				the height of the frame.
+		 * @param fps			frame per second to use.
+		 */
+		public function setQuality (quality:int, bw:int, w:int, h:int, fps:Number, gop:int=15):void
+		{
+			camera.setKeyFrameInterval(gop)
+			camera.setMode(w, h, fps);
+			camera.setQuality(bw, quality);
+		}
+
+		/**
+		 *resize the video display.
+		 * @param w		the new width.
+		 * @param h		the new height.
+		 */
+		public function resizeVideo (w:Number, h:Number):void
+		{
+			if (camera)
+			{
+				trace ("video: ",w, h);
+				video = new Video (w, h);
+				video.width = w;
+				video.height = h;
+				video.attachCamera(camera);
+			}
+		}
+
+		/**
+		 * an internal implicit setter to recordTime property.
+		 * @param value		the new stream recorded length.
+		 */
+		protected function setRecordedTime (value:uint):void
+		{
+			_recordedTime = value;
+			dispatchEvent(new RecorderEvent(RecorderEvent.UPDATE_RECORDED_TIME, _recordedTime ));
+		}
+
+		private var _blackRecordTime:uint = 0;
+		/**
+		 * this is the blacked out recording time since the client sent request to record and the server sent approve.
+		 * we later cut the stream accordingly.
+		 */
+		public function get blackRecordTime():uint
+		{
+			return _blackRecordTime;
+		}
+
+		/**
+		 * an internal implicit setter to the blackRecordTime property.
+		 * @param val	the new duration between record command and actual publish start.
+		 */
+		protected function setBlackRecordTime(val:uint):void
+		{
+			_blackRecordTime = val;
+		}
+
+		/**
+		 * activity level measured on the microphone.
+		 */
+		public function get micophoneActivityLevel ():Number
+		{
+			if (microphone)
+				return microphone.activityLevel;
+			else
+				return 0;
+		}
+
+		/**
+		 * locate active input devices.
+		 */
+		public function deviceDetection ():void
+		{
+		
+			detectMicrophoneDevice ();
+		}
+
+		/**
+		 * detect the most active microphone device.
+		 */
+		protected function detectMicrophoneDevice ():void
+		{
+			
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
+			DeviceDetector.getInstance().detectMicrophone();
+		}
+		/**
+		 * microphone detected.
+		 */
+		private function microphoneDeviceDetected (event:DeviceDetectionEvent):void
+		{
+			removeMicrophoneDetectionListeners ();
+			microphone = DeviceDetector.getInstance().microphone;
+			dispatchEvent(event.clone());
+			detectCameraDevice ();
+		}
+		/**
+		 * no microphone detected.
+		 */
+		private function microphoneDetectionError (event:DeviceDetectionEvent):void
+		{
+			removeMicrophoneDetectionListeners ();
+			dispatchEvent(event.clone());
+			detectCameraDevice ();
+		}
+		private function removeMicrophoneDetectionListeners ():void
+		{
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError);
+		}
+		/**
+		 * detect the most active camera device.
+		 */
+		protected function detectCameraDevice ():void
+		{
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected, false, 0, true);
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError, false, 0, true);
+			DeviceDetector.getInstance().detectCamera();
+		}
+		/**
+		 * camera detected.
+		 */
+		private function cameraDeviceDetected (event:DeviceDetectionEvent):void
+		{
+			removeCameraDetectionListeners ();
+			setCamera (DeviceDetector.getInstance().camera);
+			dispatchEvent(event.clone());
+		}
+		/**
+		 * no camera detected.
+		 */
+		private function cameraDetectionError (event:DeviceDetectionEvent):void
+		{
+			removeCameraDetectionListeners ();
+			dispatchEvent(event.clone());
+		}
+		private function removeCameraDetectionListeners ():void
+		{
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError);
+		}
+
+		/**
+		 * a list of available camera devices on the system.
+		 */
+		public function getCameras ():Array
+		{
+			return Camera.names;
+		}
+
+		/**
+		 * manually set the camera device to use.
+		 */
+		public function setActiveCamera (camera_name:String):void
+		{
+			removeCameraDetectionListeners ();
+			var i:int;
+			var found:Boolean = false;
+			for (i = 0; i < Camera.names.length; ++i)
+			{
+				if (camera_name == Camera.names[i]) {
+					found = true;
+					break;
+				}
+			}
+			setCamera (Camera.getCamera (found == true ? i.toString() : null));
+		}
+
+		/**
+		 * a list of available microphone devices on the system.
+		 */
+		public function getMicrophones ():Array
+		{
+			return Microphone.names;
+		}
+
+		/**
+		 * manually select the microphone device to use.
+		 */
+		public function setActiveMicrophone (microphone_name:String):void
+		{
+			removeMicrophoneDetectionListeners ();
+			var i:int;
+			var found:Boolean = false;
+			for (i = 0; i < Microphone.names.length; ++i)
+			{
+				if (microphone_name == Microphone.names[i]) {
+					found = true;
+					break;
+				}
+			}
+			microphone = Microphone.getMicrophone (found == true ? i : null);
+		}
+
+		/**
+		 * start a connection to the streaming server.
+		 */
+		public function connectToRecordingServie ():void
+		{
+			isConnected = false;
+			netConnection = new ExNetConnection ();
+			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connectionSuccess, false, 0, true);
+			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionFailed, false, 0, true);
+			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionFailed, false, 0, true);
+			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_INVALIDAPP, connectionFailed, false, 0, true);
+			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_REJECTED, connectionFailed, false, 0, true);
+			netConnection.addEventListener(NetStatusEvent.NET_STATUS,onNetConnectionStatus);
+			netConnection.connect(_initRecorderParameters.rtmpHost);
+		}
+		/**
+		 * connected to the streaming server successfully.
+		 */
+		private function connectionSuccess (event:ExNetConnectionEvent):void
+		{
+			openStream (event);
+		}
+		/**
+		 * there was an error in connecting the streaming server.
+		 */
+		private function connectionFailed (event:ExNetConnectionEvent):void
+		{
+			isConnected = false;
+			trace ("can't connect to streaming server, " + ObjectUtil.toString(event.connectionInfo));
+			dispatchEvent(event.clone());
+		}
+		/**
+		 * open a stream to publish on.
+		 */
+		protected function openStream (event:ExNetConnectionEvent = null):void
+		{
+			if (netStream)
+			{
+				netStream.removeEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble);
+				netStream.removeEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble);
+				netStream.removeEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble);
+				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStarted);
+				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream);
+				netStream.removeEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
+			}
+			netStream = new RecordNetStream (netConnection, "", true, true);
+			netStream.bufferTime = _bufferTime;
+			netStream.addEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble, false, 0, true);
+			netStream.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble, false, 0, true);
+			netStream.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble, false, 0, true);
+			netStream.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStarted, false, 0, true);
+			netStream.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream, false, 0, true);
+			netStream.addEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
+			isConnected = true;
+			if (event)
+				dispatchEvent(event.clone());
+		}
+
+		/**
+		 * the net connection status report while working.
+		 */
+		protected function onNetConnectionStatus( event : NetStatusEvent ) : void
+		{
+			trace("NetConnectionStatus: " + event.info.code);
+			dispatchEvent( event );
+		}
+
+		/**
+		 * the stream report on a net status event while working.
+		 */
+		protected function onNetStatus( event : NetStatusEvent ) : void
+		{
+			trace("NetStatusEvent: " + event.info.code);
+
+			switch(event.info.code)
+			{
+				case "NetStream.Play.Start":
+					if(_firstPreviewPause)
+					{
+						pausePreviewRecording();
+
+						//if(_timeOutId)
+							//clearTimeout( _timeOutId );
+
+						//_timeOutId = setTimeout( readyToPreview , 30000 );
+					}
+				break;
+
+				case "NetStream.Play.Stop":
+ 					if(_firstPreviewPause)
+					{
+						readyToPreview();
+					}
+				break;
+
+				case "NetStream.Unpause.Notify":
+					connecting = false;
+				break;
+
+				case "NetStream.Buffer.Full":
+					if(_firstPreviewPause)
+					{
+						readyToPreview();
+					}
+				break;
+			}
+
+			dispatchEvent( event );
+		}
+
+		private function readyToPreview() : void
+		{
+			//if(_timeOutId)
+				//clearTimeout( _timeOutId );
+
+			//_timeOutId = undefined;
+			_firstPreviewPause = false;
+			resume();
+		}
+
+		/**
+		 * the stream is fully flushed and saved on the server.
+		 */
+		protected function streamFlushBubble (event:FlushStreamEvent):void
+		{
+			trace("streamFlushBubble");
+			dispatchEvent(event.clone());
+		}
+		/**
+		 * the server confirmed start recording.
+		 */
+		protected function recordStarted (event:RecordNetStreamEvent):void
+		{
+			trace("recordStarted");
+			connecting = false;
+			dispatchEvent(event.clone());
+			setBlackRecordTime (getTimer() - _recordStartTime);
+		}
+		/**
+		 * the stream has endded play (after preview finished).
+		 */
+		protected function stoppedStream (event:RecordNetStreamEvent):void
+		{
+			trace("stoppedStream");
+			_firstPreviewPause = true;
+			delayedStoppedHandler(event);
+		}
+
+		private function delayedStoppedHandler (event:RecordNetStreamEvent):void
+		{
+			trace("delayedStoppedHandler");
+			clearVideoAndSetCamera ();
+			dispatchEvent(event);
+		}
+
+		/**
+		 * clear the preview and set camera back
+		 */
+		public function clearVideoAndSetCamera ():void
+		{
+			trace("clearVideoAndSetCamera");
+			video.attachNetStream(null);
+			openStream ();
+			setCamera(camera);
+		}
+
+		/**
+		 * start publishing the audio.
+		 */
+		public function recordNewStream ():void
+		{
+			if (netStream)
+			{
+				setCamera (camera);
+				if (camera)
+					netStream.attachCamera(camera);
+				if (microphone)
+					netStream.attachAudio(microphone);
+				setStreamUid (UIDUtil.createUID());
+				trace ("publishing: " + _streamUid);
+				connecting = true; //setting loader until the Record.Start is called
+				netStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
+				_recordStartTime = getTimer();
+			}
+		}
+
+		/**
+		 * stop publishing to the server.
+		 */
+		public function stopRecording ():void
+		{
+			setRecordedTime(getTimer() - _recordStartTime);
+			if (netStream)
+				netStream.stop();
+		}
+
+		/**
+		 * play the recorded stream.
+		 */
+		public function previewRecording ():void
+		{
+			trace("previewRecording");
+			if (netStream)
+			{
+				connecting = true;
+				video.attachNetStream(netStream);
+				trace("playing: " + _streamUid);
+				netStream.playMedia(_streamUid);
+			}
+		}
+
+		/**
+		 * stop the playing stream.
+		 */
+		public function stopPreviewRecording ():void
+		{
+			trace("stopPreviewRecording");
+			if (netStream)
+			{
+				_firstPreviewPause = true;
+				netStream.stop();
+			}
+		}
+
+	   /**
+		 * pause the playing stream.
+		 */
+		public function pausePreviewRecording ():void
+		{
+			trace("pausePreviewRecording");
+			if (netStream)
+				netStream.pause();
+		}
+
+		/**
+		 * seek the playing stream.
+		 */
+		public function seek( offset : Number ) : void
+		{
+			trace("seek");
+			if (netStream)
+				netStream.seek( offset );
+		}
+
+		/**
+		 * resume the playing stream.
+		 */
+		public function resume() : void
+		{
+			trace("resume");
+			if (netStream)
+				netStream.resume();
+		}
+
+		/**
+		 * The position of the playing stream playhead, in seconds.
+		 */
+		public function get playheadTime() : Number
+		{
+			if (netStream)
+				return netStream.time;
+
+			return NaN;
+		}
+
+		/**
+		 * set the recorder netStream bufferTime.
+		 */
+		public function set bufferTime( value : Number ) : void
+		{
+			_bufferTime = value;
+
+			if (netStream)
+				netStream.bufferTime = _bufferTime;
+		}
+
+		/**
+		 * get the recorder netStream bufferLength.
+		 */
+		public function get bufferLength() : Number
+		{
+			if(netStream)
+				return netStream.bufferLength;
+
+			return NaN;
+		}
+
+
+		///
+		///
+		///
+
+		/**
+		 * add the last recording as a new Kaltura entry in the Kaltura Network.
+		 * @param entry_name				the name for the new added entry.
+		 * @param entry_tags				user tags for the newly created entry.
+		 * @param entry_description			description of the newly created entry.
+		 * @param credits_screen_name		for anonymous user applications - the screen name of the user that contributed the entry.
+		 * @param credits_site_url			for anonymous user applications - the website url of the user that contributed the entry.
+		 * @param thumb_offset				for streaming media - used to decide from what second to capture a thumbnail.
+		 * @param admin_tags				admin tags for the newly created entry.
+		 * @param license_type				the content license type to use (this is arbitrary to be set by the partner).
+		 * @param credit					custom partner credit feild, will be used to attribute the contributing source.
+		 * @param group_id					used to group multiple entries in a group.
+		 * @param partner_data				special custom data for partners to store.
+		 * @see com.kaltura.recording.business.AddEntryDelegate
+		 */
+		public function addEntry (entry_name:String, entry_tags:String, entry_description:String, credits_screen_name:String = '',
+								credits_site_url:String = '', thumb_offset:int = -1, admin_tags:String = '', license_type:String = '',
+								credit:String = '', group_id:String = '', partner_data:String = ''):void
+		{
+			var mediaType:int = camera ? 1 : 5;
+			var addEntryDelegate:AddEntryDelegate = new AddEntryDelegate (this);
+			addEntryDelegate.addEntry(_initRecorderParameters, mediaType, entry_name, streamUid, entry_tags, entry_description,
+									blackRecordTime, -1, 2, credits_screen_name, credits_site_url, thumb_offset,
+									admin_tags, license_type, credit, group_id, partner_data);
+		}
+
+		public function result (data:Object):void
+		{
+			trace (ObjectUtil.toString(data));
+			dispatchEvent(new AddEntryEvent (AddEntryEvent.ADD_ENTRY_RESULT, data));
+		}
+		public function fault (info:Object):void
+		{
+			trace (ObjectUtil.toString(info));
+			dispatchEvent(new AddEntryEvent (AddEntryEvent.ADD_ENTRY_FAULT, info));
+		}
+	}
+}

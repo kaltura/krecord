@@ -124,6 +124,25 @@ if ( hasProductInstall && !hasRequestedVersion ) {
   }
 // -->
 </script>
+	<script>
+		function clickFunction() {
+			var kRecord = document.getElementById("${application}");
+			alert (kRecord.getMicrophoneActivityLevel());
+		}
+		
+		function noCamerasFound() {
+			alert('noCamerasFound');
+		}
+		
+		function startRecording() {
+			var kRecord = document.getElementById("${application}");
+			kRecord.startRecording();
+		}
+		function stopRecording() {
+			var kRecord = document.getElementById("${application}");
+			kRecord.stopRecording();
+		}
+	</script>
 <noscript>
   	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
 			id="${application}" width="${width}" height="${height}"
@@ -143,5 +162,9 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			</embed>
 	</object>
 </noscript>
+	<br/>
+	<button type="button" onclick="clickFunction()">getMicrophoneActivityLevel</button>
+	<button type="button" onclick="startRecording()">start recording</button>
+	<button type="button" onclick="stopRecording()">stop recording</button>
 </body>
 </html>

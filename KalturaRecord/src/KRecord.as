@@ -77,7 +77,7 @@ package
 		 */
 		public function KRecord(init:Boolean=true):void
 		{
-			trace("version 1.0.35");
+			trace("version 1.0.36");
 			Global.RECORD_CONTROL=recordControl;
 //		if (init)
 //			addEventListener(Event.ADDED_TO_STAGE, startApplication);
@@ -222,6 +222,7 @@ package
 					ExternalInterface.addCallback("getRecordedTime", getRecordedTime);
 					ExternalInterface.addCallback("setQuality", setQuality);
 					ExternalInterface.addCallback("getMicrophones", getMicrophones);
+					ExternalInterface.addCallback("getMicrophoneActivityLevel", getMicrophoneActivityLevel);
 					ExternalInterface.addCallback("getCameras", getCameras);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
 					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
@@ -310,6 +311,10 @@ package
 		public function setActiveMicrophone(microphoneName:String):void
 		{
 			recordControl.setActiveMicrophone(microphoneName);
+		}
+		
+		public function getMicrophoneActivityLevel():Number {
+			return recordControl.micophoneActivityLevel;
 		}
 
 		/**

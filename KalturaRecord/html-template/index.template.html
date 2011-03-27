@@ -51,11 +51,11 @@ var initVars =
 	"host=www.kaltura.com" +
 	"&kshowId=-1" +
 	"&autoPreview=0" +
-	"&pid=33429" +
-	"&subpid=3342900" +
+	"&pid=524241" +
+	"&subpid=524241" +
 	"&uid=your_user_id(whatever)" +
-	"&ks=YzE5ZWI1YmQxNWZhMTMzZDQxMGI1MzljN2Y2Y2RiODcwMTRiMGU2ZXwzMzQyOTszMzQyOTsxMjgwODIxMTQ5OzI7MTI4MDczNDc0OS41MDkzO19fQURNSU5fXzA7Kg==" +
-	"&themeUrl=skin.swf" +
+	"&ks=OWZhYmU2Njk4MmVmYjFiN2RmZTJhOTBhODJjODA4OTY2MTg4YjNkYnw1MjQyNDE7NTI0MjQxOzEzMDM4Mjg5ODI7MjsxMzAxMjM2OTgyLjI3Njk7bWljaGFsX3JhZEBtYWlsaW5hdG9yLmNvbTsqOzs=" +
+	"&themeUrl=http://localhost/KRecord/bin-debug/assets/skin.swf" +
 	"&localeUrl=locale.xml" +
 	"&entryName=my added entry,,,whoo!" +
 	"&entryTags=this is, my entry, test, webcam" +
@@ -127,7 +127,14 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	<script>
 		function clickFunction() {
 			var kRecord = document.getElementById("${application}");
-			alert (kRecord.getMicrophoneActivityLevel());
+			alert (kRecord.getMicrophoneGain());
+		}
+		
+		function setVolume() {
+			var kRecord = document.getElementById("${application}");
+			var val =  document.getElementById("volumeLevel").value;
+			alert ("clicked, value: "+val + " " + kRecord);
+			kRecord.setMicrophoneGain(val);
 		}
 		
 		function noCamerasFound() {
@@ -163,7 +170,9 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	</object>
 </noscript>
 	<br/>
-	<button type="button" onclick="clickFunction()">getMicrophoneActivityLevel</button>
+	<button type="button" onclick="clickFunction()">getMicrophoneGain</button>
+	<input id="volumeLevel"/>
+	<button type="button" onclick="setVolume()">setMicrophoneGain</button>
 	<button type="button" onclick="startRecording()">start recording</button>
 	<button type="button" onclick="stopRecording()">stop recording</button>
 </body>

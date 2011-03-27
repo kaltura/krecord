@@ -41,15 +41,17 @@ package com.kaltura.recording.controller
 	import com.kaltura.recording.business.interfaces.IResponder;
 	import com.kaltura.recording.controller.events.AddEntryEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
-
+	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.NetStatusEvent;
 	import flash.media.Camera;
 	import flash.media.Microphone;
+	import flash.media.SoundMixer;
+	import flash.media.SoundTransform;
 	import flash.media.Video;
 	import flash.utils.getTimer;
-
+	
 	import mx.utils.ObjectUtil;
 	import mx.utils.UIDUtil;
 
@@ -285,6 +287,25 @@ package com.kaltura.recording.controller
 			else
 				return 0;
 		}
+		
+		/**
+		 * Returns the gain of the microphone 
+		 * @return 
+		 * 
+		 */		
+		public function get microphoneGain () : Number {
+			if (microphone)
+				return microphone.gain;
+			else
+				return 0;
+		}
+		
+		public function set microphoneGain(val:Number) : void {
+			if (microphone) {
+				microphone.gain = val;
+			}
+				
+		}
 
 		/**
 		 * locate active input devices.
@@ -499,6 +520,7 @@ package com.kaltura.recording.controller
 
 						//_timeOutId = setTimeout( readyToPreview , 30000 );
 					}
+					
 				break;
 
 				case "NetStream.Play.Stop":

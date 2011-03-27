@@ -223,6 +223,8 @@ package
 					ExternalInterface.addCallback("setQuality", setQuality);
 					ExternalInterface.addCallback("getMicrophones", getMicrophones);
 					ExternalInterface.addCallback("getMicrophoneActivityLevel", getMicrophoneActivityLevel);
+					ExternalInterface.addCallback("getMicrophoneGain", getMicrophoneGain);
+					ExternalInterface.addCallback("setMicrophoneGain", setMicrophoneGain);
 					ExternalInterface.addCallback("getCameras", getCameras);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
 					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
@@ -315,6 +317,23 @@ package
 		
 		public function getMicrophoneActivityLevel():Number {
 			return recordControl.micophoneActivityLevel;
+		}
+		/**
+		 * returns the volume of the microphone 
+		 * @return 
+		 * 
+		 */		
+		public function getMicrophoneGain():Number {
+			return recordControl.microphoneGain;
+		}
+		
+		/**
+		 * sets the gain of the microphone 
+		 * @param val the given volume, between 0 to 100
+		 * 
+		 */		
+		public function setMicrophoneGain(val:String):void {
+			recordControl.microphoneGain = parseFloat(val);
 		}
 
 		/**

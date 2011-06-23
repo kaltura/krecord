@@ -30,7 +30,9 @@
 package
 {
 
+	import com.kaltura.KalturaClient;
 	import com.kaltura.base.vo.KalturaEntry;
+	import com.kaltura.config.KalturaConfig;
 	import com.kaltura.devicedetection.DeviceDetectionEvent;
 	import com.kaltura.net.streaming.events.ExNetConnectionEvent;
 	import com.kaltura.net.streaming.events.FlushStreamEvent;
@@ -44,7 +46,9 @@ package
 	import com.kaltura.recording.view.View;
 	import com.kaltura.recording.view.ViewEvent;
 	import com.kaltura.utils.KConfigUtil;
+	import com.kaltura.utils.KUtils;
 	import com.kaltura.utils.ObjectHelpers;
+	import com.kaltura.vo.KalturaMediaEntry;
 	
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
@@ -70,6 +74,9 @@ package
 		private var _view:View=new View;
 		private var _newViewState:String;
 
+		
+		public static const VERSION:String = "v1.5"; 
+		
 		/**
 		 *Constructor.
 		 * @param init		if true will automatically call startApplication and initialize application.
@@ -77,7 +84,7 @@ package
 		 */
 		public function KRecord(init:Boolean=true):void
 		{
-			trace("version 1.0.36");
+			trace("version:",VERSION);
 			Global.RECORD_CONTROL=recordControl;
 //		if (init)
 //			addEventListener(Event.ADDED_TO_STAGE, startApplication);
@@ -87,9 +94,16 @@ package
 		private function build(evt:Event=null):void
 		{
 			Security.allowDomain("*");
+			
+			
+			
+			
+			
+			
+			
 			var customContextMenu:ContextMenu=new ContextMenu();
 			customContextMenu.hideBuiltInItems();
-			var menuItem:ContextMenuItem=new ContextMenuItem("v1.0.35");
+			var menuItem:ContextMenuItem=new ContextMenuItem(VERSION);
 			customContextMenu.customItems.push(menuItem);
 
 			stageResize(null);
@@ -105,8 +119,17 @@ package
 			var themeUrl:String=KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
 			var localeUrl:String=KConfigUtil.getDefaultValue(appparams.localeurl, "locale.xml");
 			var autoPreview:String=KConfigUtil.getDefaultValue(appparams.autopreview, "1");
+			Global.REMOVE_PLAYER=(appparams.removeplayer=="1" || appparams.removeplayer=="true");
 			initParams = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
 
+			var configuration : KalturaConfig = new KalturaConfig();
+			configuration.partnerId = appparams.pid;
+			configuration.ignoreNull = 1;
+			configuration.domain = KUtils.hostFromCode(appparams.host); 
+			configuration.srvUrl = "api_v3/index.php"
+			configuration.ks = appparams.ks;
+			Global.KALTURACLIENT = new KalturaClient(configuration);
+			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick=="true");
 			Global.VIEW_PARAMS=initParams;
 			_view.addEventListener(ViewEvent.VIEW_READY, startApplication);
 			addChild(_view);
@@ -152,14 +175,14 @@ package
 					var entryDescription:String=KConfigUtil.getDefaultValue(appparams.entrydescription, "");
 					var creditsScreenName:String=KConfigUtil.getDefaultValue(appparams.creditsscreenName, "");
 					var creditsSiteUrl:String=KConfigUtil.getDefaultValue(appparams.creditssiteUrl, "");
-					var thumbOffset:Number=KConfigUtil.getDefaultValue(appparams.thumboffset, -1);
+					var categories:String=KConfigUtil.getDefaultValue(appparams.categories, "");
 					var adminTags:String=KConfigUtil.getDefaultValue(appparams.admintags, "");
 					var licenseType:String=KConfigUtil.getDefaultValue(appparams.licensetype, "");
 					var credit:String=KConfigUtil.getDefaultValue(appparams.credit, "");
 					var groupId:String=KConfigUtil.getDefaultValue(appparams.groupid, "");
 					var partnerData:String=KConfigUtil.getDefaultValue(appparams.partnerdata, "");
 
-					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, thumbOffset, adminTags, licenseType, credit, groupId, partnerData)
+					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl,categories, adminTags, licenseType, credit, groupId, partnerData)
 				}
 				catch (err:Error)
 				{
@@ -168,7 +191,7 @@ package
 			}
 			else
 			{
-				addEntry("", "", "", "", "", -1, "", "", "", "", "");
+				addEntry("", "", "", "", "", "", "", "", "", "", "");
 			}
 
 			trace("SAVE");
@@ -202,7 +225,7 @@ package
 				{
 					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
 					var appparams:Object=ObjectHelpers.lowerNoUnderscore(paramObj);
-					autoPreview=KConfigUtil.getDefaultValue(appparams.autopreview, autoPreview);
+					autoPreview= !(appparams.autopreview=="0" || appparams.autopreview=="false");
 					var hostUrl:String=KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
 					var rtmpHost:String=KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
 					var ks:String=KConfigUtil.getDefaultValue(appparams.ks, "");
@@ -561,13 +584,13 @@ package
 		 * @param partner_data				special custom data for partners to store.
 		 * @see com.kaltura.recording.business.AddEntryDelegate
 		 */
-		public function addEntry(entry_name:String='', entry_tags:String='', entry_description:String='', credits_screen_name:String='', credits_site_url:String='', thumb_offset:int=-1, admin_tags:String='', license_type:String='', credit:String='', group_id:String='', partner_data:String=''):void
+		public function addEntry(entry_name:String='', entry_tags:String='', entry_description:String='', credits_screen_name:String='', credits_site_url:String='', categories:String="", admin_tags:String='', license_type:String='', credit:String='', group_id:String='', partner_data:String=''):void
 		{
 			if (entry_name == '')
 				entry_name='recorded_entry_pid_' + recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
 			
 			  this.callInterfaceDelegate("beforeAddEntry");
-			recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, thumb_offset, admin_tags, license_type, credit, group_id, partner_data);
+			recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data);
 		}
 
 		private function addEntryFailed(event:AddEntryEvent):void
@@ -577,13 +600,13 @@ package
 
 		private function addEntryComplete(event:AddEntryEvent):void
 		{
-			var entry:KalturaEntry=event.info[0]as KalturaEntry;
+			var entry:KalturaMediaEntry=event.info as KalturaMediaEntry;
 			if (entry)
 			{
 				try
 				{
 					//ExternalInterface.call("addEntryComplete", event.info[0]);
-					this.callInterfaceDelegate("addEntryComplete", event.info[0]);
+					this.callInterfaceDelegate("addEntryComplete", event.info);
 				}
 				catch (err:Error)
 				{
@@ -596,13 +619,13 @@ package
 				try
 				{
 					//ExternalInterface.call("addEntryFail", event.info[0]);
-					this.callInterfaceDelegate("addEntryFail", event.info[0]);
+					this.callInterfaceDelegate("addEntryFail", event.info);
 				}
 				catch (err:Error)
 				{
 					trace(err.message)
 				}
-				trace(ObjectUtil.toString(event.info[0]));
+				trace(ObjectUtil.toString(event.info));
 			}
 			dispatchEvent(event.clone());
 		}

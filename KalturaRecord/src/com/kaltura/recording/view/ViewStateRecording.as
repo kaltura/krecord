@@ -52,7 +52,9 @@ public class ViewStateRecording extends ViewState
 	{
 		_bg.addEventListener( MouseEvent.MOUSE_OVER, onMouseOver, false, 0, true );
 		_bg.addEventListener( MouseEvent.MOUSE_MOVE, onMouseMove, false, 0, true );
-		this.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
+		// click on video to stop recording
+		if(!Global.DISABLE_GLOBAL_CLICK)
+			this.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
 		//stage.addEventListener( Event.MOUSE_LEAVE, onMouseOut, false, 0, true );
 		root.addEventListener( Event.MOUSE_LEAVE, onMouseOut, false, 0, true );
 	}

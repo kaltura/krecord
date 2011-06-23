@@ -14,7 +14,9 @@ public class ViewStateStart extends ViewState
 	public function ViewStateStart()
 	{
 		_bg.visible = true;
-		_bg.buttonMode = true;
+		
+		if(!Global.DISABLE_GLOBAL_CLICK)
+			_bg.buttonMode = true;
 		
 		buttonStart.mouseEnabled = false;
 		buttonStart.label = Global.LOCALE.getString( "Button.StartRecord" );
@@ -31,7 +33,9 @@ public class ViewStateStart extends ViewState
 	override protected function onAddedToStage( evt:Event=null ):void
 	{
 		_bg.addEventListener( MouseEvent.MOUSE_OVER, onMouseOver, false, 0, true );
-		this.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
+		// add click for start record to the video
+		if(!Global.DISABLE_GLOBAL_CLICK)
+			this.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
 		//stage.addEventListener( Event.MOUSE_LEAVE, onMouseOut, false, 0, true );
 		root.addEventListener( Event.MOUSE_LEAVE, onMouseOut, false, 0, true );
 	}

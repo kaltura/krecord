@@ -29,8 +29,11 @@
 */
 package com.kaltura.recording.controller
 {
+	import com.kaltura.KalturaClient;
+	import com.kaltura.commands.media.MediaAddFromRecordedWebcam;
 	import com.kaltura.devicedetection.DeviceDetectionEvent;
 	import com.kaltura.devicedetection.DeviceDetector;
+	import com.kaltura.events.KalturaEvent;
 	import com.kaltura.net.streaming.ExNetConnection;
 	import com.kaltura.net.streaming.RecordNetStream;
 	import com.kaltura.net.streaming.events.ExNetConnectionEvent;
@@ -41,6 +44,7 @@ package com.kaltura.recording.controller
 	import com.kaltura.recording.business.interfaces.IResponder;
 	import com.kaltura.recording.controller.events.AddEntryEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
+	import com.kaltura.vo.KalturaMediaEntry;
 	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -472,6 +476,7 @@ package com.kaltura.recording.controller
 		{
 			if (netStream)
 			{
+				
 				netStream.removeEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble);
 				netStream.removeEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble);
 				netStream.removeEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble);
@@ -479,7 +484,7 @@ package com.kaltura.recording.controller
 				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream);
 				netStream.removeEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
 			}
-			netStream = new RecordNetStream (netConnection, "", true, true);
+			netStream = new RecordNetStream (netConnection, UIDUtil.createUID(), true, true);
 			netStream.bufferTime = _bufferTime;
 			netStream.addEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble, false, 0, true);
 			netStream.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble, false, 0, true);
@@ -547,10 +552,6 @@ package com.kaltura.recording.controller
 
 		private function readyToPreview() : void
 		{
-			//if(_timeOutId)
-				//clearTimeout( _timeOutId );
-
-			//_timeOutId = undefined;
 			_firstPreviewPause = false;
 			resume();
 		}
@@ -734,7 +735,7 @@ package com.kaltura.recording.controller
 		 * @param entry_description			description of the newly created entry.
 		 * @param credits_screen_name		for anonymous user applications - the screen name of the user that contributed the entry.
 		 * @param credits_site_url			for anonymous user applications - the website url of the user that contributed the entry.
-		 * @param thumb_offset				for streaming media - used to decide from what second to capture a thumbnail.
+		 * @param categories				categories of entry
 		 * @param admin_tags				admin tags for the newly created entry.
 		 * @param license_type				the content license type to use (this is arbitrary to be set by the partner).
 		 * @param credit					custom partner credit feild, will be used to attribute the contributing source.
@@ -743,24 +744,38 @@ package com.kaltura.recording.controller
 		 * @see com.kaltura.recording.business.AddEntryDelegate
 		 */
 		public function addEntry (entry_name:String, entry_tags:String, entry_description:String, credits_screen_name:String = '',
-								credits_site_url:String = '', thumb_offset:int = -1, admin_tags:String = '', license_type:String = '',
+								credits_site_url:String = '', categories:String="", admin_tags:String = '', license_type:String = '',
 								credit:String = '', group_id:String = '', partner_data:String = ''):void
 		{
-			var mediaType:int = camera ? 1 : 5;
-			var addEntryDelegate:AddEntryDelegate = new AddEntryDelegate (this);
-			addEntryDelegate.addEntry(_initRecorderParameters, mediaType, entry_name, streamUid, entry_tags, entry_description,
-									blackRecordTime, -1, 2, credits_screen_name, credits_site_url, thumb_offset,
-									admin_tags, license_type, credit, group_id, partner_data);
+		
+			var kc:KalturaClient = Global.KALTURACLIENT;
+			var entry:KalturaMediaEntry = new KalturaMediaEntry();
+			entry.mediaType = 1;
+			entry.name = entry_name;
+			entry.tags = entry_tags;
+			entry.description = entry_description;
+			entry.creditUserName = credits_screen_name;
+			entry.categories = categories;
+			entry.creditUrl = credits_site_url;
+			entry.adminTags = admin_tags;
+			entry.licenseType = int(license_type);
+			entry.groupId = int(group_id);
+			entry.partnerData = partner_data;
+			var addEntry:MediaAddFromRecordedWebcam = new MediaAddFromRecordedWebcam(entry,streamUid);
+			addEntry.addEventListener(KalturaEvent.COMPLETE,result);
+			addEntry.addEventListener(KalturaEvent.FAILED,fault);
+			kc.post(addEntry);
+			
 		}
 
 		public function result (data:Object):void
 		{
-			trace (ObjectUtil.toString(data));
-			dispatchEvent(new AddEntryEvent (AddEntryEvent.ADD_ENTRY_RESULT, data));
+			trace ("result",ObjectUtil.toString(data));
+			dispatchEvent(new AddEntryEvent (AddEntryEvent.ADD_ENTRY_RESULT, data.data));
 		}
 		public function fault (info:Object):void
 		{
-			trace (ObjectUtil.toString(info));
+			trace ("fault",ObjectUtil.toString(info));
 			dispatchEvent(new AddEntryEvent (AddEntryEvent.ADD_ENTRY_FAULT, info));
 		}
 	}

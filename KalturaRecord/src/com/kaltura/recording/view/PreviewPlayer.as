@@ -4,6 +4,7 @@ package com.kaltura.recording.view
 import com.kaltura.net.streaming.events.RecordNetStreamEvent;
 
 import flash.display.MovieClip;
+import flash.display.Sprite;
 import flash.events.Event;
 import flash.events.MouseEvent;
 import flash.events.NetStatusEvent;
@@ -54,34 +55,42 @@ public class PreviewPlayer extends UIComponent
 		
 		buttonSave = new Button( _skin["buttonSave"] );
 		buttonSave.name = "buttonSave";
-		_skin.addChild( buttonSave );
+		if(!Global.REMOVE_PLAYER)
+			_skin.addChild( buttonSave );
 		
 		buttonReRecord = new Button( _skin["buttonReRecord"] );
 		buttonReRecord.name = "buttonReRecord";
-		_skin.addChild( buttonReRecord );
+		if(!Global.REMOVE_PLAYER)
+			_skin.addChild( buttonReRecord );
 
 		buttonPlay = new Button( _skin["buttonPlay"] );
 		buttonPlay.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
 		buttonPlay.name = "buttonPlay";
 		buttonPlay.visible = true;
-		_skin.addChild( buttonPlay );
+		if(!Global.REMOVE_PLAYER)
+			_skin.addChild( buttonPlay );
 
 		buttonPause = new Button( _skin["buttonPause"] );
 //		buttonPause.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
 		buttonPause.name = "buttonPause";
 		buttonPause.visible = false;
-		_skin.addChild( buttonPause );
+		if(!Global.REMOVE_PLAYER)
+			_skin.addChild( buttonPause );
 
 		buttonStop = new Button( _skin["buttonStop"] );
 		buttonStop.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
 		buttonStop.name = "buttonStop";
 		buttonStop.visible = false;
-		_skin.addChild( buttonStop )
+		if(!Global.REMOVE_PLAYER)
+			_skin.addChild( buttonStop )
 		
 		progressBar = new ProgressBar( _skin["progressBar"] );
 		progressBar.addEventListener( MouseEvent.CLICK, onMouseClick, false, 0, true );
 		progressBar.name = "progressBar";
-		_skin.addChild( progressBar );
+		if(!Global.REMOVE_PLAYER)
+			_skin.addChild( progressBar );
+		
+		
 		
 		textProgress = _skin["textProgress"];
 	}

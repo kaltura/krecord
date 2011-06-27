@@ -89,7 +89,6 @@ public class ViewStateRecording extends ViewState
 	private function onMouseClick( evt:Event ):void
 	{
 		evt.stopImmediatePropagation();
-		
 		evt = new ViewEvent( ViewEvent.RECORD_STOP, true );
 		dispatchEvent( evt );
 	}

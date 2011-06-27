@@ -51,11 +51,12 @@ var initVars =
 	"host=www.kaltura.com" +
 	"&kshowId=-1" +
 	"&autoPreview=false" +
+	"&disableglobalclick=true" +
 	"&removeplayer=false" +
 	"&pid=27017" +
 	"&subpid=27017" +
 	"&uid=555" +
-	"&ks=OWE2MWFlNmNhMmFmNWE5Y2MxY2RjYTU0OWE0YTFjMWJhMDEyN2IxM3wyNzAxNzsyNzAxNzsxMzA4OTIyMDY2OzI7MTMwODgzNTY2Ni41NjA4Ozs7Ow==" +
+	"&ks=MTczZTJhNDNiYTY1MGJlODNjY2MxNGI0ZGRhNTVhNzNmMzE3NGQwYXwyNzAxNzsyNzAxNzsxMzA5MTcwMzIxOzI7MTMwOTA4MzkyMS42MDc1Ozs7Ow==" +
 	"&themeUrl=http://localhost/krecord-v3/KalturaRecord/bin-debug/skin.swf" +
 	"&localeUrl=locale.xml" +
 	"&entryName=Eitan test" +
@@ -65,7 +66,7 @@ var initVars =
 	"&creditsScreenName=my entry contributor name" +
 	"&creditsSiteUrl=http://justatry.com" +
 	"&thumbOffset=1" +
-	"&adminTags=an admin, tag admin" +
+	"&adminTags=" +
 	"&licenseType=CC-0.1" +
 	"&credit=my entry contributor name" +
 	"&groupId=" +
@@ -151,6 +152,14 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			var kRecord = document.getElementById("${application}");
 			kRecord.stopRecording();
 		}
+		function stopPreview() {
+			var kRecord = document.getElementById("${application}");
+			kRecord.stopPreview();
+		}
+		function previewRecording() {
+			var kRecord = document.getElementById("${application}");
+			kRecord.previewRecording();
+		}
 	</script>
 <noscript>
   	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
@@ -177,5 +186,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	<button type="button" onclick="setVolume()">setMicrophoneGain</button>
 	<button type="button" onclick="startRecording()">start recording</button>
 	<button type="button" onclick="stopRecording()">stop recording</button>
+	<button type="button" onclick="stopPreview()">stop preview</button>
+	<button type="button" onclick="previewRecording()">start preview</button>
 </body>
 </html>

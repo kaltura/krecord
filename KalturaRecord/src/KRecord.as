@@ -58,7 +58,6 @@ package
 	import flash.system.Security;
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
-	
 	import mx.utils.ObjectUtil;
 
 	[SWF(width='320', height='240', frameRate='30', backgroundColor='#999999')]
@@ -95,12 +94,6 @@ package
 		{
 			Security.allowDomain("*");
 			
-			
-			
-			
-			
-			
-			
 			var customContextMenu:ContextMenu=new ContextMenu();
 			customContextMenu.hideBuiltInItems();
 			var menuItem:ContextMenuItem=new ContextMenuItem(VERSION);
@@ -128,14 +121,33 @@ package
 			configuration.domain = KUtils.hostFromCode(appparams.host); 
 			configuration.srvUrl = "api_v3/index.php"
 			configuration.ks = appparams.ks;
-			Global.KALTURACLIENT = new KalturaClient(configuration);
-			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick=="true");
+				
+			if (!appparams.httpprotocol)
+			{
+				var url:String = root.loaderInfo.url;			
+				configuration.protocol = isHttpURL(url) ? getProtocol(url) : "http";  			
+			}else
+			{
+				configuration.protocol = appparams.httpprotocol;
+			}
+			configuration.protocol +="://";
+			
+			Global.KALTURA_CLIENT = new KalturaClient(configuration);
+			
+			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick=="1" || appparams.disableglobalclick=="true"); 
 			Global.VIEW_PARAMS=initParams;
 			_view.addEventListener(ViewEvent.VIEW_READY, startApplication);
 			addChild(_view);
 
 		}
 
+		public static function isHttpURL(url:String):Boolean
+		{
+			return url != null &&
+				(url.indexOf("http://") == 0 ||
+					url.indexOf("https://") == 0);
+		}
+		
 		private function onStartRecord(evt:ViewEvent):void
 		{
 			startRecording();
@@ -160,6 +172,24 @@ package
 				_view.setState(_newViewState);
 		}
 
+		public static function getProtocol(url:String):String
+		{
+			var slash:int = url.indexOf("/");
+			var indx:int = url.indexOf(":/");
+			if (indx > -1 && indx < slash)
+			{
+				return url.substring(0, indx);
+			}
+			else
+			{
+				indx = url.indexOf("::");
+				if (indx > -1 && indx < slash)
+					return url.substring(0, indx);
+			}
+			
+			return "";
+		}
+		
 		private function onSave(evt:ViewEvent):void
 		{
 			recordControl.stopPreviewRecording();
@@ -475,6 +505,8 @@ package
 		 */
 		public function startRecording():void
 		{
+			_newViewState = "recording"
+			_view.setState(_newViewState);
 			trace("RECORD START");
 			recordControl.recordNewStream();
 		}
@@ -499,6 +531,8 @@ package
 		 */
 		public function stopRecording():void
 		{
+			_newViewState = "preview"
+			_view.setState(_newViewState);
 			trace("KRecord==>stopRecording()");
 			recordControl.stopRecording();
 		}
@@ -576,13 +610,12 @@ package
 		 * @param entry_description			description of the newly created entry.
 		 * @param credits_screen_name		for anonymous user applications - the screen name of the user that contributed the entry.
 		 * @param credits_site_url			for anonymous user applications - the website url of the user that contributed the entry.
-		 * @param thumb_offset				for streaming media - used to decide from what second to capture a thumbnail.
+		 * @param categories				Categories. comma seperated string
 		 * @param admin_tags				admin tags for the newly created entry.
 		 * @param license_type				the content license type to use (this is arbitrary to be set by the partner).
 		 * @param credit					custom partner credit feild, will be used to attribute the contributing source.
 		 * @param group_id					used to group multiple entries in a group.
 		 * @param partner_data				special custom data for partners to store.
-		 * @see com.kaltura.recording.business.AddEntryDelegate
 		 */
 		public function addEntry(entry_name:String='', entry_tags:String='', entry_description:String='', credits_screen_name:String='', credits_site_url:String='', categories:String="", admin_tags:String='', license_type:String='', credit:String='', group_id:String='', partner_data:String=''):void
 		{

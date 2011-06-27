@@ -14,13 +14,10 @@ public class ViewStateStart extends ViewState
 	public function ViewStateStart()
 	{
 		_bg.visible = true;
-		
 		if(!Global.DISABLE_GLOBAL_CLICK)
 			_bg.buttonMode = true;
-		
 		buttonStart.mouseEnabled = false;
 		buttonStart.label = Global.LOCALE.getString( "Button.StartRecord" );
-
 		addChild( buttonStart );
 	}
 	
@@ -52,11 +49,12 @@ public class ViewStateStart extends ViewState
 
 	private function onMouseClick( evt:Event ):void
 	{
-		evt.stopImmediatePropagation();
-		
+		if(evt)
+			evt.stopImmediatePropagation();
 		evt = new ViewEvent( ViewEvent.RECORD_START, true );
 		dispatchEvent( evt );
 	}
+	
 	
 }
 }

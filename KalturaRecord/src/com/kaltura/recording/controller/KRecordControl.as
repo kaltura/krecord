@@ -748,7 +748,7 @@ package com.kaltura.recording.controller
 								credit:String = '', group_id:String = '', partner_data:String = ''):void
 		{
 		
-			var kc:KalturaClient = Global.KALTURACLIENT;
+			var kc:KalturaClient = Global.KALTURA_CLIENT;
 			var entry:KalturaMediaEntry = new KalturaMediaEntry();
 			entry.mediaType = 1;
 			entry.name = entry_name;
@@ -757,7 +757,8 @@ package com.kaltura.recording.controller
 			entry.creditUserName = credits_screen_name;
 			entry.categories = categories;
 			entry.creditUrl = credits_site_url;
-			entry.adminTags = admin_tags;
+			if(admin_tags && admin_tags !="")
+				entry.adminTags = admin_tags;
 			entry.licenseType = int(license_type);
 			entry.groupId = int(group_id);
 			entry.partnerData = partner_data;

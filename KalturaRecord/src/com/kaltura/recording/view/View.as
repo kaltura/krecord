@@ -95,6 +95,11 @@ public class View extends Sprite
 		_currentState = _states[ name ];
 		_currentState.open();
 	}
+	public function getState():*
+	{
+		if( _currentState )
+			return _currentState;
+	}
 
 	public function showPopupMessage( message:String ):void
 	{

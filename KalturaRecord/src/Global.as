@@ -16,7 +16,7 @@ public class Global
 	static public var THEME:Theme;
 	static public var LOCALE:Locale;
 	static public var RECORD_CONTROL:IRecordControl;
-	static public var KALTURACLIENT:KalturaClient;
+	static public var KALTURA_CLIENT:KalturaClient;
 	static public var DISABLE_GLOBAL_CLICK:Boolean = false;
 	static public var REMOVE_PLAYER:Boolean = false;
 	

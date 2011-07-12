@@ -755,7 +755,8 @@ package com.kaltura.recording.controller
 			entry.tags = entry_tags;
 			entry.description = entry_description;
 			entry.creditUserName = credits_screen_name;
-			entry.categories = categories;
+			if(categories && categories !="")
+				entry.categories = categories;
 			entry.creditUrl = credits_site_url;
 			if(admin_tags && admin_tags !="")
 				entry.adminTags = admin_tags;

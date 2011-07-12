@@ -305,10 +305,13 @@ package
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
 			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
+			
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
+			
 			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEndHandler);
+			
 			recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
 			recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
 			recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
@@ -551,7 +554,7 @@ package
 				}
 				catch (err:Error)
 				{
-					trace(err.message)
+					trace(err.message);
 				}
 				dispatchEvent(event.clone());
 			
@@ -629,6 +632,7 @@ package
 		private function addEntryFailed(event:AddEntryEvent):void
 		{
 			dispatchEvent(event.clone());
+			this.callInterfaceDelegate("addEntryFailed",{errorCode:event.info.error.errorCode , errorMsg:event.info.error.errorMsg});
 		}
 
 		private function addEntryComplete(event:AddEntryEvent):void

@@ -45,6 +45,8 @@ package
 	import com.kaltura.recording.view.UIComponent;
 	import com.kaltura.recording.view.View;
 	import com.kaltura.recording.view.ViewEvent;
+	import com.kaltura.recording.view.ViewState;
+	import com.kaltura.recording.view.ViewStatePreview;
 	import com.kaltura.utils.KConfigUtil;
 	import com.kaltura.utils.KUtils;
 	import com.kaltura.utils.ObjectHelpers;
@@ -54,10 +56,14 @@ package
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
 	import flash.system.Security;
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
+	import flash.utils.Timer;
+	
 	import mx.utils.ObjectUtil;
 
 	[SWF(width='320', height='240', frameRate='30', backgroundColor='#999999')]
@@ -72,9 +78,17 @@ package
 
 		private var _view:View=new View;
 		private var _newViewState:String;
+		/**
+		 * limit in seconds to recording time. 0 means no limit 
+		 */
+		private var _limitRecord:Number = 0 ;
+		/**
+		 * The timer for the recording limitation  
+		 */
+		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5"; 
+		public static const VERSION:String = "v1.5.1"; 
 		
 		/**
 		 *Constructor.
@@ -154,7 +168,22 @@ package
 			_newViewState="recording";
 			if (!recordControl.connecting)
 				_view.setState(_newViewState);
+			limitRecording();
 		}
+		/**
+		 * Stop recording automatically. 
+		 * This function is here so we dont change the signature of  stopRecording function
+		 * @param evt
+		 * 
+		 */		
+		private function onRecordTimeComplete(evt:TimerEvent):void
+		{
+			trace("AUTO STOP AFTER ",_limitRecord," SECONDS")
+			callInterfaceDelegate("autoStopPreview",_limitRecord);
+			stopRecording();
+		}
+		
+		
 
 		private function onReRecord(evt:ViewEvent):void
 		{
@@ -164,13 +193,14 @@ package
 				_view.setState(_newViewState);
 		}
 
-		private function onStopRecord(evt:ViewEvent):void
+		private function onStopRecord(evt:ViewEvent=null):void
 		{
 			stopRecording();
 			_newViewState="preview";
 			if (!recordControl.connecting)
 				_view.setState(_newViewState);
 		}
+
 
 		public static function getProtocol(url:String):String
 		{
@@ -256,6 +286,7 @@ package
 					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
 					var appparams:Object=ObjectHelpers.lowerNoUnderscore(paramObj);
 					autoPreview= !(appparams.autopreview=="0" || appparams.autopreview=="false");
+					_limitRecord= KConfigUtil.getDefaultValue(appparams.limitrecord,0);
 					var hostUrl:String=KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
 					var rtmpHost:String=KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
 					var ks:String=KConfigUtil.getDefaultValue(appparams.ks, "");
@@ -271,6 +302,7 @@ package
 					ExternalInterface.addCallback("stopRecording", stopRecording);
 					ExternalInterface.addCallback("startRecording", startRecording);
 					ExternalInterface.addCallback("previewRecording", previewRecording);
+					ExternalInterface.addCallback("stopPreviewRecording", stopPreviewRecording);
 					ExternalInterface.addCallback("addEntry", addEntry);
 					ExternalInterface.addCallback("getRecordedTime", getRecordedTime);
 					ExternalInterface.addCallback("setQuality", setQuality);
@@ -512,11 +544,24 @@ package
 			_view.setState(_newViewState);
 			trace("RECORD START");
 			recordControl.recordNewStream();
+			limitRecording();
+
 		}
 
+		/**
+		 * Check if this instance needs to limit the time and start the timer if needed. 
+		 */
+		private function limitRecording():void
+		{
+			if(_limitRecord)
+			{
+				_limitRecordTimer = new Timer(_limitRecord*1000,1);
+				_limitRecordTimer.addEventListener(TimerEvent.TIMER_COMPLETE,onRecordTimeComplete);
+				_limitRecordTimer.start();
+			}
+		}
 		private function recordStart(event:RecordNetStreamEvent):void
 		{
-			trace(event.type);
 			try
 			{
 				//ExternalInterface.call("recordStart");
@@ -534,6 +579,15 @@ package
 		 */
 		public function stopRecording():void
 		{
+			if(_limitRecordTimer)
+			{
+				_limitRecordTimer.removeEventListener(TimerEvent.TIMER_COMPLETE,onRecordTimeComplete);
+				//if the timer is active - stop it 
+				if(_limitRecordTimer.running)
+					_limitRecordTimer.stop();
+				_limitRecordTimer = null;
+			}
+			
 			_newViewState = "preview"
 			_view.setState(_newViewState);
 			trace("KRecord==>stopRecording()");
@@ -587,7 +641,27 @@ package
 		public function previewRecording():void
 		{
 			trace("PREVIEW START");
-			recordControl.previewRecording();
+//			recordControl.previewRecording();
+			//recordControl.previewRecording();
+			var currentState:Object = _view.getState();
+			if(currentState is ViewStatePreview)
+			{
+				(currentState as ViewStatePreview).player.play(new MouseEvent("click"));
+			}
+			
+		}
+		/**
+		 * stop playing the recorded stream.
+		 */
+		public function stopPreviewRecording():void
+		{
+			//recordControl.previewRecording();
+			var currentState:Object = _view.getState();
+			if(currentState is ViewStatePreview)
+			{
+				trace("PREVIEW STOP");
+				(currentState as ViewStatePreview).player.stop();
+			}
 		}
 
 		private function previewEndHandler(event:RecordNetStreamEvent):void

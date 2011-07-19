@@ -51,7 +51,8 @@ var initVars =
 	"host=www.kaltura.com" +
 	"&kshowId=-1" +
 	"&autoPreview=false" +
-	"&disableglobalclick=true" +
+	"&disableglobalclick=false" +
+	"&limitRecord=3" +
 	"&removeplayer=false" +
 	"&pid=27017" +
 	"&subpid=27017" +
@@ -133,11 +134,20 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			alert (kRecord.getMicrophoneGain());
 		}
 		
+		function addEntryFailed(a) {
+			alert("addEntryFailed"+a[0]);
+		}
+		function flushComplete() {
+			//alert("flushComplete");
+		}
 		function setVolume() {
 			var kRecord = document.getElementById("${application}");
 			var val =  document.getElementById("volumeLevel").value;
 			alert ("clicked, value: "+val + " " + kRecord);
 			kRecord.setMicrophoneGain(val);
+		}
+		function autoStopRecord(a) {
+			alert('autoStopRecord after '+a+' seconds');
 		}
 		
 		function noCamerasFound() {
@@ -154,7 +164,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 		}
 		function stopPreview() {
 			var kRecord = document.getElementById("${application}");
-			kRecord.stopPreview();
+			kRecord.stopPreviewRecording();
 		}
 		function previewRecording() {
 			var kRecord = document.getElementById("${application}");

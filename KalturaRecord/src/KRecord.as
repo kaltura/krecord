@@ -179,7 +179,7 @@ package
 		private function onRecordTimeComplete(evt:TimerEvent):void
 		{
 			trace("AUTO STOP AFTER ",_limitRecord," SECONDS")
-			callInterfaceDelegate("autoStopPreview",_limitRecord);
+			callInterfaceDelegate("autoStopRecord",_limitRecord);
 			stopRecording();
 		}
 		

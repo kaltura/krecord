@@ -19,6 +19,7 @@ public class Global
 	static public var KALTURA_CLIENT:KalturaClient;
 	static public var DISABLE_GLOBAL_CLICK:Boolean = false;
 	static public var REMOVE_PLAYER:Boolean = false;
+	static public var SHOW_PREVIEW_TIMER:Boolean = false;
 	
 }
 }

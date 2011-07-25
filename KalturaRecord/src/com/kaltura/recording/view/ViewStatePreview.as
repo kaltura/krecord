@@ -3,6 +3,7 @@ package com.kaltura.recording.view
 
 import flash.events.Event;
 import flash.events.MouseEvent;
+import flash.text.TextField;
 	
 
 public class ViewStatePreview extends ViewState
@@ -12,12 +13,27 @@ public class ViewStatePreview extends ViewState
 
 	public var player:PreviewPlayer = new PreviewPlayer( Global.THEME.getSkinById( "previewPlayer" ));
 	public var popupDialog:PopupDialog = new PopupDialog( Global.THEME.getSkinById( "popupDialog" ));
+	public var previewTimer:PreviewTimer;
 
+	public var cornerTextProgress:TextField;
 
 	public function ViewStatePreview()
 	{
 		addChild( player );
 		addChild( popupDialog );
+		
+		if(Global.SHOW_PREVIEW_TIMER && Global.THEME.getSkinById("playerTimer"))
+		{
+			previewTimer = new PreviewTimer( Global.THEME.getSkinById("playerTimer"));
+			addChild( previewTimer );
+			player.addEventListener(PreviewPlayer.PREVIEW_UPDATE_PLAYHEAD,onUpdatePlayhead);
+		}
+
+		
+	}
+	protected function onUpdatePlayhead( evt:Event=null ):void
+	{
+		previewTimer.timer.text = player.playheadTime;
 	}
 
 	override protected function onAddedToStage( evt:Event=null ):void
@@ -33,15 +49,10 @@ public class ViewStatePreview extends ViewState
 	override public function open():void
 	{
 		super.open();
- 		/*if( Global.VIEW_PARAMS.autoPreview )
-		{
-			player.play();
-		} */
 	}
 	
 	override public function close():void
 	{
-		//if( !player.stopped ) player.stop();
 		super.close();
 	}
 

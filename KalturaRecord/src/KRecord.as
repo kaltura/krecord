@@ -126,6 +126,8 @@ package
 			var themeUrl:String=KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
 			var localeUrl:String=KConfigUtil.getDefaultValue(appparams.localeurl, "locale.xml");
 			var autoPreview:String=KConfigUtil.getDefaultValue(appparams.autopreview, "1");
+			if(appparams.showpreviewtimer=="true" || appparams.showpreviewtimer =="0" )
+				Global.SHOW_PREVIEW_TIMER = true;
 			Global.REMOVE_PLAYER=(appparams.removeplayer=="1" || appparams.removeplayer=="true");
 			initParams = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
 
@@ -553,7 +555,7 @@ package
 		 */
 		private function limitRecording():void
 		{
-			if(_limitRecord)
+			if(_limitRecord && !_limitRecordTimer)
 			{
 				_limitRecordTimer = new Timer(_limitRecord*1000,1);
 				_limitRecordTimer.addEventListener(TimerEvent.TIMER_COMPLETE,onRecordTimeComplete);
@@ -582,9 +584,7 @@ package
 			if(_limitRecordTimer)
 			{
 				_limitRecordTimer.removeEventListener(TimerEvent.TIMER_COMPLETE,onRecordTimeComplete);
-				//if the timer is active - stop it 
-				if(_limitRecordTimer.running)
-					_limitRecordTimer.stop();
+				_limitRecordTimer.stop();
 				_limitRecordTimer = null;
 			}
 			

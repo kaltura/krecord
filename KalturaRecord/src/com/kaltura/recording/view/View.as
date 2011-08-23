@@ -10,6 +10,8 @@ import flash.net.URLLoader;
 import flash.net.URLRequest;
 import flash.system.ApplicationDomain;
 import flash.system.LoaderContext;
+import flash.text.TextField;
+import flash.text.TextFormat;
 
 
 public class View extends Sprite
@@ -23,6 +25,8 @@ public class View extends Sprite
 
 	private var _states:Object = new Object;
 	private var _currentState:ViewState;
+	
+	private var _message:TextField;
 
 	private var _themeLoader:Loader = new Loader;
 	private var _localeLoader:URLLoader = new URLLoader;
@@ -146,5 +150,23 @@ public class View extends Sprite
 			ready ();
 		}
 	}
+	
+	
+	/////////////////
+	public function setError(value:String):void
+	{
+		_message = new TextField()
+		_message.width = this.width;
+		_message.height = this.height;
+		var tf:TextFormat = new TextFormat();
+		tf.color = 0xFFFF00;
+		_message.text = value;
+		_message.setTextFormat(tf);
+		addChild(_message);
+	}
+	
+	
+	
+	
 }
 }

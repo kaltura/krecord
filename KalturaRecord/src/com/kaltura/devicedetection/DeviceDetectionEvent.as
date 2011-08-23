@@ -40,6 +40,8 @@ package com.kaltura.devicedetection
 
 		static public var ERROR_MICROPHONE:String = "errorMicrophone";
 		static public var ERROR_CAMERA:String = "errorCamera";
+		static public var MIC_DENIED:String = "micDenied";
+		static public var CAMERA_DENIED:String = "cameraDenied";
 
 		public var detectedDevice:Object;
 

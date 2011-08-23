@@ -111,7 +111,6 @@ package com.kaltura.devicedetection
 
 		public function detectCamera ():void
 		{
-			trace("detecting camera");
 			testedCameraIndex = -1;
 			if (delayDetectCameraIndex != 0)
 				clearTimeout(delayDetectCameraIndex);
@@ -266,6 +265,11 @@ package com.kaltura.devicedetection
 		public function detectMicrophone ():void
 		{
 			testedMicrophone=Microphone.getMicrophone(testedMicrophoneIndex);
+			if(!testedMicrophone)
+			{
+				dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_MICROPHONE, null));
+				return;
+			}
 			testedMicrophone.setUseEchoSuppression(true)
 			testedMicrophone.setLoopBack(true);//this is for provoking some activity input when it's not streaming
 			testedMicrophone.setSilenceLevel(5);
@@ -309,6 +313,7 @@ package com.kaltura.devicedetection
         
         private function statusHandler(event:StatusEvent):void 
         {
+			trace(event.code)
         	if (event.code=="Microphone.Unmuted")
         	{
         		addTimers()
@@ -320,11 +325,13 @@ package com.kaltura.devicedetection
            	trace("The user does not allows to use the mic...");
            	////HERE A JS alert: "Are you sure you don't allow the mic to be open? You won't be able to record with audio..
            try {
+				//KRecord.delegator("micDenied");
+			   dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.MIC_DENIED, null));
                 ExternalInterface.call("micDenied");
                 }
                 catch(errObject:Error) {
                   trace(errObject.message);
-                 }
+                }
            }
            
         }
@@ -335,7 +342,7 @@ package com.kaltura.devicedetection
        }
 
 
-        private function checkMicActivity(TimerEvent):void
+        private function checkMicActivity(timerEvent:TimerEvent):void
         {
         	if (testedMicrophone.activityLevel<2)
         	{
@@ -347,7 +354,7 @@ package com.kaltura.devicedetection
         	}
         }
         
-        private function onEverySec(TimerEvent):void
+        private function onEverySec(timerEvent:TimerEvent):void
         {
          if (testedMicrophone.activityLevel>2)
          {
@@ -385,8 +392,7 @@ package com.kaltura.devicedetection
                 catch(errObject:Error) {
                      trace(errObject.message);
                     }
-			    
-			    dispatchMicrophoneError ();
+				dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_MICROPHONE, null));
 			}
 			return;
 		}
@@ -409,10 +415,6 @@ package com.kaltura.devicedetection
         	return activ;
         }
 
-		private function dispatchMicrophoneError ():void
-		{
-			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_MICROPHONE, camera));
-		}
 
         private function disposeMicrophone ():void
 		{

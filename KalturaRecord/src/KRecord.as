@@ -53,6 +53,7 @@ package
 	import com.kaltura.vo.KalturaMediaEntry;
 	
 	import flash.display.Sprite;
+	import flash.display.Stage;
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
@@ -60,10 +61,13 @@ package
 	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
 	import flash.system.Security;
+	import flash.text.TextField;
+	import flash.text.TextFormat;
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
 	import flash.utils.Timer;
 	
+	import mx.core.Application;
 	import mx.utils.ObjectUtil;
 
 	[SWF(width='320', height='240', frameRate='30', backgroundColor='#999999')]
@@ -76,6 +80,11 @@ package
 		private var recordControl:KRecordControl=new KRecordControl();
 		public var autoPreview:Boolean=false;
 
+		
+		private var _message:TextField;
+		
+		private var _showErrorMessege:Boolean;
+		
 		private var _view:View=new View;
 		private var _newViewState:String;
 		/**
@@ -88,7 +97,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.2"; 
+		public static const VERSION:String = "v1.5.3"; 
 		
 		/**
 		 *Constructor.
@@ -121,6 +130,9 @@ package
 			var appparams:Object=ObjectHelpers.lowerNoUnderscore(paramObj);
 			if(appparams.showui=="false"){
 				UIComponent.visibleSkin=false
+			}
+			if(appparams.showerrormessege=="true" || appparams.showerrormessege=="1"){
+				_showErrorMessege=true
 			}
 			// view params:
 			var themeUrl:String=KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
@@ -335,9 +347,12 @@ package
 			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
 			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
 			recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
+			
+			recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
 			recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
+			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
 			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
 			
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
@@ -434,14 +449,70 @@ package
 			return recordControl.recordedTime;
 		}
 		
+		public static function delegator(methodName:String, ... args):void
+		{
+			try
+			{
+				ExternalInterface.call("eval(window.delegator)", methodName , args);
+			} 
+			catch(error:Error) 
+			{
+				trace ("delegator: "+error.message);
+			}
+		}
+		
 		private function callInterfaceDelegate(methodName:String, ... args):void
 		{
+			delegator(methodName,args);
 			try {
 				var paramObj:Object = this.root.loaderInfo.parameters;
 				var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
 				var delegate:String = KConfigUtil.getDefaultValue(paramObj.delegate, "window");
 				ExternalInterface.call("eval(" + delegate + "." + methodName + ")", args);
 			} catch (err:Error) {trace (err.message)}
+			//print message on screen
+			var message:String = "";
+			switch (methodName)
+			{
+				case DeviceDetectionEvent.ERROR_CAMERA:
+					message = "Error.CameraError";
+					break;
+				case DeviceDetectionEvent.ERROR_MICROPHONE:
+					message = "Error.MichrophoneError";
+					break;
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED:
+					message = "Error.ConnectionError";
+					break;
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED:
+					message = "Error.ConnectionClosed";
+					break;
+				case RecorderEvent.CONNECTING:
+					//message = "Dialog.Connecting";
+					break;
+				case DeviceDetectionEvent.MIC_DENIED:
+					message = "Error.micDenied";
+					break;
+				case DeviceDetectionEvent.CAMERA_DENIED:
+					message = "Error.cameraDenied";
+				break;
+			}
+			//handle only the MIC_DENIED & CAMERA_DENIED since the UI is not ready for them yet QND
+			if(message && (methodName==DeviceDetectionEvent.MIC_DENIED || methodName==DeviceDetectionEvent.CAMERA_DENIED ))
+			{
+				if(!_message)
+				{
+					_message= new TextField();
+					_message.width = this.width;
+					_message.height = this.height;
+					var tf:TextFormat = new TextFormat();
+					tf.color = 0xFFFFFF;
+				}
+				
+				_message.text = Global.LOCALE.getString(message);
+				_message.setTextFormat(tf);
+				if(_showErrorMessege) //show this message only if showErrorMessege is set to true 
+					addChild(_message);
+			}
 		}
 
 		private function stageResize(event:Event):void
@@ -466,10 +537,8 @@ package
 
 		private function deviceError(event:DeviceDetectionEvent):void
 		{
-			trace("camera error")
 			try
 			{
-				//ExternalInterface.call(event.type);
 				this.callInterfaceDelegate(event.type);				
 			}
 			catch (err:Error)
@@ -486,6 +555,23 @@ package
 
 		private function deviceDetected(event:DeviceDetectionEvent):void
 		{
+			
+			//add the detected mic notification
+			if(event.type == DeviceDetectionEvent.DETECTED_MICROPHONE)
+			{
+				try
+				{
+					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_MICROPHONE);
+				}
+				catch (err:Error)
+				{
+					trace(err.message)
+				}
+			}
+
+			
+			
+			
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA)
 			{
 				stageResize(null);
@@ -494,7 +580,6 @@ package
 //			_view.setState( "start" );
 				try
 				{
-					//ExternalInterface.call("deviceDetected");
 					this.callInterfaceDelegate("deviceDetected");
 				}
 				catch (err:Error)
@@ -511,7 +596,6 @@ package
 			trace(event.type);
 			try
 			{
-				//ExternalInterface.call("connected");
 				this.callInterfaceDelegate("connected");
 			}
 			catch (err:Error)
@@ -526,7 +610,6 @@ package
 			trace(event.type)
 			try
 			{
-				//ExternalInterface.call(event.type);
 				this.callInterfaceDelegate(event.type);
 			}
 			catch (err:Error)
@@ -566,7 +649,6 @@ package
 		{
 			try
 			{
-				//ExternalInterface.call("recordStart");
 				this.callInterfaceDelegate("recordStart");
 			}
 			catch (err:Error)
@@ -603,7 +685,6 @@ package
 				 previewRecording();*/
 				try
 				{
-					//ExternalInterface.call("flushComplete");
 					this.callInterfaceDelegate("flushComplete");
 				}
 				catch (err:Error)
@@ -641,8 +722,6 @@ package
 		public function previewRecording():void
 		{
 			trace("PREVIEW START");
-//			recordControl.previewRecording();
-			//recordControl.previewRecording();
 			var currentState:Object = _view.getState();
 			if(currentState is ViewStatePreview)
 			{
@@ -655,7 +734,6 @@ package
 		 */
 		public function stopPreviewRecording():void
 		{
-			//recordControl.previewRecording();
 			var currentState:Object = _view.getState();
 			if(currentState is ViewStatePreview)
 			{
@@ -670,7 +748,6 @@ package
 
 			try
 			{
-				//ExternalInterface.call("previewEnd");
 				this.callInterfaceDelegate("previewEnd");
 			}
 			catch (err:Error)
@@ -716,7 +793,6 @@ package
 			{
 				try
 				{
-					//ExternalInterface.call("addEntryComplete", event.info[0]);
 					this.callInterfaceDelegate("addEntryComplete", event.info);
 				}
 				catch (err:Error)
@@ -729,7 +805,6 @@ package
 			{
 				try
 				{
-					//ExternalInterface.call("addEntryFail", event.info[0]);
 					this.callInterfaceDelegate("addEntryFail", event.info);
 				}
 				catch (err:Error)

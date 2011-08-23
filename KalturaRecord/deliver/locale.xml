@@ -40,4 +40,30 @@
 		<value>Connection error. Please try again later</value>
 	</setting>
 
+	
+		<setting>
+		<key>Error.micDenied</key>
+		<value>Mic Denied</value>
+	</setting>
+	<setting>
+		<key>Error.CameraError</key>
+		<value>Camera Error</value>
+	</setting>
+	<setting>
+		<key>Error.MichrophoneError</key>
+		<value>Michrophone Error</value>
+	</setting>
+	<setting>
+		<key>Error.ConnectionError</key>
+		<value>Connection Error</value>
+	</setting>
+	<setting>
+		<key>Error.ConnectionClosed</key>
+		<value>Connection Closed</value>
+	</setting>
+	<setting>
+		<key>Error.cameraDenied</key>
+		<value>Camera Denied</value>
+	</setting>
+
 </config>

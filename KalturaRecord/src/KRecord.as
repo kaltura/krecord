@@ -60,6 +60,7 @@ package
 	import flash.events.MouseEvent;
 	import flash.events.TimerEvent;
 	import flash.external.ExternalInterface;
+	import flash.filters.DropShadowFilter;
 	import flash.system.Security;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
@@ -84,6 +85,9 @@ package
 		private var _message:TextField;
 		
 		private var _showErrorMessege:Boolean;
+		
+		private var messageX:Number = 0;
+		private var messageY:Number = 0;
 		
 		private var _view:View=new View;
 		private var _newViewState:String;
@@ -312,6 +316,8 @@ package
 					var uid:String=KConfigUtil.getDefaultValue(appparams.uid, "");
 					var kshowId:String=KConfigUtil.getDefaultValue(appparams.kshowid, "-1");
 					var fmsApp:String=KConfigUtil.getDefaultValue(appparams.fmsapp, "oflaDemo");
+					messageX=KConfigUtil.getDefaultValue(appparams.messagex, 0);
+					messageY=KConfigUtil.getDefaultValue(appparams.messagey, 0);
 					//init KRecord parameters:
 					initParams=new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
 					// Register External call
@@ -510,8 +516,21 @@ package
 					_message= new TextField();
 					_message.width = this.width;
 					_message.height = this.height;
+					_message.x = messageX;
+					_message.y = messageY;
 					var tf:TextFormat = new TextFormat();
 					tf.color = 0xFFFFFF;
+					//add drop shadow filter to message
+					var my_shadow:DropShadowFilter = new DropShadowFilter();  
+					my_shadow.color = 0x000000;  
+					my_shadow.blurY = 3;  
+					my_shadow.blurX = 3;  
+					my_shadow.angle = 45;  
+					my_shadow.alpha = 1;  
+					my_shadow.distance = 2;   
+					var filtersArray:Array = new Array(my_shadow);  
+					_message.filters = filtersArray;  
+					
 				}
 				
 				_message.text = Global.LOCALE.getString(message);

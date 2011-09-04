@@ -97,7 +97,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.3"; 
+		public static const VERSION:String = "v1.5.4"; 
 		
 		/**
 		 *Constructor.
@@ -108,9 +108,12 @@ package
 		{
 			trace("version:",VERSION);
 			Global.RECORD_CONTROL=recordControl;
-//		if (init)
-//			addEventListener(Event.ADDED_TO_STAGE, startApplication);
 			addEventListener(Event.ADDED_TO_STAGE, build);
+			var myContextMenu:ContextMenu = new ContextMenu();
+			var item:ContextMenuItem = new ContextMenuItem("Krecord "+VERSION,true);
+			myContextMenu.customItems.push(item);
+			this.contextMenu = myContextMenu;
+			
 		}
 
 		private function build(evt:Event=null):void
@@ -463,7 +466,6 @@ package
 		
 		private function callInterfaceDelegate(methodName:String, ... args):void
 		{
-			trace("------------",methodName);
 			delegator(methodName,args);
 			try {
 				var paramObj:Object = this.root.loaderInfo.parameters;
@@ -755,7 +757,6 @@ package
 			var currentState:Object = _view.getState();
 			if(currentState is ViewStatePreview)
 			{
-				trace("PREVIEW STOP");
 				(currentState as ViewStatePreview).player.stop();
 			}
 		}

@@ -39,9 +39,9 @@
 		<key>Dialog.ConnectionError</key>
 		<value>Connection error. Please try again later</value>
 	</setting>
-
+<!-- Eitan Additions -->
 	
-		<setting>
+	<setting>
 		<key>Error.micDenied</key>
 		<value>Mic Denied</value>
 	</setting>

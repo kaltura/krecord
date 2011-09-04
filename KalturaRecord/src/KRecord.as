@@ -463,6 +463,7 @@ package
 		
 		private function callInterfaceDelegate(methodName:String, ... args):void
 		{
+			trace("------------",methodName);
 			delegator(methodName,args);
 			try {
 				var paramObj:Object = this.root.loaderInfo.parameters;
@@ -487,7 +488,7 @@ package
 					message = "Error.ConnectionClosed";
 					break;
 				case RecorderEvent.CONNECTING:
-					//message = "Dialog.Connecting";
+					message = "Dialog.Connecting";
 					break;
 				case DeviceDetectionEvent.MIC_DENIED:
 					message = "Error.micDenied";
@@ -497,7 +498,10 @@ package
 				break;
 			}
 			//handle only the MIC_DENIED & CAMERA_DENIED since the UI is not ready for them yet QND
-			if(message && (methodName==DeviceDetectionEvent.MIC_DENIED || methodName==DeviceDetectionEvent.CAMERA_DENIED ))
+			if(message && (methodName==DeviceDetectionEvent.MIC_DENIED 
+				 			|| methodName==DeviceDetectionEvent.ERROR_MICROPHONE
+				 			|| methodName==DeviceDetectionEvent.CAMERA_DENIED
+							|| methodName==DeviceDetectionEvent.ERROR_CAMERA))
 			{
 				if(!_message)
 				{
@@ -586,6 +590,14 @@ package
 				{
 					trace(err.message)
 				}
+				try
+				{
+					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_CAMERA);
+				}
+				catch (err:Error)
+				{
+					trace(err.message)
+				}
 			}
 			dispatchEvent(event.clone());
 		}
@@ -616,7 +628,12 @@ package
 			{
 				trace(err.message)
 			}
-			_view.showPopupError(Global.LOCALE.getString("Error.ConnectionError"));
+	
+
+			if(event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED)
+				_view.showPopupError(Global.LOCALE.getString("Error.ConnectionError"));
+			if(event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED)
+				_view.showPopupError(Global.LOCALE.getString("Error.ConnectionClosed"));
 			dispatchEvent(event.clone());
 		}
 
@@ -685,6 +702,7 @@ package
 				 previewRecording();*/
 				try
 				{
+
 					this.callInterfaceDelegate("flushComplete");
 				}
 				catch (err:Error)
@@ -701,6 +719,7 @@ package
 		 */
 		private function onConnecting(event:Event):void
 		{
+			this.callInterfaceDelegate("connecting");
 			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
 			dispatchEvent(event.clone());
 		}
@@ -710,8 +729,7 @@ package
 		 */
 		private function onConnectingFinish(event:Event):void
 		{
-			//if(_newViewState != "message")
-			trace("Return to State: " + _newViewState);
+			this.callInterfaceDelegate("connectingFinish");
 			_view.setState(_newViewState);
 			dispatchEvent(event.clone());
 		}

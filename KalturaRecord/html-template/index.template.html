@@ -52,13 +52,15 @@ var initVars =
 	"&kshowId=-1" +
 	"&autoPreview=false" +
 	"&disableglobalclick=false" +
-	"&limitRecord=10" +
+	"&limitRecord=100" +
 	"&showPreviewTimer=true" +
+	"&showErrorMessege=true" +
 	"&removeplayer=false" +
 	"&pid=27017" +
 	"&subpid=27017" +
 	"&uid=555" +
-	"&ks=MTczZTJhNDNiYTY1MGJlODNjY2MxNGI0ZGRhNTVhNzNmMzE3NGQwYXwyNzAxNzsyNzAxNzsxMzA5MTcwMzIxOzI7MTMwOTA4MzkyMS42MDc1Ozs7Ow==" +
+	"&messageX=50" +
+	"&ks=NDI1YTIyYmIyN2NlZmNjYmUyZTBiODI3Nzc3NDVlZGQ0ZTM2YTgyMnw2OTc4NTI7Njk3ODUyOzEzMTQ4NzMwODQ7MjsxMzE0Nzg2Njg0LjE5MjM7a2FsdHVyYTRAZ3Jvb3Z5Z2Vja28uY29tOyo7Ow==" +
 	"&themeUrl=http://localhost/krecord-v3/KalturaRecord/bin-debug/skin.swf" +
 	"&localeUrl=locale.xml" +
 	"&entryName=Eitan test" +
@@ -136,7 +138,8 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 		}
 		
 		function addEntryFailed(a) {
-			alert("addEntryFailed"+a[0]);
+			alert("addEntryFailed"+a[0][0]['errorCode']);
+			alert("addEntryFailed"+a[0][0]['errorMsg']);
 		}
 		function flushComplete() {
 			//alert("flushComplete");
@@ -148,7 +151,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			kRecord.setMicrophoneGain(val);
 		}
 		function autoStopRecord(a) {
-			alert('autoStopRecord after '+a+' seconds');
+			//alert('autoStopRecord after '+a+' seconds');
 		}
 		
 		function noCamerasFound() {
@@ -171,6 +174,18 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			var kRecord = document.getElementById("${application}");
 			kRecord.previewRecording();
 		}
+		
+		function delegator(message,args) {
+			document.getElementById("delegatorText").value+="\n"+message+"  "+args;
+			if(args)
+			{
+				//document.getElementById("delegatorText").value+="\n"+args[0][0]['errorMsg'];
+				//document.getElementById("delegatorText").value+="\n"+args[0][0]['errorCode'];
+			}
+		}
+		
+		
+		
 	</script>
 <noscript>
   	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
@@ -199,5 +214,10 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	<button type="button" onclick="stopRecording()">stop recording</button>
 	<button type="button" onclick="stopPreview()">stop preview</button>
 	<button type="button" onclick="previewRecording()">start preview</button>
+	<br/>
+	
+	<TEXTAREA NAME="delegatorText" id="delegatorText" ROWS=10 COLS=30>
+
+	</TEXTAREA>
 </body>
 </html>

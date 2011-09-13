@@ -26,6 +26,7 @@ public class ViewStatePreview extends ViewState
 		{
 			previewTimer = new PreviewTimer( Global.THEME.getSkinById("playerTimer"));
 			addChild( previewTimer );
+			previewTimer.visible = false;
 			player.addEventListener(PreviewPlayer.PREVIEW_UPDATE_PLAYHEAD,onUpdatePlayhead);
 		}
 
@@ -33,6 +34,7 @@ public class ViewStatePreview extends ViewState
 	}
 	protected function onUpdatePlayhead( evt:Event=null ):void
 	{
+		previewTimer.visible = true;
 		previewTimer.timer.text = player.playheadTime;
 	}
 
@@ -48,6 +50,8 @@ public class ViewStatePreview extends ViewState
 
 	override public function open():void
 	{
+		if(previewTimer)
+			previewTimer.visible = false;
 		super.open();
 	}
 	

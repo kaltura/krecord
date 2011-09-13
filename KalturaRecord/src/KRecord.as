@@ -101,7 +101,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.3"; 
+		public static const VERSION:String = "v1.5.4"; 
 		
 		/**
 		 *Constructor.

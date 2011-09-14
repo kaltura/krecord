@@ -29,8 +29,15 @@ public class ViewStatePreview extends ViewState
 			previewTimer.visible = false;
 			player.addEventListener(PreviewPlayer.PREVIEW_UPDATE_PLAYHEAD,onUpdatePlayhead);
 		}
+		player.addEventListener(PreviewPlayer.PREVIEW_DONE, hideTimer);
+		player.addEventListener(PreviewPlayer.PREVIEW_STOPPED, hideTimer);
 
 		
+	}
+	protected function hideTimer( evt:Event=null ):void
+	{
+		if(previewTimer)
+			previewTimer.visible = false;
 	}
 	protected function onUpdatePlayhead( evt:Event=null ):void
 	{

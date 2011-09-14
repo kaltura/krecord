@@ -29,7 +29,6 @@
  */
 package
 {
-
 	import com.kaltura.KalturaClient;
 	import com.kaltura.base.vo.KalturaEntry;
 	import com.kaltura.config.KalturaConfig;
@@ -84,7 +83,7 @@ package
 		
 		private var _message:TextField;
 		
-		private var _showErrorMessege:Boolean;
+		private var _showErrorMessage:Boolean;
 		
 		private var messageX:Number = 0;
 		private var messageY:Number = 0;
@@ -101,7 +100,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.4"; 
+		public static const VERSION:String = "v1.5.5"; 
 		
 		/**
 		 *Constructor.
@@ -138,8 +137,8 @@ package
 			if(appparams.showui=="false"){
 				UIComponent.visibleSkin=false
 			}
-			if(appparams.showerrormessege=="true" || appparams.showerrormessege=="1"){
-				_showErrorMessege=true
+			if(appparams.showerrormessage=="true" || appparams.showerrormessage=="1"){
+				_showErrorMessage=true
 			}
 			// view params:
 			var themeUrl:String=KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
@@ -535,7 +534,7 @@ package
 				
 				_message.text = Global.LOCALE.getString(message);
 				_message.setTextFormat(tf);
-				if(_showErrorMessege) //show this message only if showErrorMessege is set to true 
+				if(_showErrorMessage) //show this message only if showErrorMessege is set to true 
 					addChild(_message);
 			}
 		}

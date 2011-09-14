@@ -26,6 +26,8 @@ package com.kaltura.recording.view
 		
 		public var playheadTime : String;
 		public static const PREVIEW_UPDATE_PLAYHEAD:String = "previewUpdatePlayhead"
+		public static const PREVIEW_DONE:String = "previewDone"
+		public static const PREVIEW_STOPPED:String = "previewStopped"
 		
 		public function PreviewPlayer( skin:MovieClip )
 		{
@@ -164,6 +166,7 @@ package com.kaltura.recording.view
 				Global.RECORD_CONTROL.clearVideoAndSetCamera();
 				updateProgress( 0 );
 				_state = "stop";
+				dispatchEvent(new Event(PREVIEW_STOPPED));
 			}
 		}
 		
@@ -220,6 +223,7 @@ package com.kaltura.recording.view
 		private function onPreviewComplete( evt:Event ):void
 		{
 			stop();
+			dispatchEvent(new Event(PREVIEW_DONE));
 		}
 		
 		private function formatTime( ms:Number ):String

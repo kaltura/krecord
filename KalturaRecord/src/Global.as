@@ -20,6 +20,7 @@ public class Global
 	static public var DISABLE_GLOBAL_CLICK:Boolean = false;
 	static public var REMOVE_PLAYER:Boolean = false;
 	static public var SHOW_PREVIEW_TIMER:Boolean = false;
+	static public var DETECTION_DELAY:uint;
 	
 }
 }

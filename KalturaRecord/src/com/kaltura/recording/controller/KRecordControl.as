@@ -378,7 +378,11 @@ package com.kaltura.recording.controller
 		{
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected, false, 0, true);
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError, false, 0, true);
-			DeviceDetector.getInstance().detectCamera();
+			if (Global.DETECTION_DELAY != 0){
+				DeviceDetector.getInstance().detectCamera(Global.DETECTION_DELAY);
+			} else {
+				DeviceDetector.getInstance().detectCamera();
+			}
 		}
 		/**
 		 * camera detected.
@@ -386,7 +390,7 @@ package com.kaltura.recording.controller
 		private function cameraDeviceDetected (event:DeviceDetectionEvent):void
 		{
 			removeCameraDetectionListeners ();
-			setCamera (DeviceDetector.getInstance().camera);
+			setCamera (DeviceDetector.getInstance().webCam);
 			dispatchEvent(event.clone());
 		}
 		/**

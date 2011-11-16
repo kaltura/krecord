@@ -69,7 +69,7 @@ package com.kaltura.devicedetection
 
 	public class DeviceDetector extends EventDispatcher
 	{
-		public var camera:Camera = null;
+		public var webCam:Camera = null;
 		private var camerasNumber:int = Camera.names.length;
 		private var testedCameraIndex:int = -1;
 		private var testedCamera:Camera;
@@ -94,8 +94,8 @@ package com.kaltura.devicedetection
 		private var microphoneFails:uint = 0;
 		public var maxMicrophoneFails:uint = 3;
 
-		private var delayTime:uint = 500;
-		private var delayAfterFail:uint = 1000;
+		private var delayTime:uint;
+		private var delayAfterFail:uint;
         private var MicTimer:Timer;
         private var everySecTimer:Timer;
     
@@ -109,8 +109,10 @@ package com.kaltura.devicedetection
 		//		CCCCCCCCC		AAA		AAA			MMM				  MMM
 		//////
 
-		public function detectCamera ():void
+		public function detectCamera (delay:uint = 500):void
 		{
+			delayTime = delay;
+			delayAfterFail = delay * 2;
 			testedCameraIndex = -1;
 			if (delayDetectCameraIndex != 0)
 				clearTimeout(delayDetectCameraIndex);
@@ -124,7 +126,7 @@ package com.kaltura.devicedetection
 		{
 			cameraFails = 0;
 
-			if (camera)
+			if (webCam)
 			{
 				dispatchCameraSuccess ();
 				return;
@@ -208,7 +210,9 @@ package com.kaltura.devicedetection
 			testedBitmapData.draw(testedVideo);
 			var testResult:Object = testedBitmapData.compare(blackBitmapData);
 			trace ("camera test: " + testedCameraIndex);
-			if (testResult is BitmapData)
+			
+			// Added currentFPS check to make sure if the camera is active.
+			if (testResult is BitmapData || testedCamera.currentFPS != 0)
 			{
 				//it's different, we have an image!
 				dispatchCameraSuccess ();
@@ -227,15 +231,15 @@ package com.kaltura.devicedetection
 		private function dispatchCameraSuccess ():void
 		{
 			disposeCamera ();
-			camera = Camera.getCamera(testedCameraIndex.toString());
-			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.DETECTED_CAMERA, camera));
+			webCam = Camera.getCamera(testedCameraIndex.toString());
+			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.DETECTED_CAMERA, webCam));
 		}
 
 		private function dispatchCameraError ():void
 		{
 			disposeCamera ();
-			camera = null;
-			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_CAMERA, camera));
+			webCam = null;
+			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_CAMERA, webCam));
 			ExternalInterface.call("noCamerasFound")
 		}
 

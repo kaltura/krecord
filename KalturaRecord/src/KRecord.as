@@ -100,7 +100,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.5"; 
+		public static const VERSION:String = "v1.5.6"; 
 		
 		/**
 		 *Constructor.
@@ -148,7 +148,9 @@ package
 				Global.SHOW_PREVIEW_TIMER = true;
 			Global.REMOVE_PLAYER=(appparams.removeplayer=="1" || appparams.removeplayer=="true");
 			initParams = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
-
+			
+			Global.DETECTION_DELAY = appparams.hasOwnProperty("detectiondelay") ? uint(appparams.detectiondelay) : 0;
+			
 			var configuration : KalturaConfig = new KalturaConfig();
 			configuration.partnerId = appparams.pid;
 			configuration.ignoreNull = 1;

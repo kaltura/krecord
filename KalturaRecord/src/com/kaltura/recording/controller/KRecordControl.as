@@ -784,11 +784,12 @@ package com.kaltura.recording.controller
 			entry.licenseType = int(license_type);
 			entry.groupId = int(group_id);
 			entry.partnerData = partner_data;
+			//
 			var addEntry:MediaAddFromRecordedWebcam = new MediaAddFromRecordedWebcam(entry,streamUid);
+			addEntry.useTimeout = false;
 			addEntry.addEventListener(KalturaEvent.COMPLETE,result);
 			addEntry.addEventListener(KalturaEvent.FAILED,fault);
 			kc.post(addEntry);
-			
 		}
 
 		public function result (data:Object):void

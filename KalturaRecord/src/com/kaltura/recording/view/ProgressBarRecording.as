@@ -28,16 +28,22 @@ public class ProgressBarRecording extends UIComponent
 		var formatted:String;
 		var sec:Number = Math.floor( ms/1000 );
 		var min:Number = Math.floor( sec/60 );
+		var hour:Number = Math.floor( min/60 );
 		
 		sec = sec - (min*60);
+		if(min>=60)
+			min = min - (hour*60);
 		
 		var secString:String = String(sec);
+		var hourString:String = String(hour);
+
 		var minString:String = String(min);
 		
 		secString = (secString.length == 1) ? "0" + secString : secString;
 		minString = (minString.length == 1) ? "0" + minString : minString;
+		hourString = (hourString.length == 1) ? "0" + hourString : hourString;
 		
-		formatted = minString + ":" + secString;		  
+		formatted = hourString+":"+minString + ":" + secString;		  
 		
 		return( formatted );
 	}
@@ -47,6 +53,7 @@ public class ProgressBarRecording extends UIComponent
 	{
 		if( _time )
 		{
+			//TODO 
 			_time.text = formatTime( value );
 		}
 	}

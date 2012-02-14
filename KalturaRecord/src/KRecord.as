@@ -70,7 +70,7 @@ package
 	import mx.core.Application;
 	import mx.utils.ObjectUtil;
 
-	[SWF(width='320', height='240', frameRate='30', backgroundColor='#999999')]
+	[SWF(width='320', height='240', frameRate='30', backgroundColor='#000000')]
 	[Frame(factoryClass="ApplicationLoader")]
 
 	public class KRecord extends Sprite

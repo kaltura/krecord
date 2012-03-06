@@ -100,7 +100,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.7"; 
+		public static const VERSION:String = "v1.5.8"; 
 		
 		/**
 		 *Constructor.
@@ -572,9 +572,19 @@ package
 				trace(err.message)
 			}
 
-			if (event.type == DeviceDetectionEvent.ERROR_CAMERA)
-			{
-				_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
+//			if (event.type == DeviceDetectionEvent.ERROR_CAMERA)
+//			{
+//				_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
+//			}
+			
+			switch (event.type){
+				case DeviceDetectionEvent.ERROR_CAMERA:
+					_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
+					break;
+				case DeviceDetectionEvent.ERROR_MICROPHONE:
+				case DeviceDetectionEvent.MIC_DENIED:
+					recordControl.setActiveMicrophone(recordControl.getMicrophones()[0]);
+					break;
 			}
 			dispatchEvent(event.clone());
 		}

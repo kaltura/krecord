@@ -325,12 +325,15 @@ package com.kaltura.recording.controller
 		 */
 		protected function detectMicrophoneDevice ():void
 		{
-			
-			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
-			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
-			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError, false, 0, true);
-			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, cameraDenyError, false, 0, true);
-			DeviceDetector.getInstance().detectMicrophone();
+			if (! microphone){
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError, false, 0, true);
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, cameraDenyError, false, 0, true);
+				DeviceDetector.getInstance().detectMicrophone();
+			} else {
+				detectCameraDevice();
+			}
 		}
 		/**
 		 * microphone detected.

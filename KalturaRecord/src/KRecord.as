@@ -174,7 +174,6 @@ package
 			Global.VIEW_PARAMS=initParams;
 			_view.addEventListener(ViewEvent.VIEW_READY, startApplication);
 			addChild(_view);
-
 		}
 
 		public static function isHttpURL(url:String):Boolean
@@ -337,8 +336,9 @@ package
 					ExternalInterface.addCallback("getCameras", getCameras);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
 					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
-
+					
 					ExternalInterface.marshallExceptions=true;
+					callInterfaceDelegate("swfReady");
 					trace('flashVars caught and JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
 
 				}

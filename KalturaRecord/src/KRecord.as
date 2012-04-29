@@ -100,7 +100,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.9"; 
+		public static const VERSION:String = "v1.5.10"; 
 		
 		/**
 		 *Constructor.
@@ -358,6 +358,7 @@ package
 			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
 			recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
 			
+			recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
 			recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
 			recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
@@ -565,6 +566,7 @@ package
 		{
 			try
 			{
+				trace(event.type);
 				this.callInterfaceDelegate(event.type);				
 			}
 			catch (err:Error)

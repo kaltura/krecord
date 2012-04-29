@@ -138,7 +138,7 @@ package com.kaltura.devicedetection
 			if ((++testedCameraIndex) >= camerasNumber)
 			{
 				//we didn't find any camera on the system..
-				dispatchCameraError ();
+				dispatchCameraError (DeviceDetectionEvent.ERROR_CAMERA);
 				return;
 			}
 
@@ -152,10 +152,11 @@ package com.kaltura.devicedetection
 					//let the user set the access to the default camera:
 					// NOTE: this should never happen here, because we use the specific access to the camera object
 					// rather than using the default getCamera ();
-					Security.showSettings(SecurityPanel.CAMERA);
+//					Security.showSettings(SecurityPanel.CAMERA);
+					dispatchCameraError(DeviceDetectionEvent.CAMERA_DENIED);
 				} else {
 					//we don't have any camera device!
-					dispatchCameraError ();
+					dispatchCameraError (DeviceDetectionEvent.ERROR_CAMERA);
 				}
 				return;
 			}
@@ -170,10 +171,11 @@ package com.kaltura.devicedetection
 		    {
 		        trace("User selected Accept already.");
 				delay_testCameraImage ();
-		    } else {
+		    } /*else {
 		    	//the user selected not to allow access to the devices.
-		    	Security.showSettings(SecurityPanel.PRIVACY);
-		    }
+//		    	Security.showSettings(SecurityPanel.PRIVACY);
+//	            dispatchCameraError (DeviceDetectionEvent.CAMERA_DENIED);
+		    }*/
 		}
 
 		private function statusCameraHandler (event:StatusEvent):void
@@ -182,7 +184,7 @@ package com.kaltura.devicedetection
 		    {
 		        case "Camera.Muted":
 		            trace("Camera: User clicked Deny.");
-		            dispatchCameraError ();
+		            dispatchCameraError (DeviceDetectionEvent.CAMERA_DENIED);
 		            break;
 
 		        case "Camera.Unmuted":
@@ -235,11 +237,13 @@ package com.kaltura.devicedetection
 			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.DETECTED_CAMERA, webCam));
 		}
 
-		private function dispatchCameraError ():void
+		private function dispatchCameraError (errorEventType:String):void
 		{
 			disposeCamera ();
 			webCam = null;
-			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_CAMERA, webCam));
+//			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_CAMERA, webCam));
+			dispatchEvent(new DeviceDetectionEvent (errorEventType, webCam));
+			trace("madafaka!!!!!!!!!!!!!!!!!!!!!!!");
 			ExternalInterface.call("noCamerasFound")
 		}
 

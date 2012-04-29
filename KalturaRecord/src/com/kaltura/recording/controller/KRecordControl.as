@@ -329,7 +329,6 @@ package com.kaltura.recording.controller
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError, false, 0, true);
-				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, cameraDenyError, false, 0, true);
 				DeviceDetector.getInstance().detectMicrophone();
 			} else {
 				detectCameraDevice();
@@ -380,6 +379,7 @@ package com.kaltura.recording.controller
 		protected function detectCameraDevice ():void
 		{
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected, false, 0, true);
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, cameraDenyError, false, 0, true);
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError, false, 0, true);
 			if (Global.DETECTION_DELAY != 0){
 				DeviceDetector.getInstance().detectCamera(Global.DETECTION_DELAY);

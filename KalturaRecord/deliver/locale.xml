@@ -1,0 +1,69 @@
+<config>
+		
+	<setting>
+		<key>Button.StopRecord</key>
+		<value>Click anywhere to stop recording</value>
+	</setting>
+
+	<setting>
+		<key>Button.StartRecord</key>
+		<value>Click anywhere to start recording</value>
+	</setting>
+
+	<setting>
+		<key>Button.Save</key>
+		<value>Save</value>
+	</setting>
+
+	<setting>
+		<key>Button.Yes</key>
+		<value>Yes</value>
+	</setting>
+
+	<setting>
+		<key>Button.No</key>
+		<value>No</value>
+	</setting>
+
+	<setting>
+		<key>Dialog.Overwrite</key>
+		<value>Record again without saving?</value>
+	</setting>
+
+	<setting>
+		<key>Dialog.Connecting</key>
+		<value>Connecting...</value>
+	</setting>
+
+	<setting>
+		<key>Dialog.ConnectionError</key>
+		<value>Connection error. Please try again later</value>
+	</setting>
+<!-- Eitan Additions -->
+	
+	<setting>
+		<key>Error.micDenied</key>
+		<value>Mic Denied</value>
+	</setting>
+	<setting>
+		<key>Error.CameraError</key>
+		<value>Camera Error</value>
+	</setting>
+	<setting>
+		<key>Error.MichrophoneError</key>
+		<value>Michrophone Error</value>
+	</setting>
+	<setting>
+		<key>Error.ConnectionError</key>
+		<value>Connection Error</value>
+	</setting>
+	<setting>
+		<key>Error.ConnectionClosed</key>
+		<value>Connection Closed</value>
+	</setting>
+	<setting>
+		<key>Error.cameraDenied</key>
+		<value>Camera Denied</value>
+	</setting>
+
+</config>

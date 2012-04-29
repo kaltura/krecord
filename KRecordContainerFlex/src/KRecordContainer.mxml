@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute">
+	<mx:addedToStage>
+		<![CDATA[
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+		]]>
+	</mx:addedToStage>
+	<mx:SWFLoader id="myrecorder" complete="finishedLoadingKupload(event);" source="KRecord.swf" top="200" left="200" width="250" height="250" />
+	<mx:Script>
+		<![CDATA[
+			private function finishedLoadingKupload(event:Event):void
+			{
+				//wait for the krecord view to load -
+				myrecorder.addEventListener("viewReady", accessData);
+				//when loading inside another flash application, to pass initialization parameters to the krecord application, use the parameters object
+				//if loaded through HTML directly, the initialization will be directed through the embed object flashVars.
+				myrecorder.content['parameters'] = {themeUrl:"skin.swf",
+															localeUrl:"locale.xml",
+															autoPreview:"1",
+															pid:"1",
+															subpid:"100",
+															ks:"some generated ks here..." };
+			}
+
+			private function changeSize(event:Event):void {
+				myrecorder.width = 100 + Math.random() * 600;
+				myrecorder.height = myrecorder.width * 0.75;
+			}
+
+			private function accessData(event:Event):void {
+				//to access krecord application, use the application property:
+				trace("Available microphones: " + myrecorder.content["application"].getMicrophones());
+				(myrecorder.content["application"] as EventDispatcher).addEventListener("addEntryFault", addEntryFaultHandler);
+			}
+
+			private function addEntryFaultHandler (event:Event):void {
+				trace ("can't save without KS...");
+			}
+		]]>
+	</mx:Script>
+	<mx:Button top="0" left="0" label="Change KRecorder dimensions..." click="{changeSize(event);}" />
+</mx:Application>

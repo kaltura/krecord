@@ -243,7 +243,6 @@ package com.kaltura.devicedetection
 			webCam = null;
 //			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_CAMERA, webCam));
 			dispatchEvent(new DeviceDetectionEvent (errorEventType, webCam));
-			trace("madafaka!!!!!!!!!!!!!!!!!!!!!!!");
 			ExternalInterface.call("noCamerasFound")
 		}
 

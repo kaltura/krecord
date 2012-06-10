@@ -100,7 +100,7 @@ package
 		private var _limitRecordTimer:Timer;
 
 		
-		public static const VERSION:String = "v1.5.10"; 
+		public static const VERSION:String = "v1.5.11"; 
 		
 		/**
 		 *Constructor.
@@ -520,8 +520,6 @@ package
 					_message.height = this.height;
 					_message.x = messageX;
 					_message.y = messageY;
-					var tf:TextFormat = new TextFormat();
-					tf.color = 0xFFFFFF;
 					//add drop shadow filter to message
 					var my_shadow:DropShadowFilter = new DropShadowFilter();  
 					my_shadow.color = 0x000000;  
@@ -535,6 +533,8 @@ package
 					
 				}
 				
+				var tf:TextFormat = new TextFormat();
+				tf.color = 0xFFFFFF;
 				_message.text = Global.LOCALE.getString(message);
 				_message.setTextFormat(tf);
 				if(_showErrorMessage) //show this message only if showErrorMessege is set to true 

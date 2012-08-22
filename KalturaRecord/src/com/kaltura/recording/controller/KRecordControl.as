@@ -39,6 +39,7 @@ package com.kaltura.recording.controller
 	import com.kaltura.net.streaming.events.ExNetConnectionEvent;
 	import com.kaltura.net.streaming.events.FlushStreamEvent;
 	import com.kaltura.net.streaming.events.RecordNetStreamEvent;
+	import com.kaltura.net.streaming.parsers.StreamSourceVO;
 	import com.kaltura.recording.business.AddEntryDelegate;
 	import com.kaltura.recording.business.BaseRecorderParams;
 	import com.kaltura.recording.business.interfaces.IResponder;
@@ -46,14 +47,21 @@ package com.kaltura.recording.controller
 	import com.kaltura.recording.controller.events.RecorderEvent;
 	import com.kaltura.vo.KalturaMediaEntry;
 	
+	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.events.IOErrorEvent;
 	import flash.events.NetStatusEvent;
+	import flash.events.TimerEvent;
 	import flash.media.Camera;
 	import flash.media.Microphone;
 	import flash.media.SoundMixer;
 	import flash.media.SoundTransform;
 	import flash.media.Video;
+	import flash.net.NetConnection;
+	import flash.net.NetStream;
+	import flash.net.ObjectEncoding;
+	import flash.utils.Timer;
 	import flash.utils.getTimer;
 	
 	import mx.utils.ObjectUtil;
@@ -92,6 +100,10 @@ package com.kaltura.recording.controller
 	 */
 	public class KRecordControl extends EventDispatcher implements IResponder, IRecordControl
 	{
+		
+		private const EXPANDED_BUFFER_LENGTH:int = 15;
+		private const START_BUFFER_LENGTH:int = 2;
+		private const MAX_BUFFER_LENGTH:int = 40;
 
 		/**
 		 *partner and application settings.
@@ -103,7 +115,9 @@ package com.kaltura.recording.controller
 		 */
 		private var _connecting : Boolean = false;
 
-		private var _timeOutId : uint;
+//		private var _timeOutId : uint;
+		
+		private var _timeOutTimer:Timer = new Timer(1500,1);
 
 		public function get connecting() : Boolean
 		{
@@ -170,13 +184,17 @@ package com.kaltura.recording.controller
 		/**
 		 *connection channel to the streaming server.
 		 */
-		protected var netConnection:ExNetConnection;
+//		protected var netConnection:ExNetConnection;
 		/**
 		 *stream to record on.
 		 */
-		protected var netStream:RecordNetStream;
+//		protected var netStream:RecordNetStream;
+		
+		private var connection:NetConnection;
+		private var _recordStream:NetStream;
+		private var _previewStream:NetStream;
 
-		protected var _streamUid:String = "";
+		protected var _streamUid:String = UIDUtil.createUID();
 		/**
 		 *the uid of the stream recorded.
 		 */
@@ -468,57 +486,130 @@ package com.kaltura.recording.controller
 		public function connectToRecordingServie ():void
 		{
 			isConnected = false;
-			netConnection = new ExNetConnection ();
-			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connectionSuccess, false, 0, true);
-			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionFailed, false, 0, true);
-			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionFailed, false, 0, true);
-			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_INVALIDAPP, connectionFailed, false, 0, true);
-			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_REJECTED, connectionFailed, false, 0, true);
-			netConnection.addEventListener(NetStatusEvent.NET_STATUS,onNetConnectionStatus);
-			netConnection.connect(_initRecorderParameters.rtmpHost);
+//			netConnection = new ExNetConnection ();
+			connection = new NetConnection();
+			NetConnection.defaultObjectEncoding = ObjectEncoding.AMF0;
+			connection.addEventListener(NetStatusEvent.NET_STATUS,onNetConnectionStatus);
+//			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connectionSuccess, false, 0, true);
+//			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionFailed, false, 0, true);
+//			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionFailed, false, 0, true);
+//			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_INVALIDAPP, connectionFailed, false, 0, true);
+//			netConnection.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_REJECTED, connectionFailed, false, 0, true);
+//			netConnection.addEventListener(NetStatusEvent.NET_STATUS,onNetConnectionStatus);
+			connection.connect(_initRecorderParameters.rtmpHost);
 		}
 		/**
 		 * connected to the streaming server successfully.
 		 */
-		private function connectionSuccess (event:ExNetConnectionEvent):void
+		private function connectionSuccess (event:NetStatusEvent):void
 		{
-			openStream (event);
+			var exEvent:ExNetConnectionEvent = new ExNetConnectionEvent(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, null , event.info);
+			createRecordStream (exEvent);
+			createPreviewStream();
 		}
 		/**
 		 * there was an error in connecting the streaming server.
 		 */
-		private function connectionFailed (event:ExNetConnectionEvent):void
+		private function connectionFailed (event:NetStatusEvent):void
 		{
+			var exEventType:String;
+			switch (event.info.code){
+				case "NetConnection.Connect.InvalidApp":
+					exEventType = ExNetConnectionEvent.NETCONNECTION_CONNECT_INVALIDAPP;
+					break;
+				case "NetConnection.Connect.Closed":
+					exEventType = ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED;
+					break;
+				case "NetConnection.Connect.Rejected":
+					exEventType = ExNetConnectionEvent.NETCONNECTION_CONNECT_REJECTED;
+					break;
+				case "NetConnection.Connect.Failed":
+				default:
+					exEventType = ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED;
+					break;
+			}
+			var exEvent:ExNetConnectionEvent = new ExNetConnectionEvent(exEventType, null, event.info)
 			isConnected = false;
-			trace ("can't connect to streaming server, " + ObjectUtil.toString(event.connectionInfo));
-			dispatchEvent(event.clone());
+			trace ("can't connect to streaming server, " + ObjectUtil.toString(exEvent.connectionInfo));
+//			dispatchEvent(event.clone());
+			dispatchEvent(exEvent);
 		}
 		/**
 		 * open a stream to publish on.
 		 */
-		protected function openStream (event:ExNetConnectionEvent = null):void
+		protected function createRecordStream (event:ExNetConnectionEvent = null):void
 		{
-			if (netStream)
+			if (_recordStream)
 			{
-				
-				netStream.removeEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble);
-				netStream.removeEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble);
-				netStream.removeEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble);
-				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStarted);
-				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream);
-				netStream.removeEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
+				_recordStream.removeEventListener(NetStatusEvent.NET_STATUS , onRecordNetStatus );
+//				netStream.removeEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble);
+//				netStream.removeEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble);
+//				netStream.removeEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble);
+//				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStarted);
+//				netStream.removeEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream);
+//				netStream.removeEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
 			}
-			netStream = new RecordNetStream (netConnection, UIDUtil.createUID(), true, true);
-			netStream.bufferTime = _bufferTime;
-			netStream.addEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble, false, 0, true);
-			netStream.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble, false, 0, true);
-			netStream.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble, false, 0, true);
-			netStream.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStarted, false, 0, true);
-			netStream.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream, false, 0, true);
-			netStream.addEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
+//			netStream = new RecordNetStream (netConnection, UIDUtil.createUID(), true, true);
+//			netStream.bufferTime = _bufferTime;
+//			netStream.addEventListener(FlushStreamEvent.FLUSH_START, streamFlushBubble, false, 0, true);
+//			netStream.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, streamFlushBubble, false, 0, true);
+//			netStream.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, streamFlushBubble, false, 0, true);
+//			netStream.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStarted, false, 0, true);
+//			netStream.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, stoppedStream, false, 0, true);
+//			netStream.addEventListener(NetStatusEvent.NET_STATUS , onNetStatus );
+//			
+			
+			_recordStream = new NetStream(connection);
+			_recordStream.client = new KRecordNetClient();
+			_recordStream.addEventListener(NetStatusEvent.NET_STATUS , onRecordNetStatus);
+			_recordStream.bufferTime = MAX_BUFFER_LENGTH;
+				
 			isConnected = true;
 			if (event)
 				dispatchEvent(event.clone());
+		}
+		
+		private function createPreviewStream():void{
+			if(_previewStream)
+			{
+//				_previewStream.removeEventListener(AsyncErrorEvent.ASYNC_ERROR,	AsyncErrorHandler);
+//				_previewStream.removeEventListener(IOErrorEvent.IO_ERROR,		IOErrorHandler);
+				_previewStream.removeEventListener(NetStatusEvent.NET_STATUS, 	onPreviewNetStatus);
+			}
+			
+			//Create the playBack Stream
+			_previewStream = new NetStream(connection);
+			_previewStream.client = new KRecordNetClient();
+			
+//			in_stream.addEventListener(AsyncErrorEvent.ASYNC_ERROR,	AsyncErrorHandler);
+//			in_stream.addEventListener(IOErrorEvent.IO_ERROR,		IOErrorHandler);
+			_previewStream.addEventListener(NetStatusEvent.NET_STATUS, 	onPreviewNetStatus);
+			
+			KRecordNetClient(_previewStream.client).addEventListener(KRecordNetClient.ON_STREAM_END, playEndHandler);
+		}
+		
+		private function playEndHandler(evt:Event):void{
+			stopPreviewRecording();
+		}
+		
+		private function onRecordNetStatus(evt:NetStatusEvent):void
+		{
+			trace ("Record stream net status: " + evt.info.code);
+			switch (evt.info.code){
+				case "NetStream.Buffer.Flush":
+					var flushEvent:FlushStreamEvent = new FlushStreamEvent(FlushStreamEvent.FLUSH_COMPLETE, 0, 0);
+					dispatchEvent(flushEvent);
+					break;
+				case "NetStream.Record.Start":
+					var recordNetStreamEvt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_RECORD_START);
+					recordStarted(recordNetStreamEvt)
+					break;
+			}
+		}
+		
+		private function onSomeErrorForDebug(evt:Event):void{
+			trace ("KRecord connection error " + evt.type);
+			
 		}
 
 		/**
@@ -527,53 +618,74 @@ package com.kaltura.recording.controller
 		protected function onNetConnectionStatus( event : NetStatusEvent ) : void
 		{
 			trace("NetConnectionStatus: " + event.info.code);
+			switch(event.info.code){
+				case "NetConnection.Connect.Success":
+					connectionSuccess( event );
+					break;
+				case "NetConnection.Connect.InvalidApp":
+				case "NetConnection.Connect.Failed":
+				case "NetConnection.Connect.Closed":
+				case "NetConnection.Connect.Rejected":
+					connectionFailed( event );
+					break;
+			}
 			dispatchEvent( event );
 		}
 
 		/**
 		 * the stream report on a net status event while working.
 		 */
-		protected function onNetStatus( event : NetStatusEvent ) : void
+		private function onPreviewNetStatus( event : NetStatusEvent ) : void
 		{
 			trace("NetStatusEvent: " + event.info.code);
 
 			switch(event.info.code)
 			{
-				case "NetStream.Play.Start":
-					if(_firstPreviewPause)
-					{
-						pausePreviewRecording();
-
-						//if(_timeOutId)
-							//clearTimeout( _timeOutId );
-
-						//_timeOutId = setTimeout( readyToPreview , 30000 );
-					}
+				case "NetStream.Play.InsufficientBW":
+				case "NetStream.Buffer.Full":
+					if((event.target).bufferLength <= EXPANDED_BUFFER_LENGTH)
+						(event.target).bufferTime = 2 * EXPANDED_BUFFER_LENGTH;
+					else
+						(event.target).bufferTime = EXPANDED_BUFFER_LENGTH;
 					
-				break;
-
-				case "NetStream.Play.Stop":
- 					if(_firstPreviewPause)
-					{
-						readyToPreview();
+					if (_timeOutTimer.running){
+						_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
+						_timeOutTimer.stop();
+						_timeOutTimer.reset();
 					}
-				break;
-
+					connecting = false;
+					break;
+				case "NetStream.Buffer.Empty":
+					(event.target).bufferTime = START_BUFFER_LENGTH;
+					_timeOutTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
+					_timeOutTimer.start();
+					
+					connecting = true;
+					break;
+				case "NetStream.Play.Stop":
 				case "NetStream.Unpause.Notify":
 					connecting = false;
-				break;
-
-				case "NetStream.Buffer.Full":
-					if(_firstPreviewPause)
-					{
-						readyToPreview();
-					}
+					
+					notifyFinish();
 				break;
 			}
 
 			dispatchEvent( event );
 		}
-
+		
+		private function notifyFinish():void{
+			var evt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE);
+			dispatchEvent(evt);
+		}
+		
+		private function onTimeOut(evt:TimerEvent):void
+		{
+			stopPreviewRecording();
+			connecting = false;
+			
+			notifyFinish();
+		}
+		
 		private function readyToPreview() : void
 		{
 			_firstPreviewPause = false;
@@ -583,11 +695,11 @@ package com.kaltura.recording.controller
 		/**
 		 * the stream is fully flushed and saved on the server.
 		 */
-		protected function streamFlushBubble (event:FlushStreamEvent):void
-		{
-			trace("streamFlushBubble");
-			dispatchEvent(event.clone());
-		}
+//		protected function streamFlushBubble (event:FlushStreamEvent):void
+//		{
+//			trace("streamFlushBubble");
+//			dispatchEvent(event.clone());
+//		}
 		/**
 		 * the server confirmed start recording.
 		 */
@@ -622,7 +734,7 @@ package com.kaltura.recording.controller
 		{
 			trace("clearVideoAndSetCamera");
 			video.attachNetStream(null);
-			openStream ();
+			createRecordStream ();
 			setCamera(camera);
 		}
 
@@ -631,17 +743,18 @@ package com.kaltura.recording.controller
 		 */
 		public function recordNewStream ():void
 		{
-			if (netStream)
+			if (_recordStream)
 			{
 				setCamera (camera);
 				if (camera)
-					netStream.attachCamera(camera);
+					_recordStream.attachCamera(camera);
 				if (microphone)
-					netStream.attachAudio(microphone);
+					_recordStream.attachAudio(microphone);
 				setStreamUid (UIDUtil.createUID());
 				trace ("publishing: " + _streamUid);
 				connecting = true; //setting loader until the Record.Start is called
-				netStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
+				_recordStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
+//				netStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
 				_recordStartTime = getTimer();
 			}
 		}
@@ -652,8 +765,9 @@ package com.kaltura.recording.controller
 		public function stopRecording ():void
 		{
 			setRecordedTime(getTimer() - _recordStartTime);
-			if (netStream)
-				netStream.stop();
+			if (_recordStream)
+				_recordStream.close();
+//				netStream.stop();
 		}
 
 		/**
@@ -662,12 +776,12 @@ package com.kaltura.recording.controller
 		public function previewRecording ():void
 		{
 			trace("previewRecording");
-			if (netStream)
+			if (_previewStream)
 			{
 				connecting = true;
-				video.attachNetStream(netStream);
+				video.attachNetStream(_previewStream);
 				trace("playing: " + _streamUid);
-				netStream.playMedia(_streamUid);
+				_previewStream.play(_streamUid);
 			}
 		}
 
@@ -677,10 +791,11 @@ package com.kaltura.recording.controller
 		public function stopPreviewRecording ():void
 		{
 			trace("stopPreviewRecording");
-			if (netStream)
+			if (_previewStream)
 			{
 				_firstPreviewPause = true;
-				netStream.stop();
+//				netStream.stop();
+				_previewStream.close();
 			}
 		}
 
@@ -690,8 +805,11 @@ package com.kaltura.recording.controller
 		public function pausePreviewRecording ():void
 		{
 			trace("pausePreviewRecording");
-			if (netStream)
-				netStream.pause();
+//			if (netStream)
+//				netStream.pause();
+			if (_previewStream){
+				_previewStream.pause();
+			}
 		}
 
 		/**
@@ -700,8 +818,10 @@ package com.kaltura.recording.controller
 		public function seek( offset : Number ) : void
 		{
 			trace("seek");
-			if (netStream)
-				netStream.seek( offset );
+//			if (netStream)
+//				netStream.seek( offset );
+			if (_previewStream)
+				_previewStream.seek( offset );
 		}
 
 		/**
@@ -710,8 +830,10 @@ package com.kaltura.recording.controller
 		public function resume() : void
 		{
 			trace("resume");
-			if (netStream)
-				netStream.resume();
+//			if (netStream)
+//				netStream.resume();
+			if (_previewStream)
+				_previewStream.resume();
 		}
 
 		/**
@@ -719,8 +841,11 @@ package com.kaltura.recording.controller
 		 */
 		public function get playheadTime() : Number
 		{
-			if (netStream)
-				return netStream.time;
+//			if (netStream)
+//				return netStream.time;
+			if (_previewStream){
+				return _previewStream.time;
+			}
 
 			return NaN;
 		}
@@ -732,8 +857,8 @@ package com.kaltura.recording.controller
 		{
 			_bufferTime = value;
 
-			if (netStream)
-				netStream.bufferTime = _bufferTime;
+			if (_recordStream)
+				_recordStream.bufferTime = _bufferTime;
 		}
 
 		/**
@@ -741,8 +866,8 @@ package com.kaltura.recording.controller
 		 */
 		public function get bufferLength() : Number
 		{
-			if(netStream)
-				return netStream.bufferLength;
+			if(_recordStream)
+				return _recordStream.bufferLength;
 
 			return NaN;
 		}

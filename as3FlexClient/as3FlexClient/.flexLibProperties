@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" version="3">
+  <includeClasses>
+    <classEntry path="com.kaltura.vo.KalturaUserRoleFilter"/>
+    <classEntry path="com.kaltura.vo.KalturaVirusScanProfile"/>
+    <classEntry path="com.kaltura.vo.KalturaVirusScanProfileFilter"/>
+    <classEntry path="com.kaltura.vo.KalturaWidget"/>
+    <classEntry path="com.kaltura.vo.KalturaWidgetBaseFilter"/>
+    <classEntry path="com.kaltura.vo.KalturaWidgetFilter"/>
+    <classEntry path="com.kaltura.vo.KalturaWidgetListResponse"/>
+    <classEntry path="com.kaltura.vo.KalturaYahooSyndicationFeed"/>
+    <classEntry path="com.kaltura.vo.KalturaYahooSyndicationFeedBaseFilter"/>
+    <classEntry path="com.kaltura.vo.KalturaYahooSyndicationFeedFilter"/>
+    <classEntry path="ru.inspirit.net.MultipartURLLoader"/>
+    <classEntry path="ru.inspirit.net.events.MultipartURLLoaderEvent"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>

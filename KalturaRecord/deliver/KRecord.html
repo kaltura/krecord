@@ -33,11 +33,11 @@ body { margin: 0px; overflow:hidden }
 // -----------------------------------------------------------------------------
 // Globals
 // Major version of Flash required
-var requiredMajorVersion = 9;
+var requiredMajorVersion = 10;
 // Minor version of Flash required
 var requiredMinorVersion = 0;
 // Minor version of Flash required
-var requiredRevision = 124;
+var requiredRevision = 1;
 // -----------------------------------------------------------------------------
 // -->
 </script>
@@ -50,23 +50,31 @@ var requiredRevision = 124;
 var initVars = 
 	"host=www.kaltura.com" +
 	"&kshowId=-1" +
-	"&autoPreview=1" +
-	"&pid=33429" +
-	"&subpid=3342900" +
-	"&uid=your_user_id(whatever)" +
-	"&ks=NjA4ZDg5ZWIyOWY4YTU0ZmZhMzZhZjFhYzlmMTE1MTRjOWE3OGRhN3wzMzQyOTszMzQyOTsxMjQ4Nzc1ODUwOzA7MTI0ODY4OTQ1MC4xNzQyOzI7ZWRpdDoq" +
-	"&themeUrl=skin.swf" +
+	"&autoPreview=false" +
+	"&disableglobalclick=false" +
+	"&limitRecord=100" +
+	"&showPreviewTimer=true" +
+	"&showErrorMessege=true" +
+	"&removeplayer=false" +
+	"&pid=27017" +
+	"&subpid=27017" +
+	"&uid=555" +
+	"&messageX=50" +
+	"&ks=NDI1YTIyYmIyN2NlZmNjYmUyZTBiODI3Nzc3NDVlZGQ0ZTM2YTgyMnw2OTc4NTI7Njk3ODUyOzEzMTQ4NzMwODQ7MjsxMzE0Nzg2Njg0LjE5MjM7a2FsdHVyYTRAZ3Jvb3Z5Z2Vja28uY29tOyo7Ow==" +
+	"&themeUrl=../library/skin.swf" +
 	"&localeUrl=locale.xml" +
-	"&entryName=my added entry,,,whoo!" +
+	"&entryName=Eitan test" +
 	"&entryTags=this is, my entry, test, webcam" +
+	"&categories=mama,papa" +
 	"&entryDescription=this is my testing entry for webcam" +
 	"&creditsScreenName=my entry contributor name" +
 	"&creditsSiteUrl=http://justatry.com" +
 	"&thumbOffset=1" +
-	"&adminTags=an admin, tag admin" +
+	"&adminTags=" +
 	"&licenseType=CC-0.1" +
 	"&credit=my entry contributor name" +
 	"&groupId=" +
+	"&showUi=true"+
 	"&partnerData=my_pd";
 
 	
@@ -87,12 +95,12 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	AC_FL_RunContent(
 		"src", "playerProductInstall",
 		"FlashVars", "MMredirectURL="+MMredirectURL+'&MMplayerType='+MMPlayerType+'&MMdoctitle='+MMdoctitle+"",
-		"width", "400",
-		"height", "300",
+		"width", "320",
+		"height", "240",
 		"align", "middle",
 		"id", "KRecord",
 		"quality", "high",
-		"bgcolor", "#999999",
+		"bgcolor", "#000000",
 		"name", "KRecord",
 		"allowScriptAccess","sameDomain",
 		"type", "application/x-shockwave-flash",
@@ -103,12 +111,12 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	// embed the Flash Content SWF when all tests are passed
 	AC_FL_RunContent(
 			"src", "KRecord",
-			"width", "400",
-			"height", "300",
+			"width", "320",
+			"height", "240",
 			"align", "middle",
 			"id", "KRecord",
 			"quality", "high",
-			"bgcolor", "#999999",
+			"bgcolor", "#000000",
 			"name", "KRecord",
 			"FlashVars", initVars,
 			"allowScriptAccess","sameDomain",
@@ -123,16 +131,72 @@ if ( hasProductInstall && !hasRequestedVersion ) {
   }
 // -->
 </script>
+	<script>
+		function clickFunction() {
+			var kRecord = document.getElementById("KRecord");
+			alert (kRecord.getMicrophoneGain());
+		}
+		
+		function addEntryFailed(a) {
+			alert("addEntryFailed"+a[0][0]['errorCode']);
+			alert("addEntryFailed"+a[0][0]['errorMsg']);
+		}
+		function flushComplete() {
+			//alert("flushComplete");
+		}
+		function setVolume() {
+			var kRecord = document.getElementById("KRecord");
+			var val =  document.getElementById("volumeLevel").value;
+			alert ("clicked, value: "+val + " " + kRecord);
+			kRecord.setMicrophoneGain(val);
+		}
+		function autoStopRecord(a) {
+			//alert('autoStopRecord after '+a+' seconds');
+		}
+		
+		function noCamerasFound() {
+			alert('noCamerasFound');
+		}
+		
+		function startRecording() {
+			var kRecord = document.getElementById("KRecord");
+			kRecord.startRecording();
+		}
+		function stopRecording() {
+			var kRecord = document.getElementById("KRecord");
+			kRecord.stopRecording();
+		}
+		function stopPreview() {
+			var kRecord = document.getElementById("KRecord");
+			kRecord.stopPreviewRecording();
+		}
+		function previewRecording() {
+			var kRecord = document.getElementById("KRecord");
+			kRecord.previewRecording();
+		}
+		
+		function delegator(message,args) {
+			document.getElementById("delegatorText").value+="\n"+message+"  "+args;
+			if(args)
+			{
+				//document.getElementById("delegatorText").value+="\n"+args[0][0]['errorMsg'];
+				//document.getElementById("delegatorText").value+="\n"+args[0][0]['errorCode'];
+			}
+		}
+		
+		
+		
+	</script>
 <noscript>
   	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-			id="KRecord" width="400" height="300"
+			id="KRecord" width="320" height="240"
 			codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
 			<param name="movie" value="KRecord.swf" />
 			<param name="quality" value="high" />
-			<param name="bgcolor" value="#999999" />
+			<param name="bgcolor" value="#000000" />
 			<param name="allowScriptAccess" value="sameDomain" />
-			<embed src="KRecord.swf" quality="high" bgcolor="#999999"
-				width="400" height="300" name="KRecord" align="middle"
+			<embed src="KRecord.swf" quality="high" bgcolor="#000000"
+				width="320" height="240" name="KRecord" align="middle"
 				play="true"
 				loop="false"
 				quality="high"
@@ -142,5 +206,18 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			</embed>
 	</object>
 </noscript>
+	<br/>
+	<button type="button" onclick="clickFunction()">getMicrophoneGain</button>
+	<input id="volumeLevel"/>
+	<button type="button" onclick="setVolume()">setMicrophoneGain</button>
+	<button type="button" onclick="startRecording()">start recording</button>
+	<button type="button" onclick="stopRecording()">stop recording</button>
+	<button type="button" onclick="stopPreview()">stop preview</button>
+	<button type="button" onclick="previewRecording()">start preview</button>
+	<br/>
+	
+	<TEXTAREA NAME="delegatorText" id="delegatorText" ROWS=10 COLS=30>
+
+	</TEXTAREA>
 </body>
 </html>

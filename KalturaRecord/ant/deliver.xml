@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="KRecord Compiler" basedir="./.." default="build">
+	
+	<property name="KRECORD_VERSION" value="v1.5.13"/>
+	
+	<!-- path to Flex SDK -->
+    <property name="FLEX_HOME" value="C:/Program Files (x86)/Adobe/Adobe Flash Builder 4/sdks/3.5.0"/>
+	
+	<!-- directory for the compiled swf -->
+    <property name="DEPLOY_DIR" value="${basedir}/bin-release"/>
+	
+	<!-- directory for the delivered package -->
+    <property name="DELIVER_DIR" value="${basedir}/deliver"/>
+	
+	<!-- directory to which the complete version is copied, mostly a folder under kalprod repository -->
+	<property name="TARGET_DIR" value="${basedir}/../${KRECORD_VERSION}"/>
+	
+	<!-- include flex tasks -->
+	<taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
+	
+	<target name="init">
+		<mkdir dir="${DEPLOY_DIR}" description="Make sure there is a bin directory"/>
+	</target>
+	
+	<target name="build" description="general build" depends="init, compile, pack">
+		<echo>WOOHOO! KRecord is ready!</echo>
+	</target>
+	
+	<target name="compile" description="compile release build of KRecord into DEPLOY_DIR">
+		<fb.exportReleaseBuild project="KalturaRecord" destdir="${DEPLOY_DIR}"/> 
+		<echo>KRecord release build created</echo>
+	</target>
+			
+	<target name="pack" description="copy version files to target folders" depends="clean">
+		<copy file="${DEPLOY_DIR}/KRecord.swf" 
+			tofile="${DELIVER_DIR}/KRecord.swf" />
+		
+		<copy file="${DEPLOY_DIR}/KRecord.html" 
+			tofile="${DELIVER_DIR}/KRecord.html" />
+		
+		<copy file="${DEPLOY_DIR}/KRecord.swf" 
+			tofile="${TARGET_DIR}/KRecord.swf" />
+				
+		<copy file="${DELIVER_DIR}/skin.swf" 
+			tofile="${TARGET_DIR}/skin.swf" />
+		
+		<copy file="${DELIVER_DIR}/locale.xml" 
+			tofile="${TARGET_DIR}/locale.xml" />
+		
+	</target>
+	
+	<target name="clean" description="delete old files from TARGET_DIR">
+		<echo>Deleting old files</echo>
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${TARGET_DIR}" excludes="**/*.project,**/*.svn"/>
+        </delete>
+    </target>
+	
+	
+	
+	
+</project>
+

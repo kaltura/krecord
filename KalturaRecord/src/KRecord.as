@@ -27,10 +27,8 @@
    // @ignore
    // ===================================================================================================
  */
-package
-{
+package {
 	import com.kaltura.KalturaClient;
-	import com.kaltura.base.vo.KalturaEntry;
 	import com.kaltura.config.KalturaConfig;
 	import com.kaltura.devicedetection.DeviceDetectionEvent;
 	import com.kaltura.net.streaming.events.ExNetConnectionEvent;
@@ -44,7 +42,6 @@ package
 	import com.kaltura.recording.view.UIComponent;
 	import com.kaltura.recording.view.View;
 	import com.kaltura.recording.view.ViewEvent;
-	import com.kaltura.recording.view.ViewState;
 	import com.kaltura.recording.view.ViewStatePreview;
 	import com.kaltura.utils.KConfigUtil;
 	import com.kaltura.utils.KUtils;
@@ -52,7 +49,6 @@ package
 	import com.kaltura.vo.KalturaMediaEntry;
 	
 	import flash.display.Sprite;
-	import flash.display.Stage;
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
@@ -67,227 +63,214 @@ package
 	import flash.ui.ContextMenuItem;
 	import flash.utils.Timer;
 	
-	import mx.core.Application;
 	import mx.utils.ObjectUtil;
 
-	[SWF(width='320', height='240', frameRate='30', backgroundColor='#000000')]
-	[Frame(factoryClass="ApplicationLoader")]
+	[SWF(width = '320', height = '240', frameRate = '30', backgroundColor = '#000000')]
+	[Frame(factoryClass = "ApplicationLoader")]
 
-	public class KRecord extends Sprite
-	{
+	public class KRecord extends Sprite {
+		
 		public var pushParameters:Object;
 
-		private var recordControl:KRecordControl=new KRecordControl();
-		public var autoPreview:Boolean=false;
+		public var autoPreview:Boolean = false;
 
-		
+		private var recordControl:KRecordControl = new KRecordControl();
+
 		private var _message:TextField;
-		
+
 		private var _showErrorMessage:Boolean;
+
+		private var _messageX:Number = 0;
+		private var _messageY:Number = 0;
+
+		private var _view:View = new View();
 		
-		private var messageX:Number = 0;
-		private var messageY:Number = 0;
-		
-		private var _view:View=new View;
 		private var _newViewState:String;
+		
 		/**
-		 * limit in seconds to recording time. 0 means no limit 
+		 * limit in seconds to recording time. 0 means no limit
 		 */
-		private var _limitRecord:Number = 0 ;
+		private var _limitRecord:Number = 0;
+		
 		/**
-		 * The timer for the recording limitation  
+		 * The timer for the recording limitation
 		 */
 		private var _limitRecordTimer:Timer;
 
-		
-		public static const VERSION:String = "v1.5.12"; 
-		
+
+		public static const VERSION:String = "v1.5.12";
+
+
 		/**
 		 *Constructor.
 		 * @param init		if true will automatically call startApplication and initialize application.
 		 *
 		 */
-		public function KRecord(init:Boolean=true):void
-		{
-			trace("version:",VERSION);
-			Global.RECORD_CONTROL=recordControl;
+		public function KRecord(init:Boolean = true):void {
+			Global.RECORD_CONTROL = recordControl;
 			addEventListener(Event.ADDED_TO_STAGE, build);
-			var myContextMenu:ContextMenu = new ContextMenu();
-			var item:ContextMenuItem = new ContextMenuItem("Krecord "+VERSION,true);
-			myContextMenu.customItems.push(item);
-			this.contextMenu = myContextMenu;
-			
 		}
 
-		private function build(evt:Event=null):void
-		{
+
+		private function build(evt:Event = null):void {
 			Security.allowDomain("*");
-			
-			var customContextMenu:ContextMenu=new ContextMenu();
+
+			var customContextMenu:ContextMenu = new ContextMenu();
 			customContextMenu.hideBuiltInItems();
-			var menuItem:ContextMenuItem=new ContextMenuItem(VERSION);
+			var menuItem:ContextMenuItem = new ContextMenuItem("Krecord " + VERSION, true);
 			customContextMenu.customItems.push(menuItem);
+			this.contextMenu = customContextMenu;
 
 			stageResize(null);
-			
+
 			var initParams:KRecordViewParams;
 			//read flashVars (uses these lines only when flashVars and ExternalInterface control is needed):
 			var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-			var appparams:Object=ObjectHelpers.lowerNoUnderscore(paramObj);
-			if(appparams.showui=="false"){
-				UIComponent.visibleSkin=false
+			var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
+			if (appparams.showui == "false") {
+				UIComponent.visibleSkin = false
 			}
-			if(appparams.showerrormessage=="true" || appparams.showerrormessage=="1"){
-				_showErrorMessage=true
+			if (appparams.showerrormessage == "true" || appparams.showerrormessage == "1") {
+				_showErrorMessage = true
 			}
 			// view params:
-			var themeUrl:String=KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
-			var localeUrl:String=KConfigUtil.getDefaultValue(appparams.localeurl, "locale.xml");
-			var autoPreview:String=KConfigUtil.getDefaultValue(appparams.autopreview, "1");
-			if(appparams.showpreviewtimer=="true" || appparams.showpreviewtimer =="0" )
+			var themeUrl:String = KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
+			var localeUrl:String = KConfigUtil.getDefaultValue(appparams.localeurl, "locale.xml");
+			var autoPreview:String = KConfigUtil.getDefaultValue(appparams.autopreview, "1");
+			if (appparams.showpreviewtimer == "true" || appparams.showpreviewtimer == "0")
 				Global.SHOW_PREVIEW_TIMER = true;
-			Global.REMOVE_PLAYER=(appparams.removeplayer=="1" || appparams.removeplayer=="true");
+			Global.REMOVE_PLAYER = (appparams.removeplayer == "1" || appparams.removeplayer == "true");
 			initParams = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
-			
+
 			Global.DETECTION_DELAY = appparams.hasOwnProperty("detectiondelay") ? uint(appparams.detectiondelay) : 0;
-			
-			var configuration : KalturaConfig = new KalturaConfig();
+			Global.DEBUG_MODE = appparams.hasOwnProperty("debugmode") ? true : false;
+
+			var configuration:KalturaConfig = new KalturaConfig();
 			configuration.partnerId = appparams.pid;
 			configuration.ignoreNull = 1;
-			configuration.domain = KUtils.hostFromCode(appparams.host); 
+			configuration.domain = KUtils.hostFromCode(appparams.host);
 			configuration.srvUrl = "api_v3/index.php"
 			configuration.ks = appparams.ks;
-				
-			if (!appparams.httpprotocol)
-			{
-				var url:String = root.loaderInfo.url;			
-				configuration.protocol = isHttpURL(url) ? getProtocol(url) : "http";  			
-			}else
-			{
+
+			if (!appparams.httpprotocol) {
+				var url:String = root.loaderInfo.url;
+				configuration.protocol = isHttpURL(url) ? getProtocol(url) : "http";
+			}
+			else {
 				configuration.protocol = appparams.httpprotocol;
 			}
-			configuration.protocol +="://";
-			
+			configuration.protocol += "://";
+
 			Global.KALTURA_CLIENT = new KalturaClient(configuration);
-			
-			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick=="1" || appparams.disableglobalclick=="true"); 
-			Global.VIEW_PARAMS=initParams;
+
+			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick == "1" || appparams.disableglobalclick == "true");
+			Global.VIEW_PARAMS = initParams;
 			_view.addEventListener(ViewEvent.VIEW_READY, startApplication);
 			addChild(_view);
 		}
 
-		public static function isHttpURL(url:String):Boolean
-		{
-			return url != null &&
-				(url.indexOf("http://") == 0 ||
-					url.indexOf("https://") == 0);
+
+		public static function isHttpURL(url:String):Boolean {
+			return url != null && (url.indexOf("http://") == 0 || url.indexOf("https://") == 0);
 		}
-		
-		private function onStartRecord(evt:ViewEvent):void
-		{
+
+
+		private function onStartRecord(evt:ViewEvent):void {
 			startRecording();
-			_newViewState="recording";
+			_newViewState = "recording";
 			if (!recordControl.connecting)
 				_view.setState(_newViewState);
 			limitRecording();
 		}
+
+
 		/**
-		 * Stop recording automatically. 
+		 * Stop recording automatically.
 		 * This function is here so we dont change the signature of  stopRecording function
 		 * @param evt
-		 * 
-		 */		
-		private function onRecordTimeComplete(evt:TimerEvent):void
-		{
-			trace("AUTO STOP AFTER ",_limitRecord," SECONDS")
+		 *
+		 */
+		private function onRecordTimeComplete(evt:TimerEvent):void {
+			if (Global.DEBUG_MODE) 
+				trace("AUTO STOP AFTER ", _limitRecord, " SECONDS")
 			stopRecording();
-			callInterfaceDelegate("autoStopRecord",_limitRecord);
+			callInterfaceDelegate("autoStopRecord", _limitRecord);
 		}
-		
-		
 
-		private function onReRecord(evt:ViewEvent):void
-		{
+
+
+		private function onReRecord(evt:ViewEvent):void {
 			startRecording();
-			_newViewState="recording";
+			_newViewState = "recording";
 			if (!recordControl.connecting)
 				_view.setState(_newViewState);
 		}
 
-		private function onStopRecord(evt:ViewEvent=null):void
-		{
+
+		private function onStopRecord(evt:ViewEvent = null):void {
 			stopRecording();
-			_newViewState="preview";
+			_newViewState = "preview";
 			if (!recordControl.connecting)
 				_view.setState(_newViewState);
 		}
 
 
-		public static function getProtocol(url:String):String
-		{
+		public static function getProtocol(url:String):String {
 			var slash:int = url.indexOf("/");
 			var indx:int = url.indexOf(":/");
-			if (indx > -1 && indx < slash)
-			{
+			if (indx > -1 && indx < slash) {
 				return url.substring(0, indx);
 			}
-			else
-			{
+			else {
 				indx = url.indexOf("::");
 				if (indx > -1 && indx < slash)
 					return url.substring(0, indx);
 			}
-			
+
 			return "";
 		}
-		
-		private function onSave(evt:ViewEvent):void
-		{
+
+
+		private function onSave(evt:ViewEvent):void {
 			recordControl.stopPreviewRecording();
 			// get entry flashvars:
-			if (ExternalInterface.available)
-			{
-				try
-				{
+			if (ExternalInterface.available) {
+				try {
 					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-					var appparams:Object=ObjectHelpers.lowerNoUnderscore(paramObj);
-					var entryName:String=KConfigUtil.getDefaultValue(appparams.entryname, "");
-					var entryTags:String=KConfigUtil.getDefaultValue(appparams.entrytags, "");
-					var entryDescription:String=KConfigUtil.getDefaultValue(appparams.entrydescription, "");
-					var creditsScreenName:String=KConfigUtil.getDefaultValue(appparams.creditsscreenName, "");
-					var creditsSiteUrl:String=KConfigUtil.getDefaultValue(appparams.creditssiteUrl, "");
-					var categories:String=KConfigUtil.getDefaultValue(appparams.categories, "");
-					var adminTags:String=KConfigUtil.getDefaultValue(appparams.admintags, "");
-					var licenseType:String=KConfigUtil.getDefaultValue(appparams.licensetype, "");
-					var credit:String=KConfigUtil.getDefaultValue(appparams.credit, "");
-					var groupId:String=KConfigUtil.getDefaultValue(appparams.groupid, "");
-					var partnerData:String=KConfigUtil.getDefaultValue(appparams.partnerdata, "");
+					var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
+					var entryName:String = KConfigUtil.getDefaultValue(appparams.entryname, "");
+					var entryTags:String = KConfigUtil.getDefaultValue(appparams.entrytags, "");
+					var entryDescription:String = KConfigUtil.getDefaultValue(appparams.entrydescription, "");
+					var creditsScreenName:String = KConfigUtil.getDefaultValue(appparams.creditsscreenName, "");
+					var creditsSiteUrl:String = KConfigUtil.getDefaultValue(appparams.creditssiteUrl, "");
+					var categories:String = KConfigUtil.getDefaultValue(appparams.categories, "");
+					var adminTags:String = KConfigUtil.getDefaultValue(appparams.admintags, "");
+					var licenseType:String = KConfigUtil.getDefaultValue(appparams.licensetype, "");
+					var credit:String = KConfigUtil.getDefaultValue(appparams.credit, "");
+					var groupId:String = KConfigUtil.getDefaultValue(appparams.groupid, "");
+					var partnerData:String = KConfigUtil.getDefaultValue(appparams.partnerdata, "");
 
-					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl,categories, adminTags, licenseType, credit, groupId, partnerData)
+					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, categories, adminTags, licenseType, credit, groupId, partnerData)
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace('Error reading flashVars and initializing KRecord via html and JS');
 				}
 			}
-			else
-			{
+			else {
 				addEntry("", "", "", "", "", "", "", "", "", "", "");
 			}
-
-			trace("SAVE");
+			if (Global.DEBUG_MODE)
+				trace("SAVE");
 		}
 
 
 		/**
 		 * initializes the application.
 		 */
-		public function startApplication(event:Event=null):void
-		{
-			if (Global.PRELOADER && Global.PRELOADER.parent)
-			{
+		public function startApplication(event:Event = null):void {
+			if (Global.PRELOADER && Global.PRELOADER.parent) {
 				Global.PRELOADER.parent.removeChild(Global.PRELOADER);
-				Global.PRELOADER=null;
+				Global.PRELOADER = null;
 			}
 
 			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
@@ -296,30 +279,28 @@ package
 			_view.addEventListener(ViewEvent.PREVIEW_SAVE, onSave);
 			_view.addEventListener(ViewEvent.PREVIEW_RERECORD, onReRecord);
 
-			stage.align=StageAlign.TOP_LEFT;
-			stage.scaleMode=StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			stage.scaleMode = StageScaleMode.NO_SCALE;
 			var initParams:BaseRecorderParams;
 			//read flashVars (uses these lines only when flashVars and ExternalInterface control is needed):
-			if (ExternalInterface.available)
-			{
-				try
-				{
+			if (ExternalInterface.available) {
+				try {
 					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-					var appparams:Object=ObjectHelpers.lowerNoUnderscore(paramObj);
-					autoPreview= !(appparams.autopreview=="0" || appparams.autopreview=="false");
-					_limitRecord= KConfigUtil.getDefaultValue(appparams.limitrecord,0);
-					var hostUrl:String=KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
-					var rtmpHost:String=KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
-					var ks:String=KConfigUtil.getDefaultValue(appparams.ks, "");
-					var pid:String=KConfigUtil.getDefaultValue(appparams.pid, "");
-					var subpid:String=KConfigUtil.getDefaultValue(appparams.subpid, "");
-					var uid:String=KConfigUtil.getDefaultValue(appparams.uid, "");
-					var kshowId:String=KConfigUtil.getDefaultValue(appparams.kshowid, "-1");
-					var fmsApp:String=KConfigUtil.getDefaultValue(appparams.fmsapp, "oflaDemo");
-					messageX=KConfigUtil.getDefaultValue(appparams.messagex, 0);
-					messageY=KConfigUtil.getDefaultValue(appparams.messagey, 0);
+					var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
+					autoPreview = !(appparams.autopreview == "0" || appparams.autopreview == "false");
+					_limitRecord = KConfigUtil.getDefaultValue(appparams.limitrecord, 0);
+					var hostUrl:String = KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
+					var rtmpHost:String = KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
+					var ks:String = KConfigUtil.getDefaultValue(appparams.ks, "");
+					var pid:String = KConfigUtil.getDefaultValue(appparams.pid, "");
+					var subpid:String = KConfigUtil.getDefaultValue(appparams.subpid, "");
+					var uid:String = KConfigUtil.getDefaultValue(appparams.uid, "");
+					var kshowId:String = KConfigUtil.getDefaultValue(appparams.kshowid, "-1");
+					var fmsApp:String = KConfigUtil.getDefaultValue(appparams.fmsapp, "oflaDemo");
+					_messageX = KConfigUtil.getDefaultValue(appparams.messagex, 0);
+					_messageY = KConfigUtil.getDefaultValue(appparams.messagey, 0);
 					//init KRecord parameters:
-					initParams=new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
+					initParams = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
 					// Register External call
 
 					ExternalInterface.addCallback("stopRecording", stopRecording);
@@ -336,28 +317,27 @@ package
 					ExternalInterface.addCallback("getCameras", getCameras);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
 					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
-					
-					ExternalInterface.marshallExceptions=true;
+
+					ExternalInterface.marshallExceptions = true;
 					callInterfaceDelegate("swfReady");
-					trace('flashVars caught and JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
+					if (Global.DEBUG_MODE)
+						trace('flashVars caught and JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
 
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace('Error reading flashVars and initializing KRecord via html and JS');
 				}
 			}
-			else
-			{
+			else {
 				//init KRecord parameters, use this line in cases where you don't use flashVars and external JS control:
-				initParams=new BaseRecorderParams('http://www.kaltura.com', 'rtmp://www.kaltura.com', '', '', '', '', '-1', 'oflaDemo');
+				initParams = new BaseRecorderParams('http://www.kaltura.com', 'rtmp://www.kaltura.com', '', '', '', '', '-1', 'oflaDemo');
 			}
 
-			recordControl.initRecorderParameters=initParams;
+			recordControl.initRecorderParameters = initParams;
 			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
 			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
 			recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
-			
+
 			recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
 			recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
 			recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
@@ -365,23 +345,24 @@ package
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
 			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
 			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
-			
+
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
 			recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
-			
+
 			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEndHandler);
-			
+
 			recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
 			recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
 			recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
 			recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
 			recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
 			recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
-			trace("call deviceDetection");
+			if (Global.DEBUG_MODE)
+				trace("call deviceDetection");
 			recordControl.deviceDetection();
 
-			if(this.stage == this.root.parent)
+			if (this.stage == this.root.parent)
 				stage.addEventListener(Event.RESIZE, stageResize);
 
 			dispatchEvent(new ViewEvent(ViewEvent.VIEW_READY, true));
@@ -401,90 +382,93 @@ package
 		 * @param h				the height of the frame.
 		 * @param fps			frame per second to use.
 		 * @param fps			frame per second to use.
-		 * @param gop			The distance (in frames) between 2 keyframes 
-		 * @bufferTime			This parameter compensates for lower connectivity or inconstant bandwidth 
-		 * 						so no content will be lost. 
+		 * @param gop			The distance (in frames) between 2 keyframes
+		 * @bufferTime			This parameter compensates for lower connectivity or inconstant bandwidth
+		 * 						so no content will be lost.
 		 */
-		public function setQuality(quality:int, bw:int, w:int, h:int, fps:Number, gop:int=25, bufferTime:Number=70):void
-		{
-			recordControl.bufferTime=bufferTime;
+		public function setQuality(quality:int, bw:int, w:int, h:int, fps:Number, gop:int = 25, bufferTime:Number = 70):void {
+			recordControl.bufferTime = bufferTime;
 			recordControl.setQuality(quality, bw, w, h, fps, gop);
 		}
 
-		public function getMicrophones():String
-		{
+
+		public function getMicrophones():String {
 			return recordControl.getMicrophones().toString();
 		}
 
-		public function getCameras():String
-		{
+
+		public function getCameras():String {
 			return recordControl.getCameras().toString();
 		}
 
-		public function setActiveCamera(cameraName:String):void
-		{
+
+		public function setActiveCamera(cameraName:String):void {
 			recordControl.setActiveCamera(cameraName);
 		}
 
-		public function setActiveMicrophone(microphoneName:String):void
-		{
+
+		public function setActiveMicrophone(microphoneName:String):void {
 			recordControl.setActiveMicrophone(microphoneName);
 		}
-		
+
+
 		public function getMicrophoneActivityLevel():Number {
 			return recordControl.micophoneActivityLevel;
 		}
+
+
 		/**
-		 * returns the volume of the microphone 
-		 * @return 
-		 * 
-		 */		
+		 * returns the volume of the microphone
+		 * @return
+		 *
+		 */
 		public function getMicrophoneGain():Number {
 			return recordControl.microphoneGain;
 		}
-		
+
+
 		/**
-		 * sets the gain of the microphone 
+		 * sets the gain of the microphone
 		 * @param val the given volume, between 0 to 100
-		 * 
-		 */		
+		 *
+		 */
 		public function setMicrophoneGain(val:String):void {
 			recordControl.microphoneGain = parseFloat(val);
 		}
 
+
 		/**
 		 *the duration of the recording in milliseconds.
 		 */
-		public function getRecordedTime():uint
-		{
+		public function getRecordedTime():uint {
 			return recordControl.recordedTime;
 		}
-		
-		public static function delegator(methodName:String, ... args):void
-		{
-			try
-			{
-				ExternalInterface.call("eval(window.delegator)", methodName , args);
-			} 
-			catch(error:Error) 
-			{
-				trace ("delegator: "+error.message);
+
+
+		public static function delegator(methodName:String, ... args):void {
+			try {
+				ExternalInterface.call("eval(window.delegator)", methodName, args);
+			}
+			catch (error:Error) {
+				trace("delegator: " + error.message);
 			}
 		}
-		
-		private function callInterfaceDelegate(methodName:String, ... args):void
-		{
-			delegator(methodName,args);
+
+
+		private function callInterfaceDelegate(methodName:String, ... args):void {
+			delegator(methodName, args);
 			try {
 				var paramObj:Object = this.root.loaderInfo.parameters;
 				var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
 				var delegate:String = KConfigUtil.getDefaultValue(paramObj.delegate, "window");
 				ExternalInterface.call("eval(" + delegate + "." + methodName + ")", args);
-			} catch (err:Error) {trace (err.message)}
+			}
+			catch (err:Error) {
+				trace(err.message)
+			}
 			//print message on screen
 			var message:String = "";
-			switch (methodName)
-			{
+			switch (methodName) {
 				case DeviceDetectionEvent.ERROR_CAMERA:
 					message = "Error.CameraError";
 					break;
@@ -505,56 +489,50 @@ package
 					break;
 				case DeviceDetectionEvent.CAMERA_DENIED:
 					message = "Error.cameraDenied";
-				break;
+					break;
 			}
 			//handle only the MIC_DENIED & CAMERA_DENIED since the UI is not ready for them yet QND
-			if(message && (methodName==DeviceDetectionEvent.MIC_DENIED 
-				 			|| methodName==DeviceDetectionEvent.ERROR_MICROPHONE
-				 			|| methodName==DeviceDetectionEvent.CAMERA_DENIED
-							|| methodName==DeviceDetectionEvent.ERROR_CAMERA))
-			{
-				if(!_message)
-				{
-					_message= new TextField();
+			if (message && (methodName == DeviceDetectionEvent.MIC_DENIED || methodName == DeviceDetectionEvent.ERROR_MICROPHONE || methodName == DeviceDetectionEvent.CAMERA_DENIED || methodName == DeviceDetectionEvent.ERROR_CAMERA)) {
+				if (!_message) {
+					_message = new TextField();
 					_message.width = this.width;
 					_message.height = this.height;
-					_message.x = messageX;
-					_message.y = messageY;
+					_message.x = _messageX;
+					_message.y = _messageY;
 					//add drop shadow filter to message
-					var my_shadow:DropShadowFilter = new DropShadowFilter();  
-					my_shadow.color = 0x000000;  
-					my_shadow.blurY = 3;  
-					my_shadow.blurX = 3;  
-					my_shadow.angle = 45;  
-					my_shadow.alpha = 1;  
-					my_shadow.distance = 2;   
-					var filtersArray:Array = new Array(my_shadow);  
-					_message.filters = filtersArray;  
-					
+					var my_shadow:DropShadowFilter = new DropShadowFilter();
+					my_shadow.color = 0x000000;
+					my_shadow.blurY = 3;
+					my_shadow.blurX = 3;
+					my_shadow.angle = 45;
+					my_shadow.alpha = 1;
+					my_shadow.distance = 2;
+					var filtersArray:Array = new Array(my_shadow);
+					_message.filters = filtersArray;
+
 				}
-				
+
 				var tf:TextFormat = new TextFormat();
 				tf.color = 0xFFFFFF;
 				_message.text = Global.LOCALE.getString(message);
 				_message.setTextFormat(tf);
-				if(_showErrorMessage) //show this message only if showErrorMessege is set to true 
+				if (_showErrorMessage) //show this message only if showErrorMessege is set to true 
 					addChild(_message);
 			}
 		}
 
-		private function stageResize(event:Event):void
-		{
+
+		private function stageResize(event:Event):void {
 			//set the _view width and height because any view resize by it's parent
-			_view.width = _view.viewWidth=stage.stageWidth;
-			_view.height = _view.viewHeight=stage.stageHeight;
+			_view.width = _view.viewWidth = stage.stageWidth;
+			_view.height = _view.viewHeight = stage.stageHeight;
 
 			graphics.clear();
 			graphics.beginFill(0x000000);
 			graphics.drawRect(0, 0, _view.viewWidth, _view.viewHeight);
 			graphics.endFill();
 
-			if (recordControl && recordControl.video)
-			{
+			if (recordControl && recordControl.video) {
 				if (contains(recordControl.video))
 					removeChild(recordControl.video);
 				recordControl.resizeVideo(_view.viewWidth, _view.viewHeight);
@@ -562,24 +540,17 @@ package
 			}
 		}
 
-		private function deviceError(event:DeviceDetectionEvent):void
-		{
-			try
-			{
+
+		private function deviceError(event:DeviceDetectionEvent):void {
+			try {
 				trace(event.type);
-				this.callInterfaceDelegate(event.type);				
+				this.callInterfaceDelegate(event.type);
 			}
-			catch (err:Error)
-			{
+			catch (err:Error) {
 				trace(err.message)
 			}
 
-//			if (event.type == DeviceDetectionEvent.ERROR_CAMERA)
-//			{
-//				_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
-//			}
-			
-			switch (event.type){
+			switch (event.type) {
 				case DeviceDetectionEvent.ERROR_CAMERA:
 					_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
 					break;
@@ -591,222 +562,209 @@ package
 			dispatchEvent(event.clone());
 		}
 
-		private function deviceDetected(event:DeviceDetectionEvent):void
-		{
-			
+
+		private function deviceDetected(event:DeviceDetectionEvent):void {
 			//add the detected mic notification
-			if(event.type == DeviceDetectionEvent.DETECTED_MICROPHONE)
-			{
-				try
-				{
+			if (event.type == DeviceDetectionEvent.DETECTED_MICROPHONE) {
+				try {
 					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_MICROPHONE);
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace(err.message)
 				}
 			}
 
-			
-			
-			
-			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA)
-			{
+
+
+
+			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
 				setQuality(85, 0, 336, 252, 25);
 				recordControl.connectToRecordingServie();
-//			_view.setState( "start" );
-				try
-				{
+				try {
 					this.callInterfaceDelegate("deviceDetected");
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace(err.message)
 				}
-				try
-				{
+				
+				try {
 					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_CAMERA);
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace(err.message)
 				}
 			}
 			dispatchEvent(event.clone());
 		}
 
-		private function connected(event:ExNetConnectionEvent):void
-		{
+
+		private function connected(event:ExNetConnectionEvent):void {
 			_view.setState("start");
-			trace(event.type);
-			try
-			{
+			if (Global.DEBUG_MODE)
+				trace(event.type);
+			
+			try {
 				this.callInterfaceDelegate("connected");
 			}
-			catch (err:Error)
-			{
+			catch (err:Error) {
 				trace(err.message)
 			}
 			dispatchEvent(event.clone());
 		}
 
-		private function connectionError(event:ExNetConnectionEvent):void
-		{
-			trace(event.type)
-			try
-			{
+
+		private function connectionError(event:ExNetConnectionEvent):void {
+			if (Global.DEBUG_MODE)
+				trace(event.type)
+				
+			try {
 				this.callInterfaceDelegate(event.type);
 			}
-			catch (err:Error)
-			{
+			catch (err:Error) {
 				trace(err.message)
 			}
-	
 
-			if(event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED)
+
+			if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED)
 				_view.showPopupError(Global.LOCALE.getString("Error.ConnectionError"));
-			if(event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED)
+			if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED)
 				_view.showPopupError(Global.LOCALE.getString("Error.ConnectionClosed"));
 			dispatchEvent(event.clone());
 		}
 
+
 		/**
 		 * start publishing the audio.
 		 */
-		public function startRecording():void
-		{
+		public function startRecording():void {
 			_newViewState = "recording"
 			_view.setState(_newViewState);
-			trace("RECORD START");
+			
+			if (Global.DEBUG_MODE)
+				trace("RECORD START");
+			
 			recordControl.recordNewStream();
 			limitRecording();
 
 		}
 
+
 		/**
-		 * Check if this instance needs to limit the time and start the timer if needed. 
+		 * Check if this instance needs to limit the time and start the timer if needed.
 		 */
-		private function limitRecording():void
-		{
-			if(_limitRecord && !_limitRecordTimer)
-			{
-				_limitRecordTimer = new Timer(_limitRecord*1000,1);
-				_limitRecordTimer.addEventListener(TimerEvent.TIMER_COMPLETE,onRecordTimeComplete);
+		private function limitRecording():void {
+			if (_limitRecord && !_limitRecordTimer) {
+				_limitRecordTimer = new Timer(_limitRecord * 1000, 1);
+				_limitRecordTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onRecordTimeComplete);
 				_limitRecordTimer.start();
 			}
 		}
-		private function recordStart(event:RecordNetStreamEvent):void
-		{
-			try
-			{
+
+
+		private function recordStart(event:RecordNetStreamEvent):void {
+			try {
 				this.callInterfaceDelegate("recordStart");
 			}
-			catch (err:Error)
-			{
+			catch (err:Error) {
 				trace(err.message)
 			}
 			dispatchEvent(event.clone());
 		}
 
+
 		/**
 		 * stop publishing to the server.
 		 */
-		public function stopRecording():void
-		{
-			if(_limitRecordTimer)
-			{
-				_limitRecordTimer.removeEventListener(TimerEvent.TIMER_COMPLETE,onRecordTimeComplete);
+		public function stopRecording():void {
+			if (_limitRecordTimer) {
+				_limitRecordTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onRecordTimeComplete);
 				_limitRecordTimer.stop();
 				_limitRecordTimer = null;
 			}
-			
+
 			_newViewState = "preview"
 			_view.setState(_newViewState);
-			trace("KRecord==>stopRecording()");
+			if (Global.DEBUG_MODE)
+				trace("KRecord==>stopRecording()");
 			recordControl.stopRecording();
 		}
 
-		private function flushHandler(event:FlushStreamEvent):void
-		{
-			trace(event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
-			if (event.type == FlushStreamEvent.FLUSH_COMPLETE)
-			{
-				/*if (autoPreview)
-				 previewRecording();*/
-				try
-				{
 
+		private function flushHandler(event:FlushStreamEvent):void {
+			if (Global.DEBUG_MODE)
+				trace(event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
+			if (event.type == FlushStreamEvent.FLUSH_COMPLETE) {
+				try {
 					this.callInterfaceDelegate("flushComplete");
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace(err.message);
 				}
+				
 				dispatchEvent(event.clone());
-			
 			}
 		}
+
 
 		/**
 		 * show loader connecting when needed.
 		 */
-		private function onConnecting(event:Event):void
-		{
+		private function onConnecting(event:Event):void {
 			this.callInterfaceDelegate("connecting");
 			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
 			dispatchEvent(event.clone());
 		}
 
+
 		/**
 		 * remove loader connecting when needed and get back to the current view state.
 		 */
-		private function onConnectingFinish(event:Event):void
-		{
+		private function onConnectingFinish(event:Event):void {
 			this.callInterfaceDelegate("connectingFinish");
 			_view.setState(_newViewState);
 			dispatchEvent(event.clone());
 		}
 
+
 		/**
 		 * play the recorded stream.
 		 */
-		public function previewRecording():void
-		{
-			trace("PREVIEW START");
+		public function previewRecording():void {
+			if (Global.DEBUG_MODE)
+				trace("PREVIEW START");
 			var currentState:Object = _view.getState();
-			if(currentState is ViewStatePreview)
-			{
+			if (currentState is ViewStatePreview) {
 				(currentState as ViewStatePreview).player.play(new MouseEvent("click"));
 			}
-			
+
 		}
+
+
 		/**
 		 * stop playing the recorded stream.
 		 */
-		public function stopPreviewRecording():void
-		{
+		public function stopPreviewRecording():void {
 			var currentState:Object = _view.getState();
-			if(currentState is ViewStatePreview)
-			{
+			if (currentState is ViewStatePreview) {
 				(currentState as ViewStatePreview).player.stop();
 			}
 		}
 
-		private function previewEndHandler(event:RecordNetStreamEvent):void
-		{
-			trace('preview: ' + event.type);
 
-			try
-			{
+		private function previewEndHandler(event:RecordNetStreamEvent):void {
+			if (Global.DEBUG_MODE)
+				trace('preview: ' + event.type);
+
+			try {
 				this.callInterfaceDelegate("previewEnd");
 			}
-			catch (err:Error)
-			{
+			catch (err:Error) {
 				trace(err.message)
 			}
 			dispatchEvent(event.clone());
 		}
+
 
 		/**
 		 * add the last recording as a new Kaltura entry in the Kaltura Network.
@@ -822,58 +780,56 @@ package
 		 * @param group_id					used to group multiple entries in a group.
 		 * @param partner_data				special custom data for partners to store.
 		 */
-		public function addEntry(entry_name:String='', entry_tags:String='', entry_description:String='', credits_screen_name:String='', credits_site_url:String='', categories:String="", admin_tags:String='', license_type:String='', credit:String='', group_id:String='', partner_data:String=''):void
-		{
+		public function addEntry(entry_name:String = '', entry_tags:String = '', entry_description:String = '', credits_screen_name:String = '', credits_site_url:String = '', categories:String = "", admin_tags:String = '',
+			license_type:String = '', credit:String = '', group_id:String = '', partner_data:String = ''):void {
 			if (entry_name == '')
-				entry_name='recorded_entry_pid_' + recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
-			
-			  this.callInterfaceDelegate("beforeAddEntry");
+				entry_name = 'recorded_entry_pid_' + recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
+
+			this.callInterfaceDelegate("beforeAddEntry");
 			recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data);
 		}
 
-		private function addEntryFailed(event:AddEntryEvent):void
-		{
+
+		private function addEntryFailed(event:AddEntryEvent):void {
 			dispatchEvent(event.clone());
-			this.callInterfaceDelegate("addEntryFailed",{errorCode:event.info.error.errorCode , errorMsg:event.info.error.errorMsg});
+			this.callInterfaceDelegate("addEntryFailed", {errorCode: event.info.error.errorCode, errorMsg: event.info.error.errorMsg});
 		}
 
-		private function addEntryComplete(event:AddEntryEvent):void
-		{
-			var entry:KalturaMediaEntry=event.info as KalturaMediaEntry;
-			if (entry)
-			{
-				try
-				{
+
+		private function addEntryComplete(event:AddEntryEvent):void {
+			var entry:KalturaMediaEntry = event.info as KalturaMediaEntry;
+			if (entry) {
+				try {
 					this.callInterfaceDelegate("addEntryComplete", event.info);
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace(err.message)
 				}
-				trace("Your new entry is: " + entry.entryId + "\nthumb: " + entry.thumbnailUrl);
+				
+				if (Global.DEBUG_MODE)
+					trace("Your new entry is: " + entry.entryId + "\nthumb: " + entry.thumbnailUrl);
 			}
-			else
-			{
-				try
-				{
+			else {
+				try {
 					this.callInterfaceDelegate("addEntryFail", event.info);
 				}
-				catch (err:Error)
-				{
+				catch (err:Error) {
 					trace(err.message)
 				}
-				trace(ObjectUtil.toString(event.info));
+				
+				if (Global.DEBUG_MODE)
+					trace(ObjectUtil.toString(event.info));
 			}
 			dispatchEvent(event.clone());
 		}
 
-		private function streamIdChange(event:RecorderEvent):void
-		{
+
+		private function streamIdChange(event:RecorderEvent):void {
 			dispatchEvent(event.clone());
 		}
 
-		private function updateRecordedTime(event:RecorderEvent):void
-		{
+
+		private function updateRecordedTime(event:RecorderEvent):void {
 			dispatchEvent(event.clone());
 		}
 	}

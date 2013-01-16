@@ -377,16 +377,17 @@ package {
 		 * 						To specify that picture quality can vary as needed to avoid exceeding bandwidth, pass 0 for quality.
 		 * @param bw			Specifies the maximum amount of bandwidth that the current outgoing video feed can use,
 		 * 						in bytes per second. To specify that Flash Player video can use as much bandwidth as needed to
-		 * 						maintain the value of quality, pass 0 for bandwidth. The default value is 16384.
+		 * 						maintain the value of quality, pass 0 for bandwidth.
 		 * @param w				the width of the frame.
 		 * @param h				the height of the frame.
 		 * @param fps			frame per second to use.
-		 * @param fps			frame per second to use.
-		 * @param gop			The distance (in frames) between 2 keyframes
+		 * @param gop			Specifies which video frames are transmitted in full (called keyframes) instead of 
+		 * 						being interpolated by the video compression algorithm. default value: 25
 		 * @bufferTime			This parameter compensates for lower connectivity or inconstant bandwidth
-		 * 						so no content will be lost.
+		 * 						so no content will be lost. default value: 70
 		 */
 		public function setQuality(quality:int, bw:int, w:int, h:int, fps:Number, gop:int = 25, bufferTime:Number = 70):void {
+			// default values:		85, 		0, 		336, 	252, 	25
 			recordControl.bufferTime = bufferTime;
 			recordControl.setQuality(quality, bw, w, h, fps, gop);
 		}
@@ -564,7 +565,7 @@ package {
 
 
 		private function deviceDetected(event:DeviceDetectionEvent):void {
-			//add the detected mic notification
+			// add the detected mic notification
 			if (event.type == DeviceDetectionEvent.DETECTED_MICROPHONE) {
 				try {
 					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_MICROPHONE);
@@ -573,9 +574,6 @@ package {
 					trace(err.message)
 				}
 			}
-
-
-
 
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);

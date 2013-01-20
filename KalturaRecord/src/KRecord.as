@@ -290,7 +290,7 @@ package {
 					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
 					var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
 					autoPreview = !(appparams.autopreview == "0" || appparams.autopreview == "false");
-				//	_limitRecord = KConfigUtil.getDefaultValue(appparams.limitrecord, 0);
+					_limitRecord = KConfigUtil.getDefaultValue(appparams.limitrecord, 0);
 					var hostUrl:String = KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
 					var rtmpHost:String = KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
 					var ks:String = KConfigUtil.getDefaultValue(appparams.ks, "");

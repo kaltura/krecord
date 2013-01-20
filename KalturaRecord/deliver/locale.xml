@@ -39,7 +39,11 @@
 		<key>Dialog.ConnectionError</key>
 		<value>Connection error. Please try again later</value>
 	</setting>
-<!-- Eitan Additions -->
+	
+	<setting>
+		<key>Dialog.Processing</key>
+		<value>Processing...</value>
+	</setting>
 	
 	<setting>
 		<key>Error.micDenied</key>

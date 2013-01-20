@@ -45,7 +45,7 @@ package com.kaltura.recording.controller {
 	import com.kaltura.recording.controller.events.AddEntryEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
 	import com.kaltura.vo.KalturaMediaEntry;
-
+	
 	import flash.events.AsyncErrorEvent;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -61,8 +61,10 @@ package com.kaltura.recording.controller {
 	import flash.net.NetStream;
 	import flash.net.ObjectEncoding;
 	import flash.utils.Timer;
+	import flash.utils.clearInterval;
 	import flash.utils.getTimer;
-
+	import flash.utils.setInterval;
+	
 	import mx.utils.ObjectUtil;
 	import mx.utils.UIDUtil;
 
@@ -216,8 +218,8 @@ package com.kaltura.recording.controller {
 
 
 		/**
-		*the duration of the recording in milliseconds.
-		*/
+		 * the duration of the recording in milliseconds.
+		 */
 		public function get recordedTime():uint {
 			return _recordedTime;
 		}
@@ -761,11 +763,10 @@ package com.kaltura.recording.controller {
 				trace("publishing: " + _streamUid);
 				connecting = true; //setting loader until the Record.Start is called
 				_recordStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
-//				netStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
 				_recordStartTime = getTimer();
 			}
 		}
-
+		
 
 		/**
 		 * stop publishing to the server.
@@ -774,7 +775,6 @@ package com.kaltura.recording.controller {
 			setRecordedTime(getTimer() - _recordStartTime);
 			if (_recordStream)
 				_recordStream.close();
-//				netStream.stop();
 		}
 
 
@@ -799,7 +799,6 @@ package com.kaltura.recording.controller {
 			trace("stopPreviewRecording");
 			if (_previewStream) {
 				_firstPreviewPause = true;
-//				netStream.stop();
 				_previewStream.close();
 			}
 		}
@@ -810,8 +809,6 @@ package com.kaltura.recording.controller {
 		  */
 		public function pausePreviewRecording():void {
 			trace("pausePreviewRecording");
-//			if (netStream)
-//				netStream.pause();
 			if (_previewStream) {
 				_previewStream.pause();
 			}
@@ -823,8 +820,6 @@ package com.kaltura.recording.controller {
 		 */
 		public function seek(offset:Number):void {
 			trace("seek");
-//			if (netStream)
-//				netStream.seek( offset );
 			if (_previewStream)
 				_previewStream.seek(offset);
 		}
@@ -835,8 +830,6 @@ package com.kaltura.recording.controller {
 		 */
 		public function resume():void {
 			trace("resume");
-//			if (netStream)
-//				netStream.resume();
 			if (_previewStream)
 				_previewStream.resume();
 		}
@@ -846,8 +839,6 @@ package com.kaltura.recording.controller {
 		 * The position of the playing stream playhead, in seconds.
 		 */
 		public function get playheadTime():Number {
-//			if (netStream)
-//				return netStream.time;
 			if (_previewStream) {
 				return _previewStream.time;
 			}
@@ -878,9 +869,6 @@ package com.kaltura.recording.controller {
 		}
 
 
-		///
-		///
-		///
 
 		/**
 		 * add the last recording as a new Kaltura entry in the Kaltura Network.

@@ -62,6 +62,8 @@ package {
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
 	import flash.utils.Timer;
+	import flash.utils.clearInterval;
+	import flash.utils.setInterval;
 	
 	import mx.utils.ObjectUtil;
 
@@ -288,7 +290,7 @@ package {
 					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
 					var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
 					autoPreview = !(appparams.autopreview == "0" || appparams.autopreview == "false");
-					_limitRecord = KConfigUtil.getDefaultValue(appparams.limitrecord, 0);
+				//	_limitRecord = KConfigUtil.getDefaultValue(appparams.limitrecord, 0);
 					var hostUrl:String = KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
 					var rtmpHost:String = KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
 					var ks:String = KConfigUtil.getDefaultValue(appparams.ks, "");
@@ -383,8 +385,10 @@ package {
 		 * @param fps			frame per second to use.
 		 * @param gop			Specifies which video frames are transmitted in full (called keyframes) instead of 
 		 * 						being interpolated by the video compression algorithm. default value: 25
-		 * @bufferTime			This parameter compensates for lower connectivity or inconstant bandwidth
-		 * 						so no content will be lost. default value: 70
+		 * @bufferTime			bufferTime specifies how long the outgoing buffer can grow before the application starts dropping frames. 
+		 * 						On a high-speed connection, buffer time is not a concern; data is sent almost as quickly as the application 
+		 * 						can buffer it. On a slow connection, however, there can be a significant difference between how fast the 
+		 * 						application buffers the data and how fast it is sent to the client. default value: 70 
 		 */
 		public function setQuality(quality:int, bw:int, w:int, h:int, fps:Number, gop:int = 25, bufferTime:Number = 70):void {
 			// default values:		85, 		0, 		336, 	252, 	25
@@ -681,11 +685,47 @@ package {
 				_limitRecordTimer = null;
 			}
 
-			_newViewState = "preview"
-			_view.setState(_newViewState);
 			if (Global.DEBUG_MODE)
 				trace("KRecord==>stopRecording()");
 			recordControl.stopRecording();
+			
+			if (!isNaN(recordControl.bufferLength)) {
+				if (recordControl.bufferLength > 0) {
+					bufferInterval = setInterval(checkBufferEmpty, 50);
+				}
+				else {
+					switchToPreview();
+				}
+			}
+			else {
+				// never should happen
+				switchToPreview();
+			}
+		}
+		
+		/**
+		 * container variable for buffer check interval  
+		 */		
+		private var bufferInterval:int;
+		
+		/**
+		 * make sure all file data is sent before proceeding to save 
+		 */
+		private function checkBufferEmpty():void {
+			if (Global.DEBUG_MODE)
+				trace('buffer: ', recordControl.bufferLength);
+			if (recordControl.bufferLength <= 0) {
+				clearInterval(bufferInterval);
+				switchToPreview();
+			}
+		}
+		
+		/**
+		 * go to "preview" state 
+		 */
+		private function switchToPreview() :void {
+			_newViewState = "preview"
+			_view.setState(_newViewState);
 		}
 
 

@@ -84,6 +84,14 @@ package com.kaltura.recording.controller {
 	[Event(name = "flushComplete", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
 	[Event(name = "addEntryResult", type = "com.kaltura.recording.controller.events.AddEntryEvent")]
 	[Event(name = "addEntryFault", type = "com.kaltura.recording.controller.events.AddEntryEvent")]
+	
+	/**
+	 * dispatched when the buffer is empty after recording is stopped
+	 * */
+	[Event(name = "bufferEmpty", type = "flash.events.Event")]
+	
+	
+	
 	/**
 	 * KRECORDER - Flash Video and Audio Recording and Contributing Application.
 	 * <p>Goals:
@@ -615,12 +623,6 @@ package com.kaltura.recording.controller {
 		}
 
 
-		private function onSomeErrorForDebug(evt:Event):void {
-			trace("KRecord connection error " + evt.type);
-
-		}
-
-
 		/**
 		 * the net connection status report while working.
 		 */
@@ -701,14 +703,6 @@ package com.kaltura.recording.controller {
 		}
 
 
-		/**
-		 * the stream is fully flushed and saved on the server.
-		 */
-//		protected function streamFlushBubble (event:FlushStreamEvent):void
-//		{
-//			trace("streamFlushBubble");
-//			dispatchEvent(event.clone());
-//		}
 
 		/**
 		 * the server confirmed start recording.
@@ -764,19 +758,47 @@ package com.kaltura.recording.controller {
 				connecting = true; //setting loader until the Record.Start is called
 				_recordStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
 				_recordStartTime = getTimer();
+//				inter = setInterval(track, 50);
 			}
 		}
 		
-
+		private var inter:int;
+		
+//		private function track():void {
+//			trace('bufferLength: ', _recordStream.bufferLength);
+//		}
+		
+		
 		/**
-		 * stop publishing to the server.
-		 */
-		public function stopRecording():void {
-			setRecordedTime(getTimer() - _recordStartTime);
-			if (_recordStream)
+		 * if buffer empty, close stream and notify
+		 * */
+		private function checkBufferFlushed():void {
+			trace("buffer: ", _recordStream.bufferLength);
+			if (_recordStream.bufferLength <= 0) {
+				clearInterval(inter);
 				_recordStream.close();
+				_recordHalted = false;
+				dispatchEvent(new Event("bufferEmpty"));
+			}
 		}
 
+		/**
+		 * stop publishing to the server: attach null camera and mic so the stream 
+		 * will keep publishing. when buffer is empty, we close it.
+		 * @see checkBufferFlushed()
+		 */
+		public function stopRecording():void {
+//			clearInterval(inter);
+			setRecordedTime(getTimer() - _recordStartTime);
+			if (_recordStream) {
+				_recordHalted = true;
+				_recordStream.attachAudio(null);
+				_recordStream.attachCamera(null);
+				inter = setInterval(checkBufferFlushed, 50);
+			}
+		}
+
+		private var _recordHalted:Boolean;
 
 		/**
 		 * play the recorded stream.

@@ -211,9 +211,6 @@ package {
 
 		private function onStopRecord(evt:ViewEvent = null):void {
 			stopRecording();
-			_newViewState = "preview";
-			if (!recordControl.connecting)
-				_view.setState(_newViewState);
 		}
 
 
@@ -360,6 +357,9 @@ package {
 			recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
 			recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
 			recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
+			
+			recordControl.addEventListener("bufferEmpty", switchToPreview);
+			
 			if (Global.DEBUG_MODE)
 				trace("call deviceDetection");
 			recordControl.deviceDetection();
@@ -582,6 +582,7 @@ package {
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
 				setQuality(85, 0, 336, 252, 25);
+//				setQuality(100, 0, 1080, 920, 30, 1);
 				recordControl.connectToRecordingServie();
 				try {
 					this.callInterfaceDelegate("deviceDetected");
@@ -679,6 +680,8 @@ package {
 		 * stop publishing to the server.
 		 */
 		public function stopRecording():void {
+			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Processing"));
+			
 			if (_limitRecordTimer) {
 				_limitRecordTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onRecordTimeComplete);
 				_limitRecordTimer.stop();
@@ -688,42 +691,12 @@ package {
 			if (Global.DEBUG_MODE)
 				trace("KRecord==>stopRecording()");
 			recordControl.stopRecording();
-			
-			if (!isNaN(recordControl.bufferLength)) {
-				if (recordControl.bufferLength > 0) {
-					bufferInterval = setInterval(checkBufferEmpty, 50);
-				}
-				else {
-					switchToPreview();
-				}
-			}
-			else {
-				// never should happen
-				switchToPreview();
-			}
-		}
-		
-		/**
-		 * container variable for buffer check interval  
-		 */		
-		private var bufferInterval:int;
-		
-		/**
-		 * make sure all file data is sent before proceeding to save 
-		 */
-		private function checkBufferEmpty():void {
-			if (Global.DEBUG_MODE)
-				trace('buffer: ', recordControl.bufferLength);
-			if (recordControl.bufferLength <= 0) {
-				clearInterval(bufferInterval);
-				switchToPreview();
-			}
 		}
 		
 		/**
 		 * go to "preview" state 
 		 */
-		private function switchToPreview() :void {
+		private function switchToPreview(event:Event) :void {
 			_newViewState = "preview"
 			_view.setState(_newViewState);
 		}

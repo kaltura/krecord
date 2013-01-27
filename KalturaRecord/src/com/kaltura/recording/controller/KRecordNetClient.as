@@ -136,6 +136,10 @@ package com.kaltura.recording.controller
 			//trace("onBWDone: ");
 		}
 		
+		public function onBWCheck():void {
+			//trace("onBWonBWCheck: ");
+		}
+		
 		public function streamInfo(info:Object):void {
 			//trace("This is Stream info:  " + info);
 		}

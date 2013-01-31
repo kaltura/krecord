@@ -62,8 +62,6 @@ package {
 	import flash.ui.ContextMenu;
 	import flash.ui.ContextMenuItem;
 	import flash.utils.Timer;
-	import flash.utils.clearInterval;
-	import flash.utils.setInterval;
 	
 	import mx.utils.ObjectUtil;
 
@@ -100,7 +98,7 @@ package {
 		private var _limitRecordTimer:Timer;
 
 
-		public static const VERSION:String = "v1.5.13";
+		public static const VERSION:String = "v1.6";
 
 
 		/**
@@ -125,8 +123,7 @@ package {
 
 			stageResize(null);
 
-			var initParams:KRecordViewParams;
-			//read flashVars (uses these lines only when flashVars and ExternalInterface control is needed):
+			// read flashVars (uses these lines only when flashVars and ExternalInterface control is needed):
 			var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
 			var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
 			if (appparams.showui == "false") {
@@ -139,14 +136,27 @@ package {
 			var themeUrl:String = KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
 			var localeUrl:String = KConfigUtil.getDefaultValue(appparams.localeurl, "locale.xml");
 			var autoPreview:String = KConfigUtil.getDefaultValue(appparams.autopreview, "1");
-			if (appparams.showpreviewtimer == "true" || appparams.showpreviewtimer == "0")
+			if (appparams.showpreviewtimer == "true" || appparams.showpreviewtimer == "1")
 				Global.SHOW_PREVIEW_TIMER = true;
+			
 			Global.REMOVE_PLAYER = (appparams.removeplayer == "1" || appparams.removeplayer == "true");
-			initParams = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
-
+			Global.VIEW_PARAMS = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
 			Global.DETECTION_DELAY = appparams.hasOwnProperty("detectiondelay") ? uint(appparams.detectiondelay) : 0;
+			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick == "1" || appparams.disableglobalclick == "true");
+			
 			Global.DEBUG_MODE = appparams.hasOwnProperty("debugmode") ? true : false;
+			recordControl.debugTrace = Global.DEBUG_MODE;
+			
+			// H264 codec related
+			recordControl.isH264 = (appparams.ish264 == "1" || appparams.ish264 == "true");
+			if (appparams.hasOwnProperty("h264profile")) {
+				recordControl.h264Profile = appparams.h264profile;
+			}
+			if (appparams.hasOwnProperty("h264level")) {
+				recordControl.h264Level = appparams.h264level;
+			}
 
+			// create Kaltura client 
 			var configuration:KalturaConfig = new KalturaConfig();
 			configuration.partnerId = appparams.pid;
 			configuration.ignoreNull = 1;
@@ -165,8 +175,7 @@ package {
 
 			Global.KALTURA_CLIENT = new KalturaClient(configuration);
 
-			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick == "1" || appparams.disableglobalclick == "true");
-			Global.VIEW_PARAMS = initParams;
+			
 			_view.addEventListener(ViewEvent.VIEW_READY, startApplication);
 			addChild(_view);
 		}
@@ -465,11 +474,11 @@ package {
 			try {
 				var paramObj:Object = this.root.loaderInfo.parameters;
 				var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
-				var delegate:String = KConfigUtil.getDefaultValue(paramObj.delegate, "window");
+				var delegate:String = KConfigUtil.getDefaultValue(appparams.delegate, "window");
 				ExternalInterface.call("eval(" + delegate + "." + methodName + ")", args);
 			}
 			catch (err:Error) {
-				trace(err.message)
+				trace("callInterfaceDelegate: ", err.message)
 			}
 			//print message on screen
 			var message:String = "";
@@ -582,7 +591,6 @@ package {
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
 				setQuality(85, 0, 336, 252, 25);
-//				setQuality(100, 0, 1080, 920, 30, 1);
 				recordControl.connectToRecordingServie();
 				try {
 					this.callInterfaceDelegate("deviceDetected");

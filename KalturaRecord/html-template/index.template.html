@@ -1,137 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- saved from url=(0014)about:internet -->
-<html lang="en">
-
-<!-- 
-Smart developers always View Source. 
-
-This application was built using Adobe Flex, an open source framework
-for building rich Internet applications that get delivered via the
-Flash Player or to desktops via Adobe AIR. 
-
-Learn more about Flex at http://flex.org 
-// -->
-<!-- test -->
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
-<!--  BEGIN Browser History required section -->
-<link rel="stylesheet" type="text/css" href="history/history.css" />
-<!--  END Browser History required section -->
-
-<title>${title}</title>
-<script src="AC_OETags.js" language="javascript"></script>
-
-<!--  BEGIN Browser History required section -->
-<script src="history/history.js" language="javascript"></script>
-<!--  END Browser History required section -->
-
-<style>
-body { margin: 0px; overflow:hidden }
-</style>
-<script language="JavaScript" type="text/javascript">
-<!--
-// -----------------------------------------------------------------------------
-// Globals
-// Major version of Flash required
-var requiredMajorVersion = ${version_major};
-// Minor version of Flash required
-var requiredMinorVersion = ${version_minor};
-// Minor version of Flash required
-var requiredRevision = ${version_revision};
-// -----------------------------------------------------------------------------
-// -->
-</script>
-</head>
-
-<body scroll="no">
-<script language="JavaScript" type="text/javascript">
-<!--
-var rnd = Math.random();
-var initVars = 
-	"host=www.kaltura.com" +
-	"&kshowId=-1" +
-	"&autoPreview=false" +
-	"&disableglobalclick=false" +
-	"&limitRecord=100" +
-	"&showPreviewTimer=true" +
-	"&showErrorMessege=true" +
-	"&removeplayer=false" +
-	"&pid=346151" +
-	"&subpid=34615100" +
-	"&uid=atar" +
-	"&messageX=50" +
-	"&ks=MGY2ZWFiNzM5NDJlODNmMDA3YmQzMDNmMjRkNmMyZWZlODA3NmQyNHwzNDYxNTE7MzQ2MTUxOzM1MDU5MTkxMDQ7MjsxMzU4NDM1NDU4LjExMjE7YXRhcjtkaXNhYmxlZW50aXRsZW1lbnQ7Ow==" +
-	"&themeUrl=../deliver/skin.swf" +
-	"&localeUrl=../deliver/locale.xml" +
-	"&entryName=Atar test " + rnd +
-	"&entryTags=entry,webcam" +
-	"&categories=cat1,cat2" +
-	"&entryDescription=this is my testing entry for webcam " + rnd +
-	"&creditsScreenName=atars"
-	"&creditsSiteUrl=http://justatry.com" +
-	"&thumbOffset=1" +
-	"&adminTags=" +
-	"&licenseType=CC-0.1" +
-	"&credit=my entry contributor name" +
-	"&groupId=" +
-	"&showUi=true"+
-	"&partnerData=my_pd";
-
-	
-// Version check for the Flash Player that has the ability to start Player Product Install (6.0r65)
-var hasProductInstall = DetectFlashVer(6, 0, 65);
-
-// Version check based upon the values defined in globals
-var hasRequestedVersion = DetectFlashVer(requiredMajorVersion, requiredMinorVersion, requiredRevision);
-
-if ( hasProductInstall && !hasRequestedVersion ) {
-	// DO NOT MODIFY THE FOLLOWING FOUR LINES
-	// Location visited after installation is complete if installation is required
-	var MMPlayerType = (isIE == true) ? "ActiveX" : "PlugIn";
-	var MMredirectURL = window.location;
-    document.title = document.title.slice(0, 47) + " - Flash Player Installation";
-    var MMdoctitle = document.title;
-
-	AC_FL_RunContent(
-		"src", "playerProductInstall",
-		"FlashVars", "MMredirectURL="+MMredirectURL+'&MMplayerType='+MMPlayerType+'&MMdoctitle='+MMdoctitle+"",
-		"width", "${width}",
-		"height", "${height}",
-		"align", "middle",
-		"id", "${application}",
-		"quality", "high",
-		"bgcolor", "${bgcolor}",
-		"name", "${application}",
-		"allowScriptAccess","sameDomain",
-		"type", "application/x-shockwave-flash",
-		"pluginspage", "http://www.adobe.com/go/getflashplayer"
-	);
-} else if (hasRequestedVersion) {
-	// if we've detected an acceptable version
-	// embed the Flash Content SWF when all tests are passed
-	AC_FL_RunContent(
-			"src", "${swf}",
-			"width", "${width}",
-			"height", "${height}",
-			"align", "middle",
-			"id", "${application}",
-			"quality", "high",
-			"bgcolor", "${bgcolor}",
-			"name", "${application}",
-			"FlashVars", initVars,
-			"allowScriptAccess","sameDomain",
-			"type", "application/x-shockwave-flash",
-			"pluginspage", "http://www.adobe.com/go/getflashplayer"
-	);
-  } else {  // flash is too old or we can't detect the plugin
-    var alternateContent = 'Alternate HTML content should be placed here. '
-  	+ 'This content requires the Adobe Flash Player. '
-   	+ '<a href=http://www.adobe.com/go/getflash/>Get Flash</a>';
-    document.write(alternateContent);  // insert non-flash content
-  }
-// -->
-</script>
-	<script>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"> 
+    <!-- 
+    Smart developers always View Source. 
+    
+    This application was built using Adobe Flex, an open source framework
+    for building rich Internet applications that get delivered via the
+    Flash Player or to desktops via Adobe AIR. 
+    
+    Learn more about Flex at http://flex.org 
+    // -->
+    <head>
+        <title>${title}</title>
+        <meta name="google" value="notranslate" />         
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!-- Include CSS to eliminate any default margins/padding and set the height of the html element and 
+             the body element to 100%, because Firefox, or any Gecko based browser, interprets percentage as 
+             the percentage of the height of its parent container, which has to be set explicitly.  Fix for
+             Firefox 3.6 focus border issues.  Initially, don't display flashContent div so it won't show 
+             if JavaScript disabled.
+        -->
+        <style type="text/css" media="screen"> 
+            html, body  { height:100%; }
+            body { margin:0; padding:0; overflow:auto; text-align:center; 
+                   background-color: ${bgcolor}; }   
+            object:focus { outline:none; }
+            #flashContent { display:none; }
+        </style>
+        
+        <!-- Enable Browser History by replacing useBrowserHistory tokens with two hyphens -->
+        <!-- BEGIN Browser History required section ${useBrowserHistory}>
+        <link rel="stylesheet" type="text/css" href="history/history.css" />
+        <script type="text/javascript" src="history/history.js"></script>
+        <!${useBrowserHistory} END Browser History required section -->  
+            
+        <script type="text/javascript" src="swfobject.js"></script>
+        <script type="text/javascript">
+	        var rnd = Math.random();
+	        var initVars = {
+	        	debugmode:"true",
+	        	/*
+	        	host:"www.kaltura.com",
+	        	rtmphost:"rtmp://rtmp.kaltura.com",
+	        	pid:"346151",
+	        	subpid:"34615100",
+	        	ks:"ZWM5NDk0YjY4ZDBlN2JlYjI0NWZmM2U0MTYzN2Y4ZmJmOTBkYTc2ZXwzNDYxNTE7MzQ2MTUxOzEzNTk1MzM4ODE7MjsxMzU5NDQ3NDgxLjM5MDk7YXRhcjtkaXNhYmxlZW50aXRsZW1lbnQ7Ow==",
+	        	*/
+	        	host:"onprem-falcon2.kaltura.dev",
+	        	rtmphost:"rtmp://onprem-falcon2.kaltura.dev:1935",
+	        	pid:"104",
+	        	subpid:"10400",
+	        	ks:"ZTQ3ZWI1ZGEyZGE1YjlhODRkOTA3MTU0NWYxODAwMDMyYjRlNGFmOXwxMDQ7MTA0OzEzNTk2NDE5Njk7MjsxMzU5NTU1NTY5LjEwNTE7c2htdWxpay5ibGFjaGVyQGthbHR1cmEuY29tOyosZGlzYWJsZWVudGl0bGVtZW50Ozs",
+	        	kshowId:"-1",
+	        	autoPreview:"false",
+	        	disableglobalclick:"false",
+	        	limitRecord:"100",
+	        	showPreviewTimer:"true",
+	        	showErrorMessege:"true",
+	        	removeplayer:"false",
+	        	uid:"atar",
+	        	messageX:"50",
+	        	themeUrl:"../deliver/skin.swf",
+	        	localeUrl:"../deliver/locale.xml",
+	        	entryName:"Atar test " + rnd,
+	        	entryTags:"entry,webcam",
+	        	categories:"cat1,cat2",
+	        	entryDescription:"this is my testing entry for webcam " + rnd,
+	        	creditsScreenName:"atars",
+	        	creditsSiteUrl:"http://justatry.com",
+	        	thumbOffset:"1",
+	        	adminTags:"",
+	        	licenseType:"CC-0.1",
+	        	credit:"my entry contributor name",
+	        	groupId:"",
+	        	showUi:"true",
+	        	partnerData:"my_pd"
+	        };
+		
+            // For version detection, set to min. required Flash Player version, or 0 (or 0.0.0), for no version detection. 
+            var swfVersionStr = "${version_major}.${version_minor}.${version_revision}";
+            // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
+            var xiSwfUrlStr = "${expressInstallSwf}";
+            var flashvars = initVars;
+            var params = {};
+            params.quality = "high";
+            params.bgcolor = "${bgcolor}";
+            params.allowscriptaccess = "sameDomain";
+            params.allowfullscreen = "true";
+            var attributes = {};
+            attributes.id = "${application}";
+            attributes.name = "${application}";
+            attributes.align = "middle";
+            swfobject.embedSWF(
+                "${swf}.swf", "flashContent", 
+                "${width}", "${height}", 
+                swfVersionStr, xiSwfUrlStr, 
+                flashvars, params, attributes);
+            // JavaScript enabled so display the flashContent div in case it is not replaced with a swf object.
+            swfobject.createCSS("#flashContent", "display:block;text-align:left;");
+        </script>
+    </head>
+    <body>
+    <script>
 		function clickFunction() {
 			var kRecord = document.getElementById("${application}");
 			alert (kRecord.getMicrophoneGain());
@@ -151,7 +121,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			kRecord.setMicrophoneGain(val);
 		}
 		function autoStopRecord(a) {
-			//alert('autoStopRecord after '+a+' seconds');
+			alert('autoStopRecord after '+a+' seconds');
 		}
 		
 		function noCamerasFound() {
@@ -177,36 +147,59 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 		
 		function delegator(message,args) {
 			document.getElementById("delegatorText").value+="\n"+message+"  "+args;
-			if(args)
+			if(args && args[0] && args[0][0])
 			{
-				//document.getElementById("delegatorText").value+="\n"+args[0][0]['errorMsg'];
-				//document.getElementById("delegatorText").value+="\n"+args[0][0]['errorCode'];
+				document.getElementById("delegatorText").value+="\n"+args[0][0]['errorMsg'];
+				document.getElementById("delegatorText").value+="\n"+args[0][0]['errorCode'];
 			}
 		}
-		
-		
-		
 	</script>
-<noscript>
-  	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-			id="${application}" width="${width}" height="${height}"
-			codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
-			<param name="movie" value="${swf}.swf" />
-			<param name="quality" value="high" />
-			<param name="bgcolor" value="${bgcolor}" />
-			<param name="allowScriptAccess" value="sameDomain" />
-			<embed src="${swf}.swf" quality="high" bgcolor="${bgcolor}"
-				width="${width}" height="${height}" name="${application}" align="middle"
-				play="true"
-				loop="false"
-				quality="high"
-				allowScriptAccess="sameDomain"
-				type="application/x-shockwave-flash"
-				pluginspage="http://www.adobe.com/go/getflashplayer">
-			</embed>
-	</object>
-</noscript>
-	<br/>
+        <!-- SWFObject's dynamic embed method replaces this alternative HTML content with Flash content when enough 
+             JavaScript and Flash plug-in support is available. The div is initially hidden so that it doesn't show
+             when JavaScript is disabled.
+        -->
+        <div id="flashContent">
+            <p>
+                To view this page ensure that Adobe Flash Player version 
+                ${version_major}.${version_minor}.${version_revision} or greater is installed. 
+            </p>
+            <script type="text/javascript"> 
+                var pageHost = ((document.location.protocol == "https:") ? "https://" : "http://"); 
+                document.write("<a href='http://www.adobe.com/go/getflashplayer'><img src='" 
+                                + pageHost + "www.adobe.com/images/shared/download_buttons/get_flash_player.gif' alt='Get Adobe Flash player' /></a>" ); 
+            </script> 
+        </div>
+        
+        <noscript>
+            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="${width}" height="${height}" id="${application}">
+                <param name="movie" value="${swf}.swf" />
+                <param name="quality" value="high" />
+                <param name="bgcolor" value="${bgcolor}" />
+                <param name="allowScriptAccess" value="sameDomain" />
+                <param name="allowFullScreen" value="true" />
+                <!--[if !IE]>-->
+                <object type="application/x-shockwave-flash" data="${swf}.swf" width="${width}" height="${height}">
+                    <param name="quality" value="high" />
+                    <param name="bgcolor" value="${bgcolor}" />
+                    <param name="allowScriptAccess" value="sameDomain" />
+                    <param name="allowFullScreen" value="true" />
+                <!--<![endif]-->
+                <!--[if gte IE 6]>-->
+                    <p> 
+                        Either scripts and active content are not permitted to run or Adobe Flash Player version
+                        ${version_major}.${version_minor}.${version_revision} or greater is not installed.
+                    </p>
+                <!--<![endif]-->
+                    <a href="http://www.adobe.com/go/getflashplayer">
+                        <img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash Player" />
+                    </a>
+                <!--[if !IE]>-->
+                </object>
+                <!--<![endif]-->
+            </object>
+        </noscript>    
+        
+        <br/>
 	<button type="button" onclick="clickFunction()">getMicrophoneGain</button>
 	<input id="volumeLevel"/>
 	<button type="button" onclick="setVolume()">setMicrophoneGain</button>
@@ -216,8 +209,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	<button type="button" onclick="previewRecording()">start preview</button>
 	<br/>
 	
-	<TEXTAREA NAME="delegatorText" id="delegatorText" ROWS=10 COLS=30>
+	<textarea name="delegatorText" id="delegatorText" rows=10 cols=30 />
 
-	</TEXTAREA>
-</body>
+   </body>
 </html>

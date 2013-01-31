@@ -1,0 +1,43 @@
+KRecord flashvars
+=================
+showui, default: "false"
+showerrormessage, if ("true" || "1") set to true
+themeurl
+localeurl
+autopreview "1"
+showpreviewtimer, if ("true" || "1") set to true
+removeplayer, if ("1" || "true") set to true
+detectiondelay, default: 0
+disableglobalclick,  if ("1" || "true") set to true
+debugmode, if any value set to true
+
+ish264,  if ("1" || "true") set to true, encode video in h264 codec
+h264profile,	profile to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Profile.html) 
+h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Level.html)
+
+pid, partner id
+subpid
+uid, Partner User id
+host, "http://www.kaltura.com"
+rtmphost, "rtmp://www.kaltura.com"
+ks
+httpprotocol
+
+limitrecord, 0, in seconds
+kshowid, "-1", kshow to associate the recordings to
+fmsapp, "oflaDemo"
+messagex, 0, x position of messages
+messagey, 0, y position of messages
+
+entryname, "", the name for the new added entry.
+entrytags, "", user tags for the newly created entry
+entrydescription, "", description of the newly created entry
+creditsscreenName, "", for anonymous user applications - the screen name of the user that contributed the entry
+creditssiteUrl, "", for anonymous user applications - the website url of the user that contributed the entry
+categories, "", comma seperated string of category full names
+admintags, "", admin tags for the newly created entry 
+licensetype, "", the content license type to use (this is arbitrary to be set by the partner)
+credit, "", custom partner credit field, will be used to attribute the contributing source
+groupid, "", used to group multiple entries in a group.
+partnerdata, "", special custom data for partners to store.
+

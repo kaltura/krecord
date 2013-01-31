@@ -590,7 +590,7 @@ package {
 
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
-				setQuality(85, 0, 336, 252, 25);
+				setInitialQuality();
 				recordControl.connectToRecordingServie();
 				try {
 					this.callInterfaceDelegate("deviceDetected");
@@ -609,6 +609,22 @@ package {
 			dispatchEvent(event.clone());
 		}
 
+		/**
+		 * set initial recording quality according to flashvars or default 
+		 */
+		private function setInitialQuality():void {
+			var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
+			var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
+			
+			var quality:int = appparams.hasOwnProperty("quality") ? appparams.quality : 85;
+			var bw:int = appparams.hasOwnProperty("bw") ? appparams.bw : 0;
+			var w:int = appparams.hasOwnProperty("width") ? appparams.width : 336;
+			var h:int = appparams.hasOwnProperty("height") ? appparams.height : 252;
+			var fps:Number = appparams.hasOwnProperty("fps") ? appparams.fps : 25;
+			var gop:Number = appparams.hasOwnProperty("gop") ? appparams.gop : 25;
+			var bufferTime:Number = appparams.hasOwnProperty("bufferTime") ? appparams.bufferTime : 70;
+			setQuality(quality, bw, w, h, fps, gop, bufferTime);
+		}
 
 		private function connected(event:ExNetConnectionEvent):void {
 			_view.setState("start");

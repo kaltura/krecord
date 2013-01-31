@@ -768,7 +768,7 @@ package com.kaltura.recording.controller {
 				
 				if (isH264) {
 					var h264Settings:H264VideoStreamSettings = new H264VideoStreamSettings();
-					h264Settings.setProfileLevel(H264Profile.MAIN, H264Level.LEVEL_2);
+					h264Settings.setProfileLevel(h264Profile, h264Level);
 					_recordStream.videoStreamSettings = h264Settings;
 					_recordStream.publish("mp4:" + _streamUid + ".f4v", RecordNetStream.PUBLISH_METHOD_RECORD);
 					

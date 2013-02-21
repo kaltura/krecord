@@ -254,8 +254,6 @@ package com.kaltura.recording.controller {
 			return _recordedTime;
 		}
 
-		private var _firstPreviewPause:Boolean = true;
-
 
 		/**
 		 * show "trace"  
@@ -701,11 +699,6 @@ package com.kaltura.recording.controller {
 		}
 
 
-		private function readyToPreview():void {
-			_firstPreviewPause = false;
-			resume();
-		}
-
 
 
 		/**
@@ -726,7 +719,6 @@ package com.kaltura.recording.controller {
 		protected function stoppedStream(event:RecordNetStreamEvent):void {
 			if (debugTrace) 
 				trace("stoppedStream");
-			_firstPreviewPause = true;
 			delayedStoppedHandler(event);
 		}
 
@@ -858,7 +850,6 @@ package com.kaltura.recording.controller {
 				trace("stopPreviewRecording");
 			
 			if (_previewStream) {
-				_firstPreviewPause = true;
 				_previewStream.close();
 			}
 		}

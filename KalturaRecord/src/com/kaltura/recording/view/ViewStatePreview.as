@@ -76,23 +76,22 @@ public class ViewStatePreview extends ViewState
 			player.mouseEnabled = false;
 			popupDialog.visible = true;		
 		}
+		else if( evt.target == popupDialog.buttonYes )
+		{
+			dispatchEvent( new ViewEvent( ViewEvent.PREVIEW_RERECORD, true ));
+		}
+		else if( evt.target == player.buttonSave )
+		{
+			player.stop();
+			dispatchEvent( new ViewEvent( ViewEvent.PREVIEW_SAVE, true ));
+		}
+		
 		
 		if( evt.target == popupDialog.buttonYes || evt.target == popupDialog.buttonNo )
 		{
 			player.mouseChildren = true;
 			player.mouseEnabled = true;
 			popupDialog.visible = false;
-		}
-		
-		if( evt.target == popupDialog.buttonYes )
-		{
-			dispatchEvent( new ViewEvent( ViewEvent.PREVIEW_RERECORD, true ));
-		}
-		
-		if( evt.target == player.buttonSave )
-		{
-			player.stop();
-			dispatchEvent( new ViewEvent( ViewEvent.PREVIEW_SAVE, true ));
 		}
 	}
 

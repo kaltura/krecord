@@ -257,8 +257,9 @@ package {
 					var credit:String = KConfigUtil.getDefaultValue(appparams.credit, "");
 					var groupId:String = KConfigUtil.getDefaultValue(appparams.groupid, "");
 					var partnerData:String = KConfigUtil.getDefaultValue(appparams.partnerdata, "");
+					var conversionQuality:String = KConfigUtil.getDefaultValue(appparams.conversionquality, "");
 
-					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, categories, adminTags, licenseType, credit, groupId, partnerData)
+					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, categories, adminTags, licenseType, credit, groupId, partnerData, conversionQuality)
 				}
 				catch (err:Error) {
 					trace('Error reading flashVars and initializing KRecord via html and JS');
@@ -814,14 +815,15 @@ package {
 		 * @param credit					custom partner credit feild, will be used to attribute the contributing source.
 		 * @param group_id					used to group multiple entries in a group.
 		 * @param partner_data				special custom data for partners to store.
+		 * @param conversionQuality			conversion profile to be used with entry. if null, partner defult profile is used
 		 */
 		public function addEntry(entry_name:String = '', entry_tags:String = '', entry_description:String = '', credits_screen_name:String = '', credits_site_url:String = '', categories:String = "", admin_tags:String = '',
-			license_type:String = '', credit:String = '', group_id:String = '', partner_data:String = ''):void {
+			license_type:String = '', credit:String = '', group_id:String = '', partner_data:String = '', conversionQuality:String = ''):void {
 			if (entry_name == '')
 				entry_name = 'recorded_entry_pid_' + recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
 
 			this.callInterfaceDelegate("beforeAddEntry");
-			recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data);
+			recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data, conversionQuality);
 		}
 
 

@@ -940,11 +940,12 @@ package com.kaltura.recording.controller {
 		 * @param credit					custom partner credit feild, will be used to attribute the contributing source.
 		 * @param group_id					used to group multiple entries in a group.
 		 * @param partner_data				special custom data for partners to store.
+		 * @param conversionQuality			conversion profile to be used with entry. if null, partner defult profile is used
 		 * @see com.kaltura.recording.business.AddEntryDelegate
 		 */
 		public function addEntry(entry_name:String, entry_tags:String, entry_description:String, credits_screen_name:String = '',
 			credits_site_url:String = '', categories:String = "", admin_tags:String = '', license_type:String = '',
-			credit:String = '', group_id:String = '', partner_data:String = ''):void {
+			credit:String = '', group_id:String = '', partner_data:String = '', conversionQuality:String = ''):void {
 
 			var kc:KalturaClient = Global.KALTURA_CLIENT;
 			var entry:KalturaMediaEntry = new KalturaMediaEntry();
@@ -953,14 +954,19 @@ package com.kaltura.recording.controller {
 			entry.tags = entry_tags;
 			entry.description = entry_description;
 			entry.creditUserName = credits_screen_name;
-			if (categories && categories != "")
+			if (categories && categories != "") {
 				entry.categories = categories;
+			}
 			entry.creditUrl = credits_site_url;
-			if (admin_tags && admin_tags != "")
+			if (admin_tags && admin_tags != "") {
 				entry.adminTags = admin_tags;
+			}
 			entry.licenseType = int(license_type);
 			entry.groupId = int(group_id);
 			entry.partnerData = partner_data;
+			if (conversionQuality) {
+				entry.conversionProfileId = parseInt(conversionQuality);
+			}
 			//
 			var addEntry:MediaAddFromRecordedWebcam = new MediaAddFromRecordedWebcam(entry, streamUid);
 			addEntry.useTimeout = false;

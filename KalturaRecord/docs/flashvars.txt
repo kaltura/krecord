@@ -42,4 +42,4 @@ licensetype, "", the content license type to use (this is arbitrary to be set by
 credit, "", custom partner credit field, will be used to attribute the contributing source
 groupid, "", used to group multiple entries in a group.
 partnerdata, "", special custom data for partners to store.
-
+conversionQuality, "", conversion profile to be used with entry. if null, partner defult profile is used

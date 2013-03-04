@@ -758,18 +758,18 @@ package com.kaltura.recording.controller {
 					trace("publishing: " + _streamUid);
 				connecting = true; //setting loader until the Record.Start is called
 				
+				var metaData:Object = new Object();
 				if (isH264) {
 					var h264Settings:H264VideoStreamSettings = new H264VideoStreamSettings();
 					h264Settings.setProfileLevel(h264Profile, h264Level);
 					_recordStream.videoStreamSettings = h264Settings;
 					_recordStream.publish("mp4:" + _streamUid + ".f4v", RecordNetStream.PUBLISH_METHOD_RECORD);
 					
-					var metaData:Object = new Object();
 					metaData.codec = _recordStream.videoStreamSettings.codec; 
 					metaData.profile = h264Settings.profile; 
 					metaData.level = h264Settings.level; 
 					metaData.fps = camera.fps; 
-					metaData.bandwith = camera.bandwidth; 
+					metaData.bandwidth = camera.bandwidth; 
 					metaData.height = camera.height;
 					metaData.width = camera.width;
 					metaData.keyFrameInterval = camera.keyFrameInterval;
@@ -777,6 +777,13 @@ package com.kaltura.recording.controller {
 				}
 				else {
 					_recordStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
+					
+					metaData.fps = camera.fps; 
+					metaData.bandwidth = camera.bandwidth; 
+					metaData.height = camera.height;
+					metaData.width = camera.width;
+					metaData.keyFrameInterval = camera.keyFrameInterval;
+					_recordStream.send( "@setDataFrame", "onMetaData", metaData);
 				}
 				
 				_recordStartTime = getTimer();

@@ -39,18 +39,17 @@
 	        var rnd = Math.random();
 	        var initVars = {
 	        	debugmode:"true",
-	        	/*
+	        	
 	        	host:"www.kaltura.com",
-	        	rtmphost:"rtmp://rtmp.kaltura.com",
-	        	pid:"346151",
-	        	subpid:"34615100",
-	        	ks:"ZWM5NDk0YjY4ZDBlN2JlYjI0NWZmM2U0MTYzN2Y4ZmJmOTBkYTc2ZXwzNDYxNTE7MzQ2MTUxOzEzNTk1MzM4ODE7MjsxMzU5NDQ3NDgxLjM5MDk7YXRhcjtkaXNhYmxlZW50aXRsZW1lbnQ7Ow==",
-	        	*/
-	        	host:"onprem-falcon2.kaltura.dev",
-	        	rtmphost:"rtmp://onprem-falcon2.kaltura.dev:1935",
-	        	pid:"104",
-	        	subpid:"10400",
-	        	ks:"ZTQ3ZWI1ZGEyZGE1YjlhODRkOTA3MTU0NWYxODAwMDMyYjRlNGFmOXwxMDQ7MTA0OzEzNTk2NDE5Njk7MjsxMzU5NTU1NTY5LjEwNTE7c2htdWxpay5ibGFjaGVyQGthbHR1cmEuY29tOyosZGlzYWJsZWVudGl0bGVtZW50Ozs",
+	        	rtmphost:"rtmp://www.kaltura.com:1935",
+	        	pid:"",
+	        	subpid:"00",
+	        	ks:"",
+	        	//ish264:"true",
+	        	//h264profile:"baseline",
+	        	//h264level:"3",
+	        	
+	        	//conversionQuality: "1660391",
 	        	kshowId:"-1",
 	        	autoPreview:"false",
 	        	disableglobalclick:"false",
@@ -62,7 +61,7 @@
 	        	messageX:"50",
 	        	themeUrl:"../deliver/skin.swf",
 	        	localeUrl:"../deliver/locale.xml",
-	        	entryName:"Atar test " + rnd,
+	        	entryName:"Atar H264 test " + rnd,
 	        	entryTags:"entry,webcam",
 	        	categories:"cat1,cat2",
 	        	entryDescription:"this is my testing entry for webcam " + rnd,
@@ -74,7 +73,8 @@
 	        	credit:"my entry contributor name",
 	        	groupId:"",
 	        	showUi:"true",
-	        	partnerData:"my_pd"
+	        	partnerData:"my_pd",
+	        	delegate:{}
 	        };
 		
             // For version detection, set to min. required Flash Player version, or 0 (or 0.0.0), for no version detection. 

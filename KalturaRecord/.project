@@ -3,6 +3,7 @@
 	<name>KalturaRecord</name>
 	<comment></comment>
 	<projects>
+		<project>as3FlexClient</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

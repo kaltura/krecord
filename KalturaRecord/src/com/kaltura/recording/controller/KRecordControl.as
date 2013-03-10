@@ -41,6 +41,7 @@ package com.kaltura.recording.controller {
 	import com.kaltura.recording.business.interfaces.IResponder;
 	import com.kaltura.recording.controller.events.AddEntryEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
+	import com.kaltura.utils.ConnectionTester;
 	import com.kaltura.vo.KalturaMediaEntry;
 	
 	import flash.events.Event;
@@ -56,6 +57,7 @@ package com.kaltura.recording.controller {
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	import flash.net.ObjectEncoding;
+	import flash.text.engine.ContentElement;
 	import flash.utils.Timer;
 	import flash.utils.clearInterval;
 	import flash.utils.getTimer;
@@ -220,6 +222,8 @@ package com.kaltura.recording.controller {
 		 * NetStream object used for viewing the recorded video 
 		 */		
 		private var _previewStream:NetStream;
+		
+		private var _connectionTester:ConnectionTester;
 		
 		
 		protected var _streamUid:String = UIDUtil.createUID();
@@ -593,13 +597,32 @@ package com.kaltura.recording.controller {
 			if (_previewStream) {
 				_previewStream.removeEventListener(NetStatusEvent.NET_STATUS, onPreviewNetStatus);
 			}
+			if (_connectionTester) {
+				_connectionTester.removeEventListener(ConnectionTester.SUCCESS, handlePreviewConnectionTest);
+				_connectionTester.removeEventListener(ConnectionTester.FAIL, handlePreviewConnectionTest);
+			}
 
 			// Create the playBack Stream
 			_previewStream = new NetStream(_connection);
 			_previewStream.client = new KRecordNetClient();
 			_previewStream.addEventListener(NetStatusEvent.NET_STATUS, onPreviewNetStatus);
+			_connectionTester = new ConnectionTester(_previewStream, 1500);
+			_connectionTester.addEventListener(ConnectionTester.SUCCESS, handlePreviewConnectionTest);
+			_connectionTester.addEventListener(ConnectionTester.FAIL, handlePreviewConnectionTest);
 		}
-
+		
+		
+		private function handlePreviewConnectionTest(event:Event):void {
+			if (event.type == ConnectionTester.SUCCESS) {
+				// do nothing, we're good
+			}
+			else if (event.type == ConnectionTester.FAIL) {
+				stopPreviewRecording();
+				connecting = false;
+				notifyFinish();
+			}
+			
+		}
 		
 		private function onRecordNetStatus(evt:NetStatusEvent):void {
 			if (debugTrace) 
@@ -639,6 +662,7 @@ package com.kaltura.recording.controller {
 		}
 
 
+		
 		/**
 		 * the stream report on a net status event while working.
 		 */
@@ -660,18 +684,15 @@ package com.kaltura.recording.controller {
 //					else
 						(event.target).bufferTime = EXPANDED_BUFFER_LENGTH;
 
-//					if (_timeOutTimer.running) {
-//						_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
-//						_timeOutTimer.stop();
-//						_timeOutTimer.reset();
-//					}
+					if (_connectionTester.running) {
+						_connectionTester.stop();
+					}
 					connecting = false;
 					break;
 				
 				case "NetStream.Buffer.Empty":
 					(event.target).bufferTime = START_BUFFER_LENGTH;
-//					_timeOutTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
-//					_timeOutTimer.start();
+					_connectionTester.test();
 					connecting = true;
 					break;
 				
@@ -680,9 +701,9 @@ package com.kaltura.recording.controller {
 					// wait until buffer is empty before closing
 					inter = setInterval(checkPreviewBufferFlushed, 50);
 					
-//					_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
-//					_timeOutTimer.stop();
-//					_timeOutTimer.reset();
+					if (_connectionTester.running) {
+						_connectionTester.stop();
+					}
 					break;
 			}
 
@@ -707,16 +728,6 @@ package com.kaltura.recording.controller {
 			var evt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE);
 			dispatchEvent(evt);
 		}
-
-
-		private function onTimeOut(evt:TimerEvent):void {
-			//_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
-			stopPreviewRecording();
-			connecting = false;
-			notifyFinish();
-		}
-
-
 
 
 		/**
@@ -839,7 +850,6 @@ package com.kaltura.recording.controller {
 				if (debugTrace) 
 					trace("playing: " + _streamUid);
 				
-//				_previewStream.bufferTime = START_BUFFER_LENGTH;
 				if (isH264) {
 					_previewStream.play("mp4:" + _streamUid + ".f4v");
 				}

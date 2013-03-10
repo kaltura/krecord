@@ -88,7 +88,7 @@ package com.kaltura.recording.view
 				_skin.addChild(buttonStop)
 
 			progressBar = new ProgressBar(_skin["progressBar"]);
-			progressBar.addEventListener(MouseEvent.CLICK, onMouseClick, false, 0, true);
+//			progressBar.addEventListener(MouseEvent.CLICK, onMouseClick, false, 0, true);
 			progressBar.name = "progressBar";
 			if (!Global.REMOVE_PLAYER)
 				_skin.addChild(progressBar);

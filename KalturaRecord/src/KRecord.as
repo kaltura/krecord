@@ -74,7 +74,7 @@ package {
 
 		public var autoPreview:Boolean = false;
 
-		private var recordControl:KRecordControl = new KRecordControl();
+		private var _recordControl:KRecordControl = new KRecordControl();
 
 		private var _message:TextField;
 
@@ -107,7 +107,7 @@ package {
 		 *
 		 */
 		public function KRecord(init:Boolean = true):void {
-			Global.RECORD_CONTROL = recordControl;
+			Global.RECORD_CONTROL = _recordControl;
 			addEventListener(Event.ADDED_TO_STAGE, build);
 		}
 
@@ -145,15 +145,15 @@ package {
 			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick == "1" || appparams.disableglobalclick == "true");
 			
 			Global.DEBUG_MODE = appparams.hasOwnProperty("debugmode") ? true : false;
-			recordControl.debugTrace = Global.DEBUG_MODE;
+			_recordControl.debugTrace = Global.DEBUG_MODE;
 			
 			// H264 codec related
-			recordControl.isH264 = (appparams.ish264 == "1" || appparams.ish264 == "true");
+			_recordControl.isH264 = (appparams.ish264 == "1" || appparams.ish264 == "true");
 			if (appparams.hasOwnProperty("h264profile")) {
-				recordControl.h264Profile = appparams.h264profile;
+				_recordControl.h264Profile = appparams.h264profile;
 			}
 			if (appparams.hasOwnProperty("h264level")) {
-				recordControl.h264Level = appparams.h264level;
+				_recordControl.h264Level = appparams.h264level;
 			}
 
 			// create Kaltura client 
@@ -186,12 +186,12 @@ package {
 		}
 
 
+		/**
+		 * handler for view evens that should start new recording (record, re-record) 
+		 * @param evt event dispatched from view
+		 */
 		private function onStartRecord(evt:ViewEvent):void {
 			startRecording();
-			_newViewState = "recording";
-			if (!recordControl.connecting)
-				_view.setState(_newViewState);
-			limitRecording();
 		}
 
 
@@ -208,14 +208,6 @@ package {
 			callInterfaceDelegate("autoStopRecord", _limitRecord);
 		}
 
-
-
-		private function onReRecord(evt:ViewEvent):void {
-			startRecording();
-			_newViewState = "recording";
-			if (!recordControl.connecting)
-				_view.setState(_newViewState);
-		}
 
 
 		private function onStopRecord(evt:ViewEvent = null):void {
@@ -240,7 +232,7 @@ package {
 
 
 		private function onSave(evt:ViewEvent):void {
-			recordControl.stopPreviewRecording();
+			_recordControl.stopPreviewRecording();
 			// get entry flashvars:
 			if (ExternalInterface.available) {
 				try {
@@ -286,7 +278,7 @@ package {
 			_view.addEventListener(ViewEvent.RECORD_START, onStartRecord);
 			_view.addEventListener(ViewEvent.RECORD_STOP, onStopRecord);
 			_view.addEventListener(ViewEvent.PREVIEW_SAVE, onSave);
-			_view.addEventListener(ViewEvent.PREVIEW_RERECORD, onReRecord);
+			_view.addEventListener(ViewEvent.PREVIEW_RERECORD, onStartRecord);
 
 			stage.align = StageAlign.TOP_LEFT;
 			stage.scaleMode = StageScaleMode.NO_SCALE;
@@ -310,8 +302,7 @@ package {
 					_messageY = KConfigUtil.getDefaultValue(appparams.messagey, 0);
 					//init KRecord parameters:
 					initParams = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
-					// Register External call
-
+					// Register External calls
 					ExternalInterface.addCallback("stopRecording", stopRecording);
 					ExternalInterface.addCallback("startRecording", startRecording);
 					ExternalInterface.addCallback("previewRecording", previewRecording);
@@ -342,37 +333,35 @@ package {
 				initParams = new BaseRecorderParams('http://www.kaltura.com', 'rtmp://www.kaltura.com', '', '', '', '', '-1', 'oflaDemo');
 			}
 
-			recordControl.initRecorderParameters = initParams;
-			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
-			recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
-			recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
+			_recordControl.initRecorderParameters = initParams;
+			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
+			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
+			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
+			_recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
+			_recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
+			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
+			_recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
+			_recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
+			_recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
 
-			recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
-			recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
-			recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
-			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
-			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
-			recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
-			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
+			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
+			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEndHandler);
+			_recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
+			_recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
 
-			recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
-			recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
-			recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
-
-			recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEndHandler);
-
-			recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
-			recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
-			recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
-			recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
-			recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
-			recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
+			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
+			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
+			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
+			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
 			
-			recordControl.addEventListener("bufferEmpty", switchToPreview);
+			_recordControl.addEventListener("bufferEmpty", switchToPreview);
 			
 			if (Global.DEBUG_MODE)
 				trace("call deviceDetection");
-			recordControl.deviceDetection();
+			_recordControl.deviceDetection();
 
 			if (this.stage == this.root.parent)
 				stage.addEventListener(Event.RESIZE, stageResize);
@@ -402,33 +391,33 @@ package {
 		 */
 		public function setQuality(quality:int, bw:int, w:int, h:int, fps:Number, gop:int = 25, bufferTime:Number = 70):void {
 			// default values:		85, 		0, 		336, 	252, 	25
-			recordControl.bufferTime = bufferTime;
-			recordControl.setQuality(quality, bw, w, h, fps, gop);
+			_recordControl.bufferTime = bufferTime;
+			_recordControl.setQuality(quality, bw, w, h, fps, gop);
 		}
 
 
 		public function getMicrophones():String {
-			return recordControl.getMicrophones().toString();
+			return _recordControl.getMicrophones().toString();
 		}
 
 
 		public function getCameras():String {
-			return recordControl.getCameras().toString();
+			return _recordControl.getCameras().toString();
 		}
 
 
 		public function setActiveCamera(cameraName:String):void {
-			recordControl.setActiveCamera(cameraName);
+			_recordControl.setActiveCamera(cameraName);
 		}
 
 
 		public function setActiveMicrophone(microphoneName:String):void {
-			recordControl.setActiveMicrophone(microphoneName);
+			_recordControl.setActiveMicrophone(microphoneName);
 		}
 
 
 		public function getMicrophoneActivityLevel():Number {
-			return recordControl.micophoneActivityLevel;
+			return _recordControl.micophoneActivityLevel;
 		}
 
 
@@ -438,7 +427,7 @@ package {
 		 *
 		 */
 		public function getMicrophoneGain():Number {
-			return recordControl.microphoneGain;
+			return _recordControl.microphoneGain;
 		}
 
 
@@ -448,7 +437,7 @@ package {
 		 *
 		 */
 		public function setMicrophoneGain(val:String):void {
-			recordControl.microphoneGain = parseFloat(val);
+			_recordControl.microphoneGain = parseFloat(val);
 		}
 
 
@@ -456,7 +445,7 @@ package {
 		 *the duration of the recording in milliseconds.
 		 */
 		public function getRecordedTime():uint {
-			return recordControl.recordedTime;
+			return _recordControl.recordedTime;
 		}
 
 
@@ -547,11 +536,11 @@ package {
 			graphics.drawRect(0, 0, _view.viewWidth, _view.viewHeight);
 			graphics.endFill();
 
-			if (recordControl && recordControl.video) {
-				if (contains(recordControl.video))
-					removeChild(recordControl.video);
-				recordControl.resizeVideo(_view.viewWidth, _view.viewHeight);
-				addChildAt(recordControl.video, 0);
+			if (_recordControl && _recordControl.video) {
+				if (contains(_recordControl.video))
+					removeChild(_recordControl.video);
+				_recordControl.resizeVideo(_view.viewWidth, _view.viewHeight);
+				addChildAt(_recordControl.video, 0);
 			}
 		}
 
@@ -571,7 +560,7 @@ package {
 					break;
 				case DeviceDetectionEvent.ERROR_MICROPHONE:
 				case DeviceDetectionEvent.MIC_DENIED:
-					recordControl.setActiveMicrophone(recordControl.getMicrophones()[0]);
+					_recordControl.setActiveMicrophone(_recordControl.getMicrophones()[0]);
 					break;
 			}
 			dispatchEvent(event.clone());
@@ -592,7 +581,7 @@ package {
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
 				setInitialQuality();
-				recordControl.connectToRecordingServie();
+				_recordControl.connectToRecordingServie();
 				try {
 					this.callInterfaceDelegate("deviceDetected");
 				}
@@ -663,7 +652,7 @@ package {
 
 
 		/**
-		 * start publishing the audio.
+		 * start publishing the video.
 		 */
 		public function startRecording():void {
 			_newViewState = "recording"
@@ -672,9 +661,8 @@ package {
 			if (Global.DEBUG_MODE)
 				trace("RECORD START");
 			
-			recordControl.recordNewStream();
+			_recordControl.recordNewStream();
 			limitRecording();
-
 		}
 
 
@@ -715,7 +703,7 @@ package {
 
 			if (Global.DEBUG_MODE)
 				trace("KRecord==>stopRecording()");
-			recordControl.stopRecording();
+			_recordControl.stopRecording();
 		}
 		
 		/**
@@ -820,10 +808,10 @@ package {
 		public function addEntry(entry_name:String = '', entry_tags:String = '', entry_description:String = '', credits_screen_name:String = '', credits_site_url:String = '', categories:String = "", admin_tags:String = '',
 			license_type:String = '', credit:String = '', group_id:String = '', partner_data:String = '', conversionQuality:String = ''):void {
 			if (entry_name == '')
-				entry_name = 'recorded_entry_pid_' + recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
+				entry_name = 'recorded_entry_pid_' + _recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
 
 			this.callInterfaceDelegate("beforeAddEntry");
-			recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data, conversionQuality);
+			_recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data, conversionQuality);
 		}
 
 

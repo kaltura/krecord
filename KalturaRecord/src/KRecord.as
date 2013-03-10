@@ -98,7 +98,7 @@ package {
 		private var _limitRecordTimer:Timer;
 
 
-		public static const VERSION:String = "v1.6";
+		public static const VERSION:String = "v1.6.1";
 
 
 		/**

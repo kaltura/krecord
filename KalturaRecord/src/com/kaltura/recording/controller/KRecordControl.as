@@ -166,7 +166,7 @@ package com.kaltura.recording.controller {
 		}
 
 		
-		private var _timeOutTimer:Timer = new Timer(1500, 1);
+//		private var _timeOutTimer:Timer = new Timer(1500, 1);
 		
 		
 		private var _autoPreview:Boolean = true;
@@ -206,6 +206,9 @@ package com.kaltura.recording.controller {
 			video.attachCamera(camera);
 		}
 
+		/**
+		 * the NetConnection used for both streams (preview & record) 
+		 */
 		private var _connection:NetConnection;
 		
 		/**
@@ -594,18 +597,10 @@ package com.kaltura.recording.controller {
 			// Create the playBack Stream
 			_previewStream = new NetStream(_connection);
 			_previewStream.client = new KRecordNetClient();
-
 			_previewStream.addEventListener(NetStatusEvent.NET_STATUS, onPreviewNetStatus);
-
-			KRecordNetClient(_previewStream.client).addEventListener(KRecordNetClient.ON_STREAM_END, playEndHandler);
 		}
 
-
-		private function playEndHandler(evt:Event):void {
-			stopPreviewRecording();
-		}
-
-
+		
 		private function onRecordNetStatus(evt:NetStatusEvent):void {
 			if (debugTrace) 
 				trace("Record NetStatusEvent: " + evt.info.code);
@@ -652,38 +647,61 @@ package com.kaltura.recording.controller {
 				trace("Preview NetStatusEvent: " + event.info.code);
 
 			switch (event.info.code) {
+				case "NetStream.Play.Start":
+					if (inter) {
+						clearInterval(inter);
+					}
+					(event.target).bufferTime = START_BUFFER_LENGTH;
+					break;
 				case "NetStream.Play.InsufficientBW":
 				case "NetStream.Buffer.Full":
-					if ((event.target).bufferLength <= EXPANDED_BUFFER_LENGTH)
-						(event.target).bufferTime = 2 * EXPANDED_BUFFER_LENGTH;
-					else
+//					if ((event.target).bufferLength <= EXPANDED_BUFFER_LENGTH)
+//						(event.target).bufferTime = 2 * EXPANDED_BUFFER_LENGTH;
+//					else
 						(event.target).bufferTime = EXPANDED_BUFFER_LENGTH;
 
-					if (_timeOutTimer.running) {
-						_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
-						_timeOutTimer.stop();
-						_timeOutTimer.reset();
-					}
+//					if (_timeOutTimer.running) {
+//						_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
+//						_timeOutTimer.stop();
+//						_timeOutTimer.reset();
+//					}
 					connecting = false;
 					break;
 				
 				case "NetStream.Buffer.Empty":
 					(event.target).bufferTime = START_BUFFER_LENGTH;
-					_timeOutTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
-					_timeOutTimer.start();
+//					_timeOutTimer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
+//					_timeOutTimer.start();
 					connecting = true;
 					break;
 				
 				case "NetStream.Play.Stop":
 				case "NetStream.Unpause.Notify":
-					connecting = false;
-					notifyFinish();
+					// wait until buffer is empty before closing
+					inter = setInterval(checkPreviewBufferFlushed, 50);
+					
+//					_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
+//					_timeOutTimer.stop();
+//					_timeOutTimer.reset();
 					break;
 			}
 
 			dispatchEvent(event);
 		}
 
+		/**
+		 * if buffer empty, close stream and notify
+		 * */
+		private function checkPreviewBufferFlushed():void {
+			if (debugTrace) 
+				trace("buffer: ", _previewStream.bufferLength);
+			
+			if (_previewStream.bufferLength <= 0) {
+				clearInterval(inter);
+				connecting = false;
+				notifyFinish();
+			}
+		}
 
 		private function notifyFinish():void {
 			var evt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE);
@@ -692,9 +710,9 @@ package com.kaltura.recording.controller {
 
 
 		private function onTimeOut(evt:TimerEvent):void {
+			//_timeOutTimer.removeEventListener(TimerEvent.TIMER_COMPLETE, onTimeOut);
 			stopPreviewRecording();
 			connecting = false;
-
 			notifyFinish();
 		}
 
@@ -710,24 +728,6 @@ package com.kaltura.recording.controller {
 			connecting = false;
 			dispatchEvent(event.clone());
 			setBlackRecordTime(getTimer() - _recordStartTime);
-		}
-
-
-		/**
-		 * the stream has endded play (after preview finished).
-		 */
-		protected function stoppedStream(event:RecordNetStreamEvent):void {
-			if (debugTrace) 
-				trace("stoppedStream");
-			delayedStoppedHandler(event);
-		}
-
-
-		private function delayedStoppedHandler(event:RecordNetStreamEvent):void {
-			if (debugTrace) 
-				trace("delayedStoppedHandler");
-			clearVideoAndSetCamera();
-			dispatchEvent(event);
 		}
 
 
@@ -797,7 +797,7 @@ package com.kaltura.recording.controller {
 		/**
 		 * if buffer empty, close stream and notify
 		 * */
-		private function checkBufferFlushed():void {
+		private function checkRecordBufferFlushed():void {
 			if (debugTrace) 
 				trace("buffer: ", _recordStream.bufferLength);
 			
@@ -820,7 +820,7 @@ package com.kaltura.recording.controller {
 				_recordHalted = true;
 				_recordStream.attachAudio(null);
 				_recordStream.attachCamera(null);
-				inter = setInterval(checkBufferFlushed, 50);
+				inter = setInterval(checkRecordBufferFlushed, 50);
 			}
 		}
 
@@ -839,6 +839,7 @@ package com.kaltura.recording.controller {
 				if (debugTrace) 
 					trace("playing: " + _streamUid);
 				
+//				_previewStream.bufferTime = START_BUFFER_LENGTH;
 				if (isH264) {
 					_previewStream.play("mp4:" + _streamUid + ".f4v");
 				}

@@ -20,7 +20,7 @@ quality:int, bw:int, width:int, height:int, fps:Number, gop:int=25, bufferTime:N
 pid, partner id
 subpid
 uid, Partner User id
-host, "http://www.kaltura.com"
+host, "www.kaltura.com"
 rtmphost, "rtmp://www.kaltura.com"
 ks
 httpprotocol

@@ -40,6 +40,7 @@ package com.kaltura.recording.controller {
 	import com.kaltura.recording.business.BaseRecorderParams;
 	import com.kaltura.recording.business.interfaces.IResponder;
 	import com.kaltura.recording.controller.events.AddEntryEvent;
+	import com.kaltura.recording.controller.events.PreviewEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
 	import com.kaltura.utils.ConnectionTester;
 	import com.kaltura.vo.KalturaMediaEntry;
@@ -87,6 +88,26 @@ package com.kaltura.recording.controller {
 	 * dispatched when the buffer is empty after recording is stopped
 	 * */
 	[Event(name = "bufferEmpty", type = "flash.events.Event")]
+	
+	/**
+	 * dispatched when the preview stream starts playing
+	 * */
+	[Event(name = "previewStarted", type = "com.kaltura.recording.controller.events.PreviewEvent")]
+	
+	/**
+	 * dispatched when the preview stream stops playing
+	 * */
+	[Event(name = "previewStopped", type = "com.kaltura.recording.controller.events.PreviewEvent")]
+	
+	/**
+	 * dispatched when the preview stream is paused
+	 * */
+	[Event(name = "previewPaused", type = "com.kaltura.recording.controller.events.PreviewEvent")]
+	
+	/**
+	 * dispatched when the preview stream resumes playing
+	 * */
+	[Event(name = "previewResumed", type = "com.kaltura.recording.controller.events.PreviewEvent")]
 	
 	
 	
@@ -429,6 +450,7 @@ package com.kaltura.recording.controller {
 		private function removeMicrophoneDetectionListeners():void {
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError);
 		}
 
 
@@ -854,6 +876,7 @@ package com.kaltura.recording.controller {
 				else {
 					_previewStream.play(_streamUid);
 				}
+				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_STARTED));
 			}
 		}
 
@@ -867,6 +890,7 @@ package com.kaltura.recording.controller {
 			
 			if (_previewStream) {
 				_previewStream.close();
+				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_STOPPED));
 			}
 		}
 
@@ -880,6 +904,7 @@ package com.kaltura.recording.controller {
 			
 			if (_previewStream) {
 				_previewStream.pause();
+				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_PAUSED));
 			}
 		}
 
@@ -903,8 +928,10 @@ package com.kaltura.recording.controller {
 			if (debugTrace) 
 				trace("resume");
 			
-			if (_previewStream)
+			if (_previewStream) {
 				_previewStream.resume();
+				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_RESUMED));
+			}
 		}
 
 

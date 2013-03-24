@@ -27,8 +27,7 @@
 // @ignore
 // ===================================================================================================
 */
-package com.kaltura.devicedetection
-{
+package com.kaltura.devicedetection {
 	import flash.display.BitmapData;
 	import flash.events.EventDispatcher;
 	import flash.events.StatusEvent;
@@ -50,56 +49,91 @@ package com.kaltura.devicedetection
 	 *  dispatched to notify an active microphone device was detetceted.
 	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.DETECTED_MICROPHONE
 	 */
-	[Event(name="detectedMicrophone", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
-	/**
-	 *  dispatched to notify an active camera device was detected.
-	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.DETECTED_CAMERA
-	 */
-	[Event(name="detectedCamera", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name = "detectedMicrophone", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
+	
 	/**
 	 *  dispatched to notify an error of detecting an active microphone.
 	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.ERROR_MICROPHONE
 	 */
-	[Event(name="errorMicrophone", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name = "errorMicrophone", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
+	
+	/**
+	 *  dispatched to notify an active camera device was detected.
+	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.DETECTED_CAMERA
+	 */
+	[Event(name = "detectedCamera", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
+	
 	/**
 	 *  dispatched to notify an error of detecting an active camera.
 	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.ERROR_CAMERA
 	 */
-	[Event(name="errorCamera", type="com.kaltura.devicedetection.DeviceDetectionEvent")]
+	[Event(name = "errorCamera", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
+	
+	/**
+	 *  dispatched to notify access to cameras is denied by user.
+	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.CAMERA_DENIED
+	 */
+	[Event(name = "cameraDenied", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
 
-	public class DeviceDetector extends EventDispatcher
-	{
+	public class DeviceDetector extends EventDispatcher {
+		/**
+		 * the allowed camera, once found 
+		 */
 		public var webCam:Camera = null;
-		private var camerasNumber:int = Camera.names.length;
-		private var testedCameraIndex:int = -1;
-		private var testedCamera:Camera;
-		private var testedVideo:Video = new Video (50, 50);
-		private var testRect:Rectangle = new Rectangle (0, 0, 50, 50);
-		private var testedBitmapData:BitmapData = new BitmapData (50, 50, false, 0x0);
-		private var blackBitmapData:BitmapData = new BitmapData (50, 50, false, 0x0);
-		private var delayDetectCameraIndex:uint = 0;
-		private var cameraFails:uint = 0;
+		
+		/**
+		 * total number of cameras on the user's system 
+		 */
+		private var _camerasNumber:int = Camera.names.length;
+		
+		/**
+		 * test index 
+		 */
+		private var _testedCameraIndex:int = -1;
+		
+		/**
+		 * currently tested camera 
+		 */
+		private var _testedCamera:Camera;
+		
+		/**
+		 * video for testing camera input 
+		 */
+		private var _testedVideo:Video = new Video(50, 50);
+		
+		/**
+		 * rectangle for testing camera input 
+		 */
+		private var _testRect:Rectangle = new Rectangle(0, 0, 50, 50);
+		private var _testedBitmapData:BitmapData = new BitmapData(50, 50, false, 0x0);
+		private var _blackBitmapData:BitmapData = new BitmapData(50, 50, false, 0x0);
+		private var _delayDetectCameraIndex:uint = 0;
+		
+		/**
+		 * number of cameras that weren't available
+		 */
+		private var _cameraFails:uint = 0;
+		
 		public var maxCameraFails:uint = 3;
 
+		/**
+		 * the allowed microphone, once found 
+		 */
 		public var microphone:Microphone = null;
-		private var microphonesNumber:int = Microphone.names.length;
-		private var testedMicrophoneIndex:int = 0;
-		private var testedMicrophone:Microphone;
-		private var mostActiveMicrophoneIndex:int = -1;
-		private var mostActiveMicrophoneActivity:int = 0;
-		private var testNetConnection:NetConnection;
-		private var testNetStream:NetStream;
-		private var useSilenceMicrophoneDetection:Boolean = false;
-		private var delayDetectMicrphoneIndex:uint = 0;
-		private var microphoneFails:uint = 0;
-		public var maxMicrophoneFails:uint = 3;
+		
+		private var _microphonesNumber:int = Microphone.names.length;
+		private var _testedMicrophoneIndex:int = 0;
+		private var _testedMicrophone:Microphone;
 
-		private var delayTime:uint;
-		private var delayAfterFail:uint;
-        private var MicTimer:Timer;
-        private var everySecTimer:Timer;
-    
-        
+		/**
+		 * image test delay 
+		 */
+		private var _delayTime:uint;
+		private var _delayAfterFail:uint;
+		private var _micTimer:Timer;
+		private var _everySecTimer:Timer;
+
+
 		//////
 		//		CCCCCCCCC		AAAAAAAAAAA			MMMMMM		   MMMMMM
 		//		CCCCCCCCC		AAAAAAAAAAA			MMMMMMMMMM MMMMMMMMMM
@@ -109,90 +143,86 @@ package com.kaltura.devicedetection
 		//		CCCCCCCCC		AAA		AAA			MMM				  MMM
 		//////
 
-		public function detectCamera (delay:uint = 500):void
-		{
-			delayTime = delay;
-			delayAfterFail = delay * 2;
-			testedCameraIndex = -1;
-			if (delayDetectCameraIndex != 0)
-				clearTimeout(delayDetectCameraIndex);
-			testedBitmapData = new BitmapData (testRect.width, testRect.height, false, 0x0);
-			blackBitmapData = new BitmapData (testRect.width, testRect.height, false, 0x0);
-			blackBitmapData.fillRect(testRect, 0x0);
-			detectNextCamera ();
+		public function detectCamera(delay:uint = 500):void {
+			_delayTime = delay;
+			_delayAfterFail = delay * 2;
+			_testedCameraIndex = -1;
+			if (_delayDetectCameraIndex != 0)
+				clearTimeout(_delayDetectCameraIndex);
+			_testedBitmapData = new BitmapData(_testRect.width, _testRect.height, false, 0x0);
+			_blackBitmapData = new BitmapData(_testRect.width, _testRect.height, false, 0x0);
+			_blackBitmapData.fillRect(_testRect, 0x0);
+			detectNextCamera();
 		}
 
-		private function detectNextCamera ():void
-		{
-			cameraFails = 0;
 
-			if (webCam)
-			{
-				dispatchCameraSuccess ();
+		private function detectNextCamera():void {
+			_cameraFails = 0;
+
+			if (webCam) {
+				dispatchCameraSuccess();
 				return;
 			}
 
-			if (testedCameraIndex > 0 && testedCamera != null)
-				testedCamera.removeEventListener(StatusEvent.STATUS, statusCameraHandler);
+			if (_testedCameraIndex > 0 && _testedCamera != null)
+				_testedCamera.removeEventListener(StatusEvent.STATUS, statusCameraHandler);
 
-			if ((++testedCameraIndex) >= camerasNumber)
-			{
+			if ((++_testedCameraIndex) >= _camerasNumber) {
 				//we didn't find any camera on the system..
-				dispatchCameraError (DeviceDetectionEvent.ERROR_CAMERA);
+				dispatchCameraError(DeviceDetectionEvent.ERROR_CAMERA);
 				return;
 			}
 
-			testedCamera = Camera.getCamera(testedCameraIndex.toString());
+			_testedCamera = Camera.getCamera(_testedCameraIndex.toString());
 
-			if (testedCamera == null)
-			{
-				if (camerasNumber > 0)
-				{
+			if (_testedCamera == null) {
+				if (_camerasNumber > 0) {
 					//there are devices on the system but we don't get access directly to them...
 					//let the user set the access to the default camera:
 					// NOTE: this should never happen here, because we use the specific access to the camera object
 					// rather than using the default getCamera ();
 //					Security.showSettings(SecurityPanel.CAMERA);
 					dispatchCameraError(DeviceDetectionEvent.CAMERA_DENIED);
-				} else {
+				}
+				else {
 					//we don't have any camera device!
-					dispatchCameraError (DeviceDetectionEvent.ERROR_CAMERA);
+					dispatchCameraError(DeviceDetectionEvent.ERROR_CAMERA);
 				}
 				return;
 			}
 
-			testedBitmapData.fillRect(testRect, 0x0);
-			testedVideo.attachCamera(null);
-			testedVideo.clear();
-			testedCamera.addEventListener(StatusEvent.STATUS, statusCameraHandler);
-			testedVideo.attachCamera(testedCamera);
+			_testedBitmapData.fillRect(_testRect, 0x0);
+			_testedVideo.attachCamera(null);
+			_testedVideo.clear();
+			_testedCamera.addEventListener(StatusEvent.STATUS, statusCameraHandler);
+			_testedVideo.attachCamera(_testedCamera);
 
-			if (!testedCamera.muted)
-		    {
-		        trace("User selected Accept already.");
-				delay_testCameraImage ();
-		    } /*else {
-		    	//the user selected not to allow access to the devices.
+			if (!_testedCamera.muted) {
+				trace("User selected Accept already.");
+				delay_testCameraImage();
+			}
+		/*else {
+			//the user selected not to allow access to the devices.
 //		    	Security.showSettings(SecurityPanel.PRIVACY);
 //	            dispatchCameraError (DeviceDetectionEvent.CAMERA_DENIED);
-		    }*/
+		}*/
 		}
 
-		private function statusCameraHandler (event:StatusEvent):void
-		{
-			switch (event.code)
-		    {
-		        case "Camera.Muted":
-		            trace("Camera: User clicked Deny.");
-		            dispatchCameraError (DeviceDetectionEvent.CAMERA_DENIED);
-		            break;
 
-		        case "Camera.Unmuted":
-		            trace("Camera: User clicked Accept.");
-		          	delay_testCameraImage ();
-		            break;
-		    }
+		private function statusCameraHandler(event:StatusEvent):void {
+			switch (event.code) {
+				case "Camera.Muted":
+					trace("Camera: User clicked Deny.");
+					dispatchCameraError(DeviceDetectionEvent.CAMERA_DENIED);
+					break;
+
+				case "Camera.Unmuted":
+					trace("Camera: User clicked Accept.");
+					delay_testCameraImage();
+					break;
+			}
 		}
+
 
 		/**
 		 * delays the image test.
@@ -202,61 +232,59 @@ package com.kaltura.devicedetection
 		 * we additionaly give more time for slower machines (or cameras) if we fail.
 		 * you can set the maximum fail tryouts by setting the maxFails variable.</p>
 		 */
-		private function delay_testCameraImage ():void
-		{
-			delayDetectCameraIndex = setTimeout (testCameraImage, (cameraFails > 0) ? delayAfterFail : delayTime);
+		private function delay_testCameraImage():void {
+			_delayDetectCameraIndex = setTimeout(testCameraImage, (_cameraFails > 0) ? _delayAfterFail : _delayTime);
 		}
 
-		private function testCameraImage ():void
-		{
-			testedBitmapData.draw(testedVideo);
-			var testResult:Object = testedBitmapData.compare(blackBitmapData);
-			trace ("camera test: " + testedCameraIndex);
-			
+
+		private function testCameraImage():void {
+			_testedBitmapData.draw(_testedVideo);
+			var testResult:Object = _testedBitmapData.compare(_blackBitmapData);
+			trace("camera test: " + _testedCameraIndex);
+
 			// Added currentFPS check to make sure if the camera is active.
-			if (testResult is BitmapData || testedCamera.currentFPS != 0)
-			{
+			if (testResult is BitmapData || _testedCamera.currentFPS != 0) {
 				//it's different, we have an image!
-				dispatchCameraSuccess ();
-			} else {
+				dispatchCameraSuccess();
+			}
+			else {
 				//camera is not available for some reson, we don't get any image.
 				// move to check the next camera
-				if ((++cameraFails) < maxCameraFails)
-				{
-					delay_testCameraImage ();
-				} else {
-					detectNextCamera ();
+				if ((++_cameraFails) < maxCameraFails) {
+					delay_testCameraImage();
+				}
+				else {
+					detectNextCamera();
 				}
 			}
 		}
 
-		private function dispatchCameraSuccess ():void
-		{
-			disposeCamera ();
-			webCam = Camera.getCamera(testedCameraIndex.toString());
-			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.DETECTED_CAMERA, webCam));
+
+		private function dispatchCameraSuccess():void {
+			disposeCamera();
+			webCam = Camera.getCamera(_testedCameraIndex.toString());
+			dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DETECTED_CAMERA, webCam));
 		}
 
-		private function dispatchCameraError (errorEventType:String):void
-		{
-			disposeCamera ();
+
+		private function dispatchCameraError(errorEventType:String):void {
+			disposeCamera();
 			webCam = null;
-//			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_CAMERA, webCam));
-			dispatchEvent(new DeviceDetectionEvent (errorEventType, webCam));
+			dispatchEvent(new DeviceDetectionEvent(errorEventType, webCam));
 			ExternalInterface.call("noCamerasFound")
 		}
 
-		private function disposeCamera ():void
-		{
-			if (testedCamera)
-				testedCamera.removeEventListener(StatusEvent.STATUS, statusCameraHandler);
-			testedCamera = null;
-			testedVideo.attachCamera(null);
-			testedVideo.clear();
-			if (blackBitmapData)
-				blackBitmapData.dispose();
-			if (testedBitmapData)
-				testedBitmapData.dispose();
+
+		private function disposeCamera():void {
+			if (_testedCamera)
+				_testedCamera.removeEventListener(StatusEvent.STATUS, statusCameraHandler);
+			_testedCamera = null;
+			_testedVideo.attachCamera(null);
+			_testedVideo.clear();
+			if (_blackBitmapData)
+				_blackBitmapData.dispose();
+			if (_testedBitmapData)
+				_testedBitmapData.dispose();
 		}
 
 
@@ -269,168 +297,151 @@ package com.kaltura.devicedetection
 		//		MMM				  MMM			IIIIIIIIIII			CCCCCCCCC
 		//////
 
-		public function detectMicrophone ():void
-		{
-			testedMicrophone=Microphone.getMicrophone(testedMicrophoneIndex);
-			if(!testedMicrophone)
-			{
-				dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_MICROPHONE, null));
+		public function detectMicrophone():void {
+			_testedMicrophone = Microphone.getMicrophone(_testedMicrophoneIndex);
+			if (!_testedMicrophone) {
+				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.ERROR_MICROPHONE, null));
 				return;
 			}
-			testedMicrophone.setUseEchoSuppression(true)
-			testedMicrophone.setLoopBack(true);//this is for provoking some activity input when it's not streaming
-			testedMicrophone.setSilenceLevel(5);
-			testedMicrophone.gain=90
-			var timeLapse:String= ""//Application.application.parameters.testLapse;
-			var timeValue:Number
-			ExternalInterface.addCallback("openSettings",openSettings);
-			if (timeLapse != null){
-			timeValue=Number(timeLapse)
-			MicTimer=new Timer (20000,0);
-			everySecTimer=new Timer(timeValue/1000);	
+			_testedMicrophone.setUseEchoSuppression(true)
+			_testedMicrophone.setLoopBack(true); //this is for provoking some activity input when it's not streaming
+			_testedMicrophone.setSilenceLevel(5);
+			_testedMicrophone.gain = 90;
+			var timeLapse:String = ""; //Application.application.parameters.testLapse;
+			var timeValue:Number;
+			ExternalInterface.addCallback("openSettings", openSettings);
+			if (timeLapse != null) {
+				timeValue = Number(timeLapse);
+				_micTimer = new Timer(20000, 0);
+				_everySecTimer = new Timer(timeValue / 1000);
 			}
-			else
-			{
-			MicTimer=new Timer (20000,0);	
-			everySecTimer=new Timer(1000,20);
+			else {
+				_micTimer = new Timer(20000, 0);
+				_everySecTimer = new Timer(1000, 20);
 			}
-			MicTimer.addEventListener(TimerEvent.TIMER, checkMicActivity);
-			everySecTimer.addEventListener(TimerEvent.TIMER, onEverySec);
-			if (testedMicrophone.muted==false)
-			{
-			addTimers()
+			_micTimer.addEventListener(TimerEvent.TIMER, checkMicActivity);
+			_everySecTimer.addEventListener(TimerEvent.TIMER, onEverySec);
+			if (_testedMicrophone.muted == false) {
+				addTimers();
 			}
-			else
-			{
-			testedMicrophone.addEventListener(StatusEvent.STATUS, statusHandler);
+			else {
+				_testedMicrophone.addEventListener(StatusEvent.STATUS, statusHandler);
 			}
 		}
-        
-        private function addTimers():void
-        {	
-            MicTimer.start()
-        	everySecTimer.start()	
-        }
-        
-        private function stopTimers():void
-        {
-        	MicTimer.stop()	
-        	everySecTimer.stop()
-        }
-        
-        private function statusHandler(event:StatusEvent):void 
-        {
-			trace(event.code)
-        	if (event.code=="Microphone.Unmuted")
-        	{
-        		addTimers()
-        		trace("The user allows open the mic...")
-        	}
-        	
-            if(event.code=="Microphone.Muted")   
-           {
-           	trace("The user does not allows to use the mic...");
-           	////HERE A JS alert: "Are you sure you don't allow the mic to be open? You won't be able to record with audio..
-           try {
-				//KRecord.delegator("micDenied");
-			   dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.MIC_DENIED, null));
-                ExternalInterface.call("micDenied");
-                }
-                catch(errObject:Error) {
-                  trace(errObject.message);
-                }
-           }
-           
-        }
-       
-       public function openSettings():void
-       {
-       	Security.showSettings("2");
-       }
 
 
-        private function checkMicActivity(timerEvent:TimerEvent):void
-        {
-        	if (testedMicrophone.activityLevel<2)
-        	{
-        	 detectNextMicrophone()	
-        	}
-        	else
-        	{
-        	success()
-        	}
-        }
-        
-        private function onEverySec(timerEvent:TimerEvent):void
-        {
-         if (testedMicrophone.activityLevel>2)
-         {
-         	success()
-         }	
-        }
-        
-       private function success():void
-       {
-       	    stopTimers()
-        	dispatchMicrophoneSuccess ()
-        	try {
-               ExternalInterface.call("workingMicFound");
-                }
-            catch(errObject:Error) {
-              trace(errObject.message);
-                }
-        	trace("working Mic Found")
-       }
-        
-		private function detectNextMicrophone ():void
-		{
-			testedMicrophoneIndex++
-			if (testedMicrophoneIndex < microphonesNumber)
-			{
-				detectMicrophone ()
+		private function addTimers():void {
+			_micTimer.start()
+			_everySecTimer.start()
+		}
+
+
+		private function stopTimers():void {
+			_micTimer.stop()
+			_everySecTimer.stop()
+		}
+
+
+		private function statusHandler(event:StatusEvent):void {
+			trace(event.code);
+			if (event.code == "Microphone.Unmuted") {
+				addTimers();
+				trace("The user allows open the mic...");
 			}
-			else
-			{
+
+			if (event.code == "Microphone.Muted") {
+				trace("The user does not allows to use the mic...");
+				////HERE A JS alert: "Are you sure you don't allow the mic to be open? You won't be able to record with audio..
+				try {
+					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_DENIED, null));
+					ExternalInterface.call("micDenied");
+				}
+				catch (errObject:Error) {
+					trace(errObject.message);
+				}
+			}
+
+		}
+
+
+		public function openSettings():void {
+			Security.showSettings("2");
+		}
+
+
+		private function checkMicActivity(timerEvent:TimerEvent):void {
+			if (_testedMicrophone.activityLevel < 2) {
+				detectNextMicrophone();
+			}
+			else {
+				success();
+			}
+		}
+
+
+		private function onEverySec(timerEvent:TimerEvent):void {
+			if (_testedMicrophone.activityLevel > 2) {
+				success();
+			}
+		}
+
+
+		private function success():void {
+			stopTimers();
+			dispatchMicrophoneSuccess();
+			try {
+				ExternalInterface.call("workingMicFound");
+			}
+			catch (errObject:Error) {
+				trace(errObject.message);
+			}
+			trace("working Mic Found")
+		}
+
+
+		private function detectNextMicrophone():void {
+			_testedMicrophoneIndex++
+			if (_testedMicrophoneIndex < _microphonesNumber) {
+				detectMicrophone()
+			}
+			else {
 				////HERE A JS alert: "Not Working mics were found on your computer" Please check the configuration
-			    try {
-			    	 openSettings()
-                     ExternalInterface.call("noMicsFound");
-                    }
-                catch(errObject:Error) {
-                     trace(errObject.message);
-                    }
-				dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.ERROR_MICROPHONE, null));
+				try {
+					openSettings()
+					ExternalInterface.call("noMicsFound");
+				}
+				catch (errObject:Error) {
+					trace(errObject.message);
+				}
+				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.ERROR_MICROPHONE, null));
 			}
 			return;
 		}
 
 
-		private function dispatchMicrophoneSuccess ():void
-		{
+		private function dispatchMicrophoneSuccess():void {
 			disposeMicrophone()
-			microphone = Microphone.getMicrophone(testedMicrophoneIndex);
- 			microphone.setUseEchoSuppression(true);
-			microphone.gain=90
-			dispatchEvent(new DeviceDetectionEvent (DeviceDetectionEvent.DETECTED_MICROPHONE, microphone));
-			ExternalInterface.addCallback("getMicophoneActivityLevel",getActivityNow)
+			microphone = Microphone.getMicrophone(_testedMicrophoneIndex);
+			microphone.setUseEchoSuppression(true);
+			microphone.gain = 90
+			dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DETECTED_MICROPHONE, microphone));
+			ExternalInterface.addCallback("getMicophoneActivityLevel", getActivityNow)
 			microphone.setSilenceLevel(0);
 		}
 
-        private function getActivityNow():int
-        {
-        	var activ:int=microphone.activityLevel;
-        	return activ;
-        }
+
+		private function getActivityNow():int {
+			var activ:int = microphone.activityLevel;
+			return activ;
+		}
 
 
-        private function disposeMicrophone ():void
-		{
-			if (testedMicrophone)
-			{
-				testedMicrophone.setLoopBack(false);
-				testedMicrophone.gain=0
+		private function disposeMicrophone():void {
+			if (_testedMicrophone) {
+				_testedMicrophone.setLoopBack(false);
+				_testedMicrophone.gain = 0
 			}
-			testedMicrophone = null;
+			_testedMicrophone = null;
 		}
 
 
@@ -440,22 +451,22 @@ package com.kaltura.devicedetection
 		 */
 		static private var _instance:DeviceDetector;
 
-		public function DeviceDetector():void
-		{
-			if (_instance)
-				throw (new Error ("you can't instantiate singletone more than once, use getInstance instead."));
 
-			testedVideo.smoothing = false;
-			testedVideo.deblocking = 1;
+		public function DeviceDetector():void {
+			if (_instance)
+				throw(new Error("you can't instantiate singletone more than once, use getInstance instead."));
+
+			_testedVideo.smoothing = false;
+			_testedVideo.deblocking = 1;
 		}
 
-		static public function getInstance ():DeviceDetector
-		{
+
+		static public function getInstance():DeviceDetector {
 			if (!_instance)
-				_instance = new DeviceDetector ();
+				_instance = new DeviceDetector();
 			return _instance;
 		}
-		
-		
+
+
 	}
 }

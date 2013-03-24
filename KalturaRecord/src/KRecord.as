@@ -37,6 +37,7 @@ package {
 	import com.kaltura.recording.business.BaseRecorderParams;
 	import com.kaltura.recording.controller.KRecordControl;
 	import com.kaltura.recording.controller.events.AddEntryEvent;
+	import com.kaltura.recording.controller.events.PreviewEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
 	import com.kaltura.recording.view.KRecordViewParams;
 	import com.kaltura.recording.view.UIComponent;
@@ -73,6 +74,11 @@ package {
 		public var pushParameters:Object;
 
 		public var autoPreview:Boolean = false;
+		
+		/**
+		 * the id of the last entry saved 
+		 */
+		private var _mostRecentEntryId:String;
 
 		private var _recordControl:KRecordControl = new KRecordControl();
 
@@ -97,6 +103,7 @@ package {
 		 */
 		private var _limitRecordTimer:Timer;
 
+		
 
 		public static const VERSION:String = "v1.6.1";
 
@@ -317,6 +324,7 @@ package {
 					ExternalInterface.addCallback("getCameras", getCameras);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
 					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
+					ExternalInterface.addCallback("getMostRecentEntryId", getMostRecentEntryId);
 
 					ExternalInterface.marshallExceptions = true;
 					callInterfaceDelegate("swfReady");
@@ -334,12 +342,15 @@ package {
 			}
 
 			_recordControl.initRecorderParameters = initParams;
+			// before recording:
 			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
-			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
 			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
 			_recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
+			
+			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
 			_recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
 			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
+			
 			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
 			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
 			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
@@ -347,17 +358,24 @@ package {
 			_recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
 			_recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
 
-			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
-			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEndHandler);
 			_recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
 			_recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
 
+			// adding entry:
 			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
 			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
+			
 			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
 			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
 			
+			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
 			_recordControl.addEventListener("bufferEmpty", switchToPreview);
+			
+			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_STARTED, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_STOPPED, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_PAUSED, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_RESUMED, previewEventsHandler);
 			
 			if (Global.DEBUG_MODE)
 				trace("call deviceDetection");
@@ -368,7 +386,30 @@ package {
 
 			dispatchEvent(new ViewEvent(ViewEvent.VIEW_READY, true));
 		}
-
+		
+		public function getMostRecentEntryId():String
+		{
+			return _mostRecentEntryId;
+		}
+		
+		private function previewEventsHandler(event:Event):void
+		{
+			if (Global.DEBUG_MODE)
+				trace('preview: ' + event.type);
+			
+			try {
+				if (event.type == RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE) {
+					callInterfaceDelegate("previewEnd");
+				}
+				else {
+					callInterfaceDelegate(event.type);
+				}
+			}
+			catch (err:Error) {
+				trace(err.message)
+			}
+			dispatchEvent(event.clone());
+		}
 
 		/**
 		 *sets camera recording quality.
@@ -546,13 +587,8 @@ package {
 
 
 		private function deviceError(event:DeviceDetectionEvent):void {
-			try {
-				trace(event.type);
-				this.callInterfaceDelegate(event.type);
-			}
-			catch (err:Error) {
-				trace(err.message)
-			}
+			trace(event.type);
+			callInterfaceDelegate(event.type);
 
 			switch (event.type) {
 				case DeviceDetectionEvent.ERROR_CAMERA:
@@ -570,31 +606,16 @@ package {
 		private function deviceDetected(event:DeviceDetectionEvent):void {
 			// add the detected mic notification
 			if (event.type == DeviceDetectionEvent.DETECTED_MICROPHONE) {
-				try {
-					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_MICROPHONE);
-				}
-				catch (err:Error) {
-					trace(err.message)
-				}
+				callInterfaceDelegate(DeviceDetectionEvent.DETECTED_MICROPHONE);
 			}
 
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
 				setInitialQuality();
 				_recordControl.connectToRecordingServie();
-				try {
-					this.callInterfaceDelegate("deviceDetected");
-				}
-				catch (err:Error) {
-					trace(err.message)
-				}
+				callInterfaceDelegate("deviceDetected");
 				
-				try {
-					this.callInterfaceDelegate(DeviceDetectionEvent.DETECTED_CAMERA);
-				}
-				catch (err:Error) {
-					trace(err.message)
-				}
+				callInterfaceDelegate(DeviceDetectionEvent.DETECTED_CAMERA);
 			}
 			dispatchEvent(event.clone());
 		}
@@ -621,12 +642,7 @@ package {
 			if (Global.DEBUG_MODE)
 				trace(event.type);
 			
-			try {
-				this.callInterfaceDelegate("connected");
-			}
-			catch (err:Error) {
-				trace(err.message)
-			}
+			callInterfaceDelegate("connected");
 			dispatchEvent(event.clone());
 		}
 
@@ -635,12 +651,7 @@ package {
 			if (Global.DEBUG_MODE)
 				trace(event.type)
 				
-			try {
-				this.callInterfaceDelegate(event.type);
-			}
-			catch (err:Error) {
-				trace(err.message)
-			}
+			callInterfaceDelegate(event.type);
 
 
 			if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED)
@@ -680,7 +691,7 @@ package {
 
 		private function recordStart(event:RecordNetStreamEvent):void {
 			try {
-				this.callInterfaceDelegate("recordStart");
+				callInterfaceDelegate("recordStart");
 			}
 			catch (err:Error) {
 				trace(err.message)
@@ -720,7 +731,7 @@ package {
 				trace(event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
 			if (event.type == FlushStreamEvent.FLUSH_COMPLETE) {
 				try {
-					this.callInterfaceDelegate("flushComplete");
+					callInterfaceDelegate("flushComplete");
 				}
 				catch (err:Error) {
 					trace(err.message);
@@ -735,7 +746,7 @@ package {
 		 * show loader connecting when needed.
 		 */
 		private function onConnecting(event:Event):void {
-			this.callInterfaceDelegate("connecting");
+			callInterfaceDelegate("connecting");
 			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
 			dispatchEvent(event.clone());
 		}
@@ -745,7 +756,7 @@ package {
 		 * remove loader connecting when needed and get back to the current view state.
 		 */
 		private function onConnectingFinish(event:Event):void {
-			this.callInterfaceDelegate("connectingFinish");
+			callInterfaceDelegate("connectingFinish");
 			_view.setState(_newViewState);
 			dispatchEvent(event.clone());
 		}
@@ -776,18 +787,6 @@ package {
 		}
 
 
-		private function previewEndHandler(event:RecordNetStreamEvent):void {
-			if (Global.DEBUG_MODE)
-				trace('preview: ' + event.type);
-
-			try {
-				this.callInterfaceDelegate("previewEnd");
-			}
-			catch (err:Error) {
-				trace(err.message)
-			}
-			dispatchEvent(event.clone());
-		}
 
 
 		/**
@@ -810,37 +809,28 @@ package {
 			if (entry_name == '')
 				entry_name = 'recorded_entry_pid_' + _recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
 
-			this.callInterfaceDelegate("beforeAddEntry");
+			callInterfaceDelegate("beforeAddEntry");
 			_recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data, conversionQuality);
 		}
 
 
 		private function addEntryFailed(event:AddEntryEvent):void {
 			dispatchEvent(event.clone());
-			this.callInterfaceDelegate("addEntryFailed", {errorCode: event.info.error.errorCode, errorMsg: event.info.error.errorMsg});
+			callInterfaceDelegate("addEntryFailed", {errorCode: event.info.error.errorCode, errorMsg: event.info.error.errorMsg});
 		}
 
 
 		private function addEntryComplete(event:AddEntryEvent):void {
 			var entry:KalturaMediaEntry = event.info as KalturaMediaEntry;
 			if (entry) {
-				try {
-					this.callInterfaceDelegate("addEntryComplete", event.info);
-				}
-				catch (err:Error) {
-					trace(err.message)
-				}
+				_mostRecentEntryId = entry.id;
+				callInterfaceDelegate("addEntryComplete", entry);
 				
 				if (Global.DEBUG_MODE)
 					trace("Your new entry is: " + entry.entryId + "\nthumb: " + entry.thumbnailUrl);
 			}
 			else {
-				try {
-					this.callInterfaceDelegate("addEntryFail", event.info);
-				}
-				catch (err:Error) {
-					trace(err.message)
-				}
+				callInterfaceDelegate("addEntryFailed", event.info);
 				
 				if (Global.DEBUG_MODE)
 					trace(ObjectUtil.toString(event.info));

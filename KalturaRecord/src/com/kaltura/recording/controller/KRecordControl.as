@@ -168,8 +168,6 @@ package com.kaltura.recording.controller {
 		}
 
 		
-//		private var _timeOutTimer:Timer = new Timer(1500, 1);
-		
 		
 		private var _autoPreview:Boolean = true;
 

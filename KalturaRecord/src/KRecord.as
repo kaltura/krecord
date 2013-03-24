@@ -612,7 +612,7 @@ package {
 			var h:int = appparams.hasOwnProperty("height") ? appparams.height : 252;
 			var fps:Number = appparams.hasOwnProperty("fps") ? appparams.fps : 25;
 			var gop:Number = appparams.hasOwnProperty("gop") ? appparams.gop : 25;
-			var bufferTime:Number = appparams.hasOwnProperty("bufferTime") ? appparams.bufferTime : 70;
+			var bufferTime:Number = appparams.hasOwnProperty("buffertime") ? appparams.buffertime : 70;
 			setQuality(quality, bw, w, h, fps, gop, bufferTime);
 		}
 

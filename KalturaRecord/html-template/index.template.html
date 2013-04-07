@@ -48,7 +48,7 @@
 	        	//ish264:"true",
 	        	//h264profile:"baseline",
 	        	//h264level:"3",
-	        	
+	        	//timepermic:2000,
 	        	//conversionQuality: "1660391",
 	        	kshowId:"-1",
 	        	autoPreview:"false",
@@ -136,13 +136,32 @@
 			var kRecord = document.getElementById("${application}");
 			kRecord.stopRecording();
 		}
-		function stopPreview() {
+		
+		function previewRecording(action) {
 			var kRecord = document.getElementById("${application}");
-			kRecord.stopPreviewRecording();
+			switch (action) {
+			case 'start':
+				kRecord.previewRecording();
+				break;
+				
+			case 'stop':
+				kRecord.stopPreviewRecording();
+				break;
+				
+			case 'pause':
+				kRecord.pausePreview();
+				break;
+				
+			case 'resume':
+				kRecord.resumePreview();
+				break;
+				
+			}
 		}
-		function previewRecording() {
+		
+		function openSettings() {
 			var kRecord = document.getElementById("${application}");
-			kRecord.previewRecording();
+			kRecord.openSettings();
 		}
 		
 		function delegator(message,args) {
@@ -205,8 +224,13 @@
 	<button type="button" onclick="setVolume()">setMicrophoneGain</button>
 	<button type="button" onclick="startRecording()">start recording</button>
 	<button type="button" onclick="stopRecording()">stop recording</button>
-	<button type="button" onclick="stopPreview()">stop preview</button>
-	<button type="button" onclick="previewRecording()">start preview</button>
+	<br>
+	<button type="button" onclick="previewRecording('stop')">stop preview</button>
+	<button type="button" onclick="previewRecording('start')">start preview</button>
+	<button type="button" onclick="previewRecording('pause')">pause preview</button>
+	<button type="button" onclick="previewRecording('resume')">resume preview</button>
+	<br>
+	<button type="button" onclick="openSettings()">open settings</button>
 	<br/>
 	
 	<textarea name="delegatorText" id="delegatorText" rows=10 cols=30 />

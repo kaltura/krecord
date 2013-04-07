@@ -237,6 +237,8 @@ package {
 					ExternalInterface.addCallback("startRecording", startRecording);
 					ExternalInterface.addCallback("previewRecording", previewRecording);
 					ExternalInterface.addCallback("stopPreviewRecording", stopPreviewRecording);
+					ExternalInterface.addCallback("pausePreview", _recordControl.pausePreviewRecording);
+					ExternalInterface.addCallback("resumePreview", _recordControl.resume);
 					ExternalInterface.addCallback("addEntry", addEntry);
 					ExternalInterface.addCallback("getRecordedTime", getRecordedTime);
 					ExternalInterface.addCallback("setQuality", setQuality);

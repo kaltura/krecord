@@ -157,15 +157,20 @@ package com.kaltura.recording.controller {
 		}
 
 
-		public function onBWDone():void {
+		public function onBWDone(...args):void {
 			if (debugTraces)
 				trace("KRecordNetClient: onBWDone");
 		}
 
 
-		public function onBWCheck():void {
+		public function onBWCheck(...args):void {
 			if (debugTraces)
 				trace("KRecordNetClient: onBWonBWCheck");
+		}
+		
+		public function onTimeCoordInfo(...args):void {
+			if (debugTraces)
+				trace("KRecordNetClient: onTimeCoordInfo");
 		}
 
 

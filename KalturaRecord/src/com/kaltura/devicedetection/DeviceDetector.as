@@ -357,7 +357,7 @@ package com.kaltura.devicedetection {
 		
 		
 		public function openSettings():void {
-			Security.showSettings("2");
+			Security.showSettings(SecurityPanel.PRIVACY);
 		}
 		
 		private function getMicrophoneActivity():int {

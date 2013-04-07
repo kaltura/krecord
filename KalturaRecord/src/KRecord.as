@@ -71,6 +71,9 @@ package {
 
 	public class KRecord extends Sprite {
 		
+		/**
+		 * parameters passed from a wrapper application, fixed to lower-no-underscore.
+		 */
 		public var pushParameters:Object;
 
 		public var autoPreview:Boolean = false;
@@ -105,11 +108,11 @@ package {
 
 		
 
-		public static const VERSION:String = "v1.6.1";
+		public static const VERSION:String = "v1.6.2";
 
 
 		/**
-		 *Constructor.
+		 * Constructor.
 		 * @param init		if true will automatically call startApplication and initialize application.
 		 *
 		 */
@@ -129,54 +132,45 @@ package {
 			this.contextMenu = customContextMenu;
 
 			stageResize(null);
-
-			// read flashVars (uses these lines only when flashVars and ExternalInterface control is needed):
+			// store flashvars
 			var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-			var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
-			if (appparams.showui == "false") {
+			pushParameters = ObjectHelpers.lowerNoUnderscore(paramObj);
+			
+			// read flashVars
+			if (pushParameters.showui == "false") {
 				UIComponent.visibleSkin = false
 			}
-			if (appparams.showerrormessage == "true" || appparams.showerrormessage == "1") {
+			if (pushParameters.showerrormessage == "true" || pushParameters.showerrormessage == "1") {
 				_showErrorMessage = true
 			}
 			// view params:
-			var themeUrl:String = KConfigUtil.getDefaultValue(appparams.themeurl, "skin.swf");
-			var localeUrl:String = KConfigUtil.getDefaultValue(appparams.localeurl, "locale.xml");
-			var autoPreview:String = KConfigUtil.getDefaultValue(appparams.autopreview, "1");
-			if (appparams.showpreviewtimer == "true" || appparams.showpreviewtimer == "1")
+			var themeUrl:String = KConfigUtil.getDefaultValue(pushParameters.themeurl, "skin.swf");
+			var localeUrl:String = KConfigUtil.getDefaultValue(pushParameters.localeurl, "locale.xml");
+			var autoPreview:String = KConfigUtil.getDefaultValue(pushParameters.autopreview, "1");
+			if (pushParameters.showpreviewtimer == "true" || pushParameters.showpreviewtimer == "1")
 				Global.SHOW_PREVIEW_TIMER = true;
 			
-			Global.REMOVE_PLAYER = (appparams.removeplayer == "1" || appparams.removeplayer == "true");
+			Global.REMOVE_PLAYER = (pushParameters.removeplayer == "1" || pushParameters.removeplayer == "true");
 			Global.VIEW_PARAMS = new KRecordViewParams(themeUrl, localeUrl, autoPreview);
-			Global.DETECTION_DELAY = appparams.hasOwnProperty("detectiondelay") ? uint(appparams.detectiondelay) : 0;
-			Global.DISABLE_GLOBAL_CLICK = (appparams.disableglobalclick == "1" || appparams.disableglobalclick == "true");
+			Global.DETECTION_DELAY = pushParameters.hasOwnProperty("detectiondelay") ? uint(pushParameters.detectiondelay) : 0;
+			Global.DISABLE_GLOBAL_CLICK = (pushParameters.disableglobalclick == "1" || pushParameters.disableglobalclick == "true");
 			
-			Global.DEBUG_MODE = appparams.hasOwnProperty("debugmode") ? true : false;
-			_recordControl.debugTrace = Global.DEBUG_MODE;
-			
-			// H264 codec related
-			_recordControl.isH264 = (appparams.ish264 == "1" || appparams.ish264 == "true");
-			if (appparams.hasOwnProperty("h264profile")) {
-				_recordControl.h264Profile = appparams.h264profile;
-			}
-			if (appparams.hasOwnProperty("h264level")) {
-				_recordControl.h264Level = appparams.h264level;
-			}
+			Global.DEBUG_MODE = pushParameters.hasOwnProperty("debugmode") ? true : false;
 
 			// create Kaltura client 
 			var configuration:KalturaConfig = new KalturaConfig();
-			configuration.partnerId = appparams.pid;
+			configuration.partnerId = pushParameters.pid;
 			configuration.ignoreNull = 1;
-			configuration.domain = KUtils.hostFromCode(appparams.host);
+			configuration.domain = KUtils.hostFromCode(pushParameters.host);
 			configuration.srvUrl = "api_v3/index.php"
-			configuration.ks = appparams.ks;
+			configuration.ks = pushParameters.ks;
 
-			if (!appparams.httpprotocol) {
+			if (!pushParameters.httpprotocol) {
 				var url:String = root.loaderInfo.url;
 				configuration.protocol = isHttpURL(url) ? getProtocol(url) : "http";
 			}
 			else {
-				configuration.protocol = appparams.httpprotocol;
+				configuration.protocol = pushParameters.httpprotocol;
 			}
 			configuration.protocol += "://";
 
@@ -187,12 +181,130 @@ package {
 			addChild(_view);
 		}
 
-
-		public static function isHttpURL(url:String):Boolean {
-			return url != null && (url.indexOf("http://") == 0 || url.indexOf("https://") == 0);
+		
+		/**
+		 * initializes the application.
+		 */
+		public function startApplication(event:Event = null):void {
+			if (Global.PRELOADER && Global.PRELOADER.parent) {
+				Global.PRELOADER.parent.removeChild(Global.PRELOADER);
+				Global.PRELOADER = null;
+			}
+			
+			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
+			_view.addEventListener(ViewEvent.RECORD_START, onStartRecord);
+			_view.addEventListener(ViewEvent.RECORD_STOP, onStopRecord);
+			_view.addEventListener(ViewEvent.PREVIEW_SAVE, onSave);
+			_view.addEventListener(ViewEvent.PREVIEW_RERECORD, onStartRecord);
+			
+			stage.align = StageAlign.TOP_LEFT;
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			
+			// read flashVars for recorder params
+			autoPreview = !(pushParameters.autopreview == "0" || pushParameters.autopreview == "false");
+			_limitRecord = KConfigUtil.getDefaultValue(pushParameters.limitrecord, 0);
+			var hostUrl:String = KConfigUtil.getDefaultValue(pushParameters.host, "http://www.kaltura.com");
+			var rtmpHost:String = KConfigUtil.getDefaultValue(pushParameters.rtmphost, "rtmp://www.kaltura.com");
+			var ks:String = KConfigUtil.getDefaultValue(pushParameters.ks, "");
+			var pid:String = KConfigUtil.getDefaultValue(pushParameters.pid, "");
+			var subpid:String = KConfigUtil.getDefaultValue(pushParameters.subpid, "");
+			var uid:String = KConfigUtil.getDefaultValue(pushParameters.uid, "");
+			var kshowId:String = KConfigUtil.getDefaultValue(pushParameters.kshowid, "-1");
+			var fmsApp:String = KConfigUtil.getDefaultValue(pushParameters.fmsapp, "oflaDemo");
+			_recordControl.initRecorderParameters = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
+			// optional flashvars:
+			_recordControl.debugTrace = Global.DEBUG_MODE;
+			// H264 codec related
+			_recordControl.isH264 = (pushParameters.ish264 == "1" || pushParameters.ish264 == "true");
+			if (pushParameters.hasOwnProperty("h264profile")) {
+				_recordControl.h264Profile = pushParameters.h264profile;
+			}
+			if (pushParameters.hasOwnProperty("h264level")) {
+				_recordControl.h264Level = pushParameters.h264level;
+			}
+			// device detection timer:
+			if (pushParameters.hasOwnProperty("timepermic")) {
+				_recordControl.micCheckInterval = pushParameters.timepermic;
+			}
+			
+			_messageX = KConfigUtil.getDefaultValue(pushParameters.messagex, 0);
+			_messageY = KConfigUtil.getDefaultValue(pushParameters.messagey, 0);
+			
+			if (ExternalInterface.available) {
+				try {
+					// Register External calls
+					ExternalInterface.addCallback("stopRecording", stopRecording);
+					ExternalInterface.addCallback("startRecording", startRecording);
+					ExternalInterface.addCallback("previewRecording", previewRecording);
+					ExternalInterface.addCallback("stopPreviewRecording", stopPreviewRecording);
+					ExternalInterface.addCallback("addEntry", addEntry);
+					ExternalInterface.addCallback("getRecordedTime", getRecordedTime);
+					ExternalInterface.addCallback("setQuality", setQuality);
+					ExternalInterface.addCallback("getMicrophones", getMicrophones);
+					ExternalInterface.addCallback("getMicrophoneActivityLevel", getMicrophoneActivityLevel);
+					ExternalInterface.addCallback("getMicrophoneGain", getMicrophoneGain);
+					ExternalInterface.addCallback("setMicrophoneGain", setMicrophoneGain);
+					ExternalInterface.addCallback("getCameras", getCameras);
+					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
+					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
+					ExternalInterface.addCallback("getMostRecentEntryId", getMostRecentEntryId);
+					
+					ExternalInterface.marshallExceptions = true;
+					callInterfaceDelegate("swfReady");
+					if (Global.DEBUG_MODE)
+						trace('JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
+				}
+				catch (err:Error) {
+					trace('Error initializing KRecord via JS: ', err.message);
+				}
+			}
+			
+			// before recording:
+			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
+			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
+			_recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
+			
+			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
+			_recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
+			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
+			
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
+			_recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
+			_recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
+			_recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
+			
+			_recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
+			_recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
+			
+			// adding entry:
+			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
+			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
+			
+			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
+			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
+			
+			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
+			_recordControl.addEventListener("bufferEmpty", switchToPreview);
+			
+			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_STARTED, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_STOPPED, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_PAUSED, previewEventsHandler);
+			_recordControl.addEventListener(PreviewEvent.PREVIEW_RESUMED, previewEventsHandler);
+			
+			if (Global.DEBUG_MODE)
+				trace("call deviceDetection");
+			_recordControl.deviceDetection();
+			
+			if (this.stage == this.root.parent)
+				stage.addEventListener(Event.RESIZE, stageResize);
+			
+			dispatchEvent(new ViewEvent(ViewEvent.VIEW_READY, true));
 		}
 
-
+		
 		/**
 		 * handler for view evens that should start new recording (record, re-record) 
 		 * @param evt event dispatched from view
@@ -221,6 +333,11 @@ package {
 			stopRecording();
 		}
 
+		
+		public static function isHttpURL(url:String):Boolean {
+			return url != null && (url.indexOf("http://") == 0 || url.indexOf("https://") == 0);
+		}
+		
 
 		public static function getProtocol(url:String):String {
 			var slash:int = url.indexOf("/");
@@ -241,151 +358,27 @@ package {
 		private function onSave(evt:ViewEvent):void {
 			_recordControl.stopPreviewRecording();
 			// get entry flashvars:
-			if (ExternalInterface.available) {
-				try {
-					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-					var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
-					var entryName:String = KConfigUtil.getDefaultValue(appparams.entryname, "");
-					var entryTags:String = KConfigUtil.getDefaultValue(appparams.entrytags, "");
-					var entryDescription:String = KConfigUtil.getDefaultValue(appparams.entrydescription, "");
-					var creditsScreenName:String = KConfigUtil.getDefaultValue(appparams.creditsscreenName, "");
-					var creditsSiteUrl:String = KConfigUtil.getDefaultValue(appparams.creditssiteUrl, "");
-					var categories:String = KConfigUtil.getDefaultValue(appparams.categories, "");
-					var adminTags:String = KConfigUtil.getDefaultValue(appparams.admintags, "");
-					var licenseType:String = KConfigUtil.getDefaultValue(appparams.licensetype, "");
-					var credit:String = KConfigUtil.getDefaultValue(appparams.credit, "");
-					var groupId:String = KConfigUtil.getDefaultValue(appparams.groupid, "");
-					var partnerData:String = KConfigUtil.getDefaultValue(appparams.partnerdata, "");
-					var conversionQuality:String = KConfigUtil.getDefaultValue(appparams.conversionquality, "");
+			var entryName:String = KConfigUtil.getDefaultValue(pushParameters.entryname, "");
+			var entryTags:String = KConfigUtil.getDefaultValue(pushParameters.entrytags, "");
+			var entryDescription:String = KConfigUtil.getDefaultValue(pushParameters.entrydescription, "");
+			var creditsScreenName:String = KConfigUtil.getDefaultValue(pushParameters.creditsscreenName, "");
+			var creditsSiteUrl:String = KConfigUtil.getDefaultValue(pushParameters.creditssiteUrl, "");
+			var categories:String = KConfigUtil.getDefaultValue(pushParameters.categories, "");
+			var adminTags:String = KConfigUtil.getDefaultValue(pushParameters.admintags, "");
+			var licenseType:String = KConfigUtil.getDefaultValue(pushParameters.licensetype, "");
+			var credit:String = KConfigUtil.getDefaultValue(pushParameters.credit, "");
+			var groupId:String = KConfigUtil.getDefaultValue(pushParameters.groupid, "");
+			var partnerData:String = KConfigUtil.getDefaultValue(pushParameters.partnerdata, "");
+			var conversionQuality:String = KConfigUtil.getDefaultValue(pushParameters.conversionquality, "");
 
-					addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, categories, adminTags, licenseType, credit, groupId, partnerData, conversionQuality)
-				}
-				catch (err:Error) {
-					trace('Error reading flashVars and initializing KRecord via html and JS');
-				}
-			}
-			else {
-				addEntry("", "", "", "", "", "", "", "", "", "", "");
-			}
+			addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, categories, adminTags, licenseType, credit, groupId, partnerData, conversionQuality)
+			
 			if (Global.DEBUG_MODE)
 				trace("SAVE");
 		}
 
 
-		/**
-		 * initializes the application.
-		 */
-		public function startApplication(event:Event = null):void {
-			if (Global.PRELOADER && Global.PRELOADER.parent) {
-				Global.PRELOADER.parent.removeChild(Global.PRELOADER);
-				Global.PRELOADER = null;
-			}
-
-			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
-			_view.addEventListener(ViewEvent.RECORD_START, onStartRecord);
-			_view.addEventListener(ViewEvent.RECORD_STOP, onStopRecord);
-			_view.addEventListener(ViewEvent.PREVIEW_SAVE, onSave);
-			_view.addEventListener(ViewEvent.PREVIEW_RERECORD, onStartRecord);
-
-			stage.align = StageAlign.TOP_LEFT;
-			stage.scaleMode = StageScaleMode.NO_SCALE;
-			var initParams:BaseRecorderParams;
-			//read flashVars (uses these lines only when flashVars and ExternalInterface control is needed):
-			if (ExternalInterface.available) {
-				try {
-					var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-					var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
-					autoPreview = !(appparams.autopreview == "0" || appparams.autopreview == "false");
-					_limitRecord = KConfigUtil.getDefaultValue(appparams.limitrecord, 0);
-					var hostUrl:String = KConfigUtil.getDefaultValue(appparams.host, "http://www.kaltura.com");
-					var rtmpHost:String = KConfigUtil.getDefaultValue(appparams.rtmphost, "rtmp://www.kaltura.com");
-					var ks:String = KConfigUtil.getDefaultValue(appparams.ks, "");
-					var pid:String = KConfigUtil.getDefaultValue(appparams.pid, "");
-					var subpid:String = KConfigUtil.getDefaultValue(appparams.subpid, "");
-					var uid:String = KConfigUtil.getDefaultValue(appparams.uid, "");
-					var kshowId:String = KConfigUtil.getDefaultValue(appparams.kshowid, "-1");
-					var fmsApp:String = KConfigUtil.getDefaultValue(appparams.fmsapp, "oflaDemo");
-					_messageX = KConfigUtil.getDefaultValue(appparams.messagex, 0);
-					_messageY = KConfigUtil.getDefaultValue(appparams.messagey, 0);
-					//init KRecord parameters:
-					initParams = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
-					// Register External calls
-					ExternalInterface.addCallback("stopRecording", stopRecording);
-					ExternalInterface.addCallback("startRecording", startRecording);
-					ExternalInterface.addCallback("previewRecording", previewRecording);
-					ExternalInterface.addCallback("stopPreviewRecording", stopPreviewRecording);
-					ExternalInterface.addCallback("addEntry", addEntry);
-					ExternalInterface.addCallback("getRecordedTime", getRecordedTime);
-					ExternalInterface.addCallback("setQuality", setQuality);
-					ExternalInterface.addCallback("getMicrophones", getMicrophones);
-					ExternalInterface.addCallback("getMicrophoneActivityLevel", getMicrophoneActivityLevel);
-					ExternalInterface.addCallback("getMicrophoneGain", getMicrophoneGain);
-					ExternalInterface.addCallback("setMicrophoneGain", setMicrophoneGain);
-					ExternalInterface.addCallback("getCameras", getCameras);
-					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
-					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
-					ExternalInterface.addCallback("getMostRecentEntryId", getMostRecentEntryId);
-
-					ExternalInterface.marshallExceptions = true;
-					callInterfaceDelegate("swfReady");
-					if (Global.DEBUG_MODE)
-						trace('flashVars caught and JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
-
-				}
-				catch (err:Error) {
-					trace('Error reading flashVars and initializing KRecord via html and JS');
-				}
-			}
-			else {
-				//init KRecord parameters, use this line in cases where you don't use flashVars and external JS control:
-				initParams = new BaseRecorderParams('http://www.kaltura.com', 'rtmp://www.kaltura.com', '', '', '', '', '-1', 'oflaDemo');
-			}
-
-			_recordControl.initRecorderParameters = initParams;
-			// before recording:
-			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
-			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
-			_recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
-			
-			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
-			_recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
-			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
-			
-			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
-			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
-			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
-			_recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
-			_recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
-			_recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
-
-			_recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
-			_recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
-
-			// adding entry:
-			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
-			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
-			
-			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
-			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
-			
-			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
-			_recordControl.addEventListener("bufferEmpty", switchToPreview);
-			
-			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEventsHandler);
-			_recordControl.addEventListener(PreviewEvent.PREVIEW_STARTED, previewEventsHandler);
-			_recordControl.addEventListener(PreviewEvent.PREVIEW_STOPPED, previewEventsHandler);
-			_recordControl.addEventListener(PreviewEvent.PREVIEW_PAUSED, previewEventsHandler);
-			_recordControl.addEventListener(PreviewEvent.PREVIEW_RESUMED, previewEventsHandler);
-			
-			if (Global.DEBUG_MODE)
-				trace("call deviceDetection");
-			_recordControl.deviceDetection();
-
-			if (this.stage == this.root.parent)
-				stage.addEventListener(Event.RESIZE, stageResize);
-
-			dispatchEvent(new ViewEvent(ViewEvent.VIEW_READY, true));
-		}
+		
 		
 		public function getMostRecentEntryId():String
 		{
@@ -587,17 +580,16 @@ package {
 
 
 		private function deviceError(event:DeviceDetectionEvent):void {
-			trace(event.type);
 			callInterfaceDelegate(event.type);
 
 			switch (event.type) {
 				case DeviceDetectionEvent.ERROR_CAMERA:
 					_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
 					break;
-				case DeviceDetectionEvent.ERROR_MICROPHONE:
-				case DeviceDetectionEvent.MIC_DENIED:
-					_recordControl.setActiveMicrophone(_recordControl.getMicrophones()[0]);
-					break;
+//				case DeviceDetectionEvent.ERROR_MICROPHONE:
+//				case DeviceDetectionEvent.MIC_DENIED:
+//					_recordControl.setActiveMicrophone(_recordControl.getMicrophones()[0]);
+//					break;
 			}
 			dispatchEvent(event.clone());
 		}
@@ -624,16 +616,13 @@ package {
 		 * set initial recording quality according to flashvars or default 
 		 */
 		private function setInitialQuality():void {
-			var paramObj:Object = !pushParameters ? root.loaderInfo.parameters : pushParameters;
-			var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
-			
-			var quality:int = appparams.hasOwnProperty("quality") ? appparams.quality : 85;
-			var bw:int = appparams.hasOwnProperty("bw") ? appparams.bw : 0;
-			var w:int = appparams.hasOwnProperty("width") ? appparams.width : 336;
-			var h:int = appparams.hasOwnProperty("height") ? appparams.height : 252;
-			var fps:Number = appparams.hasOwnProperty("fps") ? appparams.fps : 25;
-			var gop:Number = appparams.hasOwnProperty("gop") ? appparams.gop : 25;
-			var bufferTime:Number = appparams.hasOwnProperty("buffertime") ? appparams.buffertime : 70;
+			var quality:int = pushParameters.hasOwnProperty("quality") ? pushParameters.quality : 85;
+			var bw:int = pushParameters.hasOwnProperty("bw") ? pushParameters.bw : 0;
+			var w:int = pushParameters.hasOwnProperty("width") ? pushParameters.width : 336;
+			var h:int = pushParameters.hasOwnProperty("height") ? pushParameters.height : 252;
+			var fps:Number = pushParameters.hasOwnProperty("fps") ? pushParameters.fps : 25;
+			var gop:Number = pushParameters.hasOwnProperty("gop") ? pushParameters.gop : 25;
+			var bufferTime:Number = pushParameters.hasOwnProperty("buffertime") ? pushParameters.buffertime : 70;
 			setQuality(quality, bw, w, h, fps, gop, bufferTime);
 		}
 

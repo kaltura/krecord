@@ -35,13 +35,15 @@ package com.kaltura.devicedetection
 
 	public class DeviceDetectionEvent extends Event
 	{
-		static public var DETECTED_MICROPHONE:String = "detectedMicrophone";
 		static public var DETECTED_CAMERA:String = "detectedCamera";
-
-		static public var ERROR_MICROPHONE:String = "errorMicrophone";
 		static public var ERROR_CAMERA:String = "errorCamera";
-		static public var MIC_DENIED:String = "micDenied";
 		static public var CAMERA_DENIED:String = "cameraDenied";
+
+		static public var DETECTED_MICROPHONE:String = "detectedMicrophone";
+		static public var ERROR_MICROPHONE:String = "errorMicrophone";
+		static public var MIC_DENIED:String = "micDenied";
+		static public var MIC_ALLOWED:String = "micAllowed";
+		
 
 		public var detectedDevice:Object;
 

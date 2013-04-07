@@ -33,7 +33,6 @@ package com.kaltura.recording.business
 	{
 		public var host:String;
 		public var rtmpHost:String;
-		public var addEntryUrl:String;
 		public var baseRequestData:Object;
 		public var kshowid:String;
 
@@ -67,7 +66,6 @@ package com.kaltura.recording.business
 					uid: 		_uid
 				};
 			kshowid = _kshowid;
-			addEntryUrl = host + "/index.php/partnerservices2/addentry";
 		}
 	}
 }

@@ -71,16 +71,20 @@ package com.kaltura.recording.controller {
 	[Event(name = "detectedCamera", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
 	[Event(name = "errorMicrophone", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
 	[Event(name = "errorCamera", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
+	
 	[Event(name = "netconnectionConnectClosed", type = "com.kaltura.net.streaming.events.ExNetConnectionEvent")]
 	[Event(name = "netconnectionConnectFailed", type = "com.kaltura.net.streaming.events.ExNetConnectionEvent")]
 	[Event(name = "netconnectionConnectSuccess", type = "com.kaltura.net.streaming.events.ExNetConnectionEvent")]
 	[Event(name = "netconnectionConnectRejected", type = "com.kaltura.net.streaming.events.ExNetConnectionEvent")]
 	[Event(name = "netconnectionConnectInvalidapp", type = "com.kaltura.net.streaming.events.ExNetConnectionEvent")]
+	
 	[Event(name = "netstreamRecordStart", type = "com.kaltura.net.streaming.events.RecordNetStreamEvent")]
 	[Event(name = "netstreamPlayStop", type = "com.kaltura.net.streaming.events.RecordNetStreamEvent")]
+	
 	[Event(name = "flushStart", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
 	[Event(name = "flushProgress", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
 	[Event(name = "flushComplete", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
+	
 	[Event(name = "addEntryResult", type = "com.kaltura.recording.controller.events.AddEntryEvent")]
 	[Event(name = "addEntryFault", type = "com.kaltura.recording.controller.events.AddEntryEvent")]
 	
@@ -150,6 +154,11 @@ package com.kaltura.recording.controller {
 		 */
 		public var h264Level:String = H264Level.LEVEL_3_1;
 		
+		/**
+		 * when looking for active microphone, time to spend on each mic (ms)
+		 * @default 20000 
+		 */
+		public var micCheckInterval:int = 20000;
 		
 		/**
 		 * partner and application settings.
@@ -402,7 +411,8 @@ package com.kaltura.recording.controller {
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError, false, 0, true);
-				DeviceDetector.getInstance().detectMicrophone();
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_ALLOWED, microphoneDenyError, false, 0, true);
+				DeviceDetector.getInstance().detectMicrophone(micCheckInterval);
 			}
 			else {
 				detectCameraDevice();
@@ -415,7 +425,7 @@ package com.kaltura.recording.controller {
 		 */
 		private function microphoneDeviceDetected(event:DeviceDetectionEvent):void {
 			removeMicrophoneDetectionListeners();
-			microphone = DeviceDetector.getInstance().microphone;
+			microphone = event.detectedDevice as Microphone;
 			dispatchEvent(event.clone());
 			detectCameraDevice();
 		}
@@ -430,7 +440,7 @@ package com.kaltura.recording.controller {
 
 
 		/**
-		 * microphone deny
+		 * microphone deny / allow
 		 */
 		private function microphoneDenyError(event:DeviceDetectionEvent):void {
 			dispatchEvent(event.clone());
@@ -451,6 +461,7 @@ package com.kaltura.recording.controller {
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_ALLOWED, microphoneDenyError);
 		}
 
 

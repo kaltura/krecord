@@ -76,6 +76,10 @@ package com.kaltura.devicedetection {
 	[Event(name = "cameraDenied", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
 
 	public class DeviceDetector extends EventDispatcher {
+		
+		private var _micDetector:MicrophoneDetector;
+		
+		
 		/**
 		 * the allowed camera, once found 
 		 */
@@ -116,23 +120,15 @@ package com.kaltura.devicedetection {
 		
 		public var maxCameraFails:uint = 3;
 
-		/**
-		 * the allowed microphone, once found 
-		 */
-		public var microphone:Microphone = null;
 		
-		private var _microphonesNumber:int = Microphone.names.length;
-		private var _testedMicrophoneIndex:int = 0;
-		private var _testedMicrophone:Microphone;
 
 		/**
 		 * image test delay 
 		 */
 		private var _delayTime:uint;
 		private var _delayAfterFail:uint;
-		private var _micTimer:Timer;
-		private var _everySecTimer:Timer;
-
+		
+		
 
 		//////
 		//		CCCCCCCCC		AAAAAAAAAAA			MMMMMM		   MMMMMM
@@ -297,157 +293,84 @@ package com.kaltura.devicedetection {
 		//		MMM				  MMM			IIIIIIIIIII			CCCCCCCCC
 		//////
 
-		public function detectMicrophone():void {
-			_testedMicrophone = Microphone.getMicrophone(_testedMicrophoneIndex);
-			if (!_testedMicrophone) {
-				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.ERROR_MICROPHONE, null));
-				return;
+		/**
+		 * 
+		 * @param timePerMic	delay before trying the next microphone (ms)
+		 * @param timePerCheck	delay between activity checks for current microphone (ms)
+		 * 
+		 */
+		public function detectMicrophone(timePerMic:int = 20000, timePerCheck:int = 1000):void {
+			if (!_micDetector) {
+				ExternalInterface.addCallback("openSettings", openSettings); 
+				_micDetector = new MicrophoneDetector();
+				_micDetector.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, handleMicDetectionEvents);
+				_micDetector.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, handleMicDetectionEvents);
+				_micDetector.addEventListener(DeviceDetectionEvent.MIC_DENIED, handleMicDetectionEvents);
+				_micDetector.addEventListener(DeviceDetectionEvent.MIC_ALLOWED, handleMicDetectionEvents);
 			}
-			_testedMicrophone.setUseEchoSuppression(true)
-			_testedMicrophone.setLoopBack(true); //this is for provoking some activity input when it's not streaming
-			_testedMicrophone.setSilenceLevel(5);
-			_testedMicrophone.gain = 90;
-			var timeLapse:String = ""; //Application.application.parameters.testLapse;
-			var timeValue:Number;
-			ExternalInterface.addCallback("openSettings", openSettings);
-			if (timeLapse != null) {
-				timeValue = Number(timeLapse);
-				_micTimer = new Timer(20000, 0);
-				_everySecTimer = new Timer(timeValue / 1000);
-			}
-			else {
-				_micTimer = new Timer(20000, 0);
-				_everySecTimer = new Timer(1000, 20);
-			}
-			_micTimer.addEventListener(TimerEvent.TIMER, checkMicActivity);
-			_everySecTimer.addEventListener(TimerEvent.TIMER, onEverySec);
-			if (_testedMicrophone.muted == false) {
-				addTimers();
-			}
-			else {
-				_testedMicrophone.addEventListener(StatusEvent.STATUS, statusHandler);
-			}
+			_micDetector.detectMicrophone(timePerMic, timePerCheck);
 		}
-
-
-		private function addTimers():void {
-			_micTimer.start()
-			_everySecTimer.start()
-		}
-
-
-		private function stopTimers():void {
-			_micTimer.stop()
-			_everySecTimer.stop()
-		}
-
-
-		private function statusHandler(event:StatusEvent):void {
-			trace(event.code);
-			if (event.code == "Microphone.Unmuted") {
-				addTimers();
-				trace("The user allows open the mic...");
-			}
-
-			if (event.code == "Microphone.Muted") {
-				trace("The user does not allows to use the mic...");
-				////HERE A JS alert: "Are you sure you don't allow the mic to be open? You won't be able to record with audio..
-				try {
+		
+		private function handleMicDetectionEvents(event:DeviceDetectionEvent):void {
+			switch (event.type) {
+				case DeviceDetectionEvent.DETECTED_MICROPHONE:
+					ExternalInterface.addCallback("getMicophoneActivityLevel", getMicrophoneActivity);
+					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DETECTED_MICROPHONE, event.detectedDevice));
+					try {
+						ExternalInterface.call("workingMicFound");
+					}
+					catch (errObject:Error) {
+						trace(errObject.message);
+					}
+					break;
+				case DeviceDetectionEvent.ERROR_MICROPHONE:
+					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.ERROR_MICROPHONE, null));
+					try {
+						openSettings();
+						ExternalInterface.call("noMicsFound");
+					}
+					catch (errObject:Error) {
+						trace(errObject.message);
+					}
+					break;
+				case DeviceDetectionEvent.MIC_DENIED:
 					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_DENIED, null));
-					ExternalInterface.call("micDenied");
-				}
-				catch (errObject:Error) {
-					trace(errObject.message);
-				}
+					try {
+						ExternalInterface.call("micDenied");
+					}
+					catch (errObject:Error) {
+						trace(errObject.message);
+					}
+					break;
+				case DeviceDetectionEvent.MIC_ALLOWED:
+					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_ALLOWED, event.detectedDevice));
+					try {
+						ExternalInterface.call("micAllowed");
+					}
+					catch (errObject:Error) {
+						trace(errObject.message);
+					}
+					break;
 			}
-
-		}
-
-
+			
+		}	
+		
+		
 		public function openSettings():void {
 			Security.showSettings("2");
 		}
-
-
-		private function checkMicActivity(timerEvent:TimerEvent):void {
-			if (_testedMicrophone.activityLevel < 2) {
-				detectNextMicrophone();
-			}
-			else {
-				success();
-			}
+		
+		private function getMicrophoneActivity():int {
+			return _micDetector.getActivityNow();
 		}
-
-
-		private function onEverySec(timerEvent:TimerEvent):void {
-			if (_testedMicrophone.activityLevel > 2) {
-				success();
-			}
+		
+		public function get microphone():Microphone {
+			return _micDetector.microphone;
 		}
-
-
-		private function success():void {
-			stopTimers();
-			dispatchMicrophoneSuccess();
-			try {
-				ExternalInterface.call("workingMicFound");
-			}
-			catch (errObject:Error) {
-				trace(errObject.message);
-			}
-			trace("working Mic Found")
-		}
-
-
-		private function detectNextMicrophone():void {
-			_testedMicrophoneIndex++
-			if (_testedMicrophoneIndex < _microphonesNumber) {
-				detectMicrophone()
-			}
-			else {
-				////HERE A JS alert: "Not Working mics were found on your computer" Please check the configuration
-				try {
-					openSettings()
-					ExternalInterface.call("noMicsFound");
-				}
-				catch (errObject:Error) {
-					trace(errObject.message);
-				}
-				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.ERROR_MICROPHONE, null));
-			}
-			return;
-		}
-
-
-		private function dispatchMicrophoneSuccess():void {
-			disposeMicrophone()
-			microphone = Microphone.getMicrophone(_testedMicrophoneIndex);
-			microphone.setUseEchoSuppression(true);
-			microphone.gain = 90
-			dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DETECTED_MICROPHONE, microphone));
-			ExternalInterface.addCallback("getMicophoneActivityLevel", getActivityNow)
-			microphone.setSilenceLevel(0);
-		}
-
-
-		private function getActivityNow():int {
-			var activ:int = microphone.activityLevel;
-			return activ;
-		}
-
-
-		private function disposeMicrophone():void {
-			if (_testedMicrophone) {
-				_testedMicrophone.setLoopBack(false);
-				_testedMicrophone.gain = 0
-			}
-			_testedMicrophone = null;
-		}
-
 
 		/////// ============= singletone
 		/**
-		 *Constructor + getInsance.
+		 *Constructor + getInstance.
 		 */
 		static private var _instance:DeviceDetector;
 

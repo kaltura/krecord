@@ -410,8 +410,8 @@ package com.kaltura.recording.controller {
 			if (!microphone) {
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
-				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError, false, 0, true);
-				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_ALLOWED, microphoneDenyError, false, 0, true);
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, allowDenyHandler, false, 0, true);
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_ALLOWED, allowDenyHandler, false, 0, true);
 				DeviceDetector.getInstance().detectMicrophone(micCheckInterval);
 			}
 			else {
@@ -432,17 +432,9 @@ package com.kaltura.recording.controller {
 
 
 		/**
-		 * camera deny
+		 * microphone deny/allow, camera deny.
 		 */
-		private function cameraDenyError(event:DeviceDetectionEvent):void {
-			dispatchEvent(event.clone());
-		}
-
-
-		/**
-		 * microphone deny / allow
-		 */
-		private function microphoneDenyError(event:DeviceDetectionEvent):void {
+		private function allowDenyHandler(event:DeviceDetectionEvent):void {
 			dispatchEvent(event.clone());
 		}
 
@@ -460,8 +452,8 @@ package com.kaltura.recording.controller {
 		private function removeMicrophoneDetectionListeners():void {
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError);
-			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_DENIED, microphoneDenyError);
-			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_ALLOWED, microphoneDenyError);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_DENIED, allowDenyHandler);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_ALLOWED, allowDenyHandler);
 		}
 
 
@@ -470,7 +462,7 @@ package com.kaltura.recording.controller {
 		 */
 		protected function detectCameraDevice():void {
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected, false, 0, true);
-			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, cameraDenyError, false, 0, true);
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, allowDenyHandler, false, 0, true);
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError, false, 0, true);
 			if (Global.DETECTION_DELAY != 0) {
 				DeviceDetector.getInstance().detectCamera(Global.DETECTION_DELAY);
@@ -703,6 +695,7 @@ package com.kaltura.recording.controller {
 
 			switch (event.info.code) {
 				case "NetStream.Play.Start":
+				case "NetStream.Pause.Notify":
 					if (inter) {
 						clearInterval(inter);
 					}
@@ -730,6 +723,10 @@ package com.kaltura.recording.controller {
 				case "NetStream.Play.Stop":
 				case "NetStream.Unpause.Notify":
 					// wait until buffer is empty before closing
+					if (inter) {
+						// in case we double clicked the "resume preview"
+						clearInterval(inter);
+					}
 					inter = setInterval(checkPreviewBufferFlushed, 50);
 					
 					if (_connectionTester.running) {

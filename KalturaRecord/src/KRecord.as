@@ -268,6 +268,7 @@ package {
 			
 			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, deviceDetected);
 			_recordControl.addEventListener(DeviceDetectionEvent.MIC_DENIED, deviceError);
+			_recordControl.addEventListener(DeviceDetectionEvent.MIC_ALLOWED, deviceError);
 			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
 			
 			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
@@ -582,7 +583,10 @@ package {
 
 
 		private function deviceError(event:DeviceDetectionEvent):void {
-			callInterfaceDelegate(event.type);
+			if (event.type != DeviceDetectionEvent.MIC_ALLOWED && event.type == DeviceDetectionEvent.MIC_DENIED) {
+				// EI for these is triggered in DeviceDetector 
+				callInterfaceDelegate(event.type);
+			}
 
 			switch (event.type) {
 				case DeviceDetectionEvent.ERROR_CAMERA:

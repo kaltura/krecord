@@ -38,7 +38,6 @@ package com.kaltura.recording.controller {
 	import com.kaltura.net.streaming.events.FlushStreamEvent;
 	import com.kaltura.net.streaming.events.RecordNetStreamEvent;
 	import com.kaltura.recording.business.BaseRecorderParams;
-	import com.kaltura.recording.business.interfaces.IResponder;
 	import com.kaltura.recording.controller.events.AddEntryEvent;
 	import com.kaltura.recording.controller.events.PreviewEvent;
 	import com.kaltura.recording.controller.events.RecorderEvent;
@@ -48,7 +47,6 @@ package com.kaltura.recording.controller {
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.NetStatusEvent;
-	import flash.events.TimerEvent;
 	import flash.media.Camera;
 	import flash.media.H264Level;
 	import flash.media.H264Profile;
@@ -58,8 +56,6 @@ package com.kaltura.recording.controller {
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	import flash.net.ObjectEncoding;
-	import flash.text.engine.ContentElement;
-	import flash.utils.Timer;
 	import flash.utils.clearInterval;
 	import flash.utils.getTimer;
 	import flash.utils.setInterval;

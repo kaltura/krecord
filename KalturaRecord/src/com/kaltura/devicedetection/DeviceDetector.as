@@ -315,7 +315,6 @@ package com.kaltura.devicedetection {
 			switch (event.type) {
 				case DeviceDetectionEvent.DETECTED_MICROPHONE:
 					ExternalInterface.addCallback("getMicophoneActivityLevel", getMicrophoneActivity);
-					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DETECTED_MICROPHONE, event.detectedDevice));
 					try {
 						ExternalInterface.call("workingMicFound");
 					}
@@ -324,7 +323,6 @@ package com.kaltura.devicedetection {
 					}
 					break;
 				case DeviceDetectionEvent.ERROR_MICROPHONE:
-					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.ERROR_MICROPHONE, null));
 					try {
 						openSettings();
 						ExternalInterface.call("noMicsFound");
@@ -334,7 +332,6 @@ package com.kaltura.devicedetection {
 					}
 					break;
 				case DeviceDetectionEvent.MIC_DENIED:
-					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_DENIED, null));
 					try {
 						ExternalInterface.call("micDenied");
 					}
@@ -343,7 +340,6 @@ package com.kaltura.devicedetection {
 					}
 					break;
 				case DeviceDetectionEvent.MIC_ALLOWED:
-					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_ALLOWED, event.detectedDevice));
 					try {
 						ExternalInterface.call("micAllowed");
 					}
@@ -352,8 +348,9 @@ package com.kaltura.devicedetection {
 					}
 					break;
 			}
+			dispatchEvent(event.clone());
 			
-		}	
+		}
 		
 		
 		public function openSettings():void {

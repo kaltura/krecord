@@ -45,6 +45,7 @@ package com.kaltura.devicedetection
 		
 		private var _totalMicrophones:int = Microphone.names.length;
 		private var _testedMicrophoneIndex:int = 0;
+		private var _defaultMicrophoneIndex:int = 0;
 		private var _testedMicrophone:Microphone;
 		
 		/**
@@ -76,6 +77,7 @@ package com.kaltura.devicedetection
 				return;
 			}
 			// add listener to default microphone
+			_defaultMicrophoneIndex = Microphone.getMicrophone().index; 
 			Microphone.getMicrophone().addEventListener(StatusEvent.STATUS, statusHandler);
 			// create check timers
 			_micTimer = new Timer(timePerMic, 1);
@@ -111,8 +113,8 @@ package com.kaltura.devicedetection
 			if (!_testedMicrophone.muted) {
 				// if the microphone is not denied by user, start activity check to verify mic is working properly 
 				startActivityTest();
-			}
-			else {
+			} 
+			else if (_defaultMicrophoneIndex != _testedMicrophoneIndex) {
 				// if user denied microphone, wait for mic status change.
 				_testedMicrophone.addEventListener(StatusEvent.STATUS, statusHandler);
 			}
@@ -143,9 +145,6 @@ package com.kaltura.devicedetection
 			}
 			else {
 				// still part of detection flow
-//				if (_testedMicrophone != Microphone.getMicrophone()) {
-//					_testedMicrophone.removeEventListener(StatusEvent.STATUS, statusHandler);
-//				}
 				if (event.code == "Microphone.Unmuted") {
 					startActivityTest();
 					trace("The user allows using the mic.");

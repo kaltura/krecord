@@ -186,9 +186,9 @@ package com.kaltura.recording.controller {
 			_connecting = value;
 
 			if (_connecting)
-				dispatchEvent(new Event(RecorderEvent.CONNECTING, true));
+				dispatchEvent(new RecorderEvent(RecorderEvent.CONNECTING, true));
 			else
-				dispatchEvent(new Event(RecorderEvent.CONNECTING_FINISH, true));
+				dispatchEvent(new RecorderEvent(RecorderEvent.CONNECTING_FINISH, true));
 		}
 
 		

@@ -225,7 +225,7 @@ package {
 					ExternalInterface.addCallback("getMostRecentEntryId", getMostRecentEntryId);
 					
 					ExternalInterface.marshallExceptions = true;
-					callInterfaceDelegate("swfReady");
+					notify("swfReady");
 					if (Global.DEBUG_MODE)
 						trace('JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
 				}
@@ -332,7 +332,7 @@ package {
 			if (Global.DEBUG_MODE) 
 				trace("AUTO STOP AFTER ", _limitRecord, " SECONDS")
 			stopRecording();
-			callInterfaceDelegate("autoStopRecord", _limitRecord);
+			notify("autoStopRecord", _limitRecord);
 		}
 
 
@@ -400,10 +400,10 @@ package {
 			
 			try {
 				if (event.type == RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE) {
-					callInterfaceDelegate("previewEnd");
+					notify("previewEnd");
 				}
 				else {
-					callInterfaceDelegate(event.type);
+					notify(event.type);
 				}
 			}
 			catch (err:Error) {
@@ -496,6 +496,11 @@ package {
 		}
 
 
+		/**
+		 * if the window has a delegator object, trigger it's methods 
+		 * @param methodName	name of delegator methods to trigger
+		 * @param args	(Optional) method arguments
+		 */
 		public static function delegator(methodName:String, ... args):void {
 			try {
 				ExternalInterface.call("eval(window.delegator)", methodName, args);
@@ -506,72 +511,74 @@ package {
 		}
 
 
-		private function callInterfaceDelegate(methodName:String, ... args):void {
+		/**
+		 * general mechanism for notifications: triggers both EI calls and handles UI 
+		 * @param methodName	name of EI method to be triggered
+		 * @param args	(optional) arguments for EI method
+		 */
+		private function notify(methodName:String, ... args):void {
 			delegator(methodName, args);
 			try {
-				var paramObj:Object = this.root.loaderInfo.parameters;
-				var appparams:Object = ObjectHelpers.lowerNoUnderscore(paramObj);
-				var delegate:String = KConfigUtil.getDefaultValue(appparams.delegate, "window");
+				// trigger EI methods on the delegate object
+				var delegate:String = KConfigUtil.getDefaultValue(pushParameters.delegate, "window");
 				ExternalInterface.call("eval(" + delegate + "." + methodName + ")", args);
 			}
 			catch (err:Error) {
-				trace("callInterfaceDelegate: ", err.message)
+				trace("notify: ", err.message);
 			}
-			//print message on screen
-			var message:String = "";
-			switch (methodName) {
-				case DeviceDetectionEvent.ERROR_CAMERA:
-					message = "Error.CameraError";
-					break;
-				case DeviceDetectionEvent.ERROR_MICROPHONE:
-					message = "Error.MichrophoneError";
-					break;
-				case ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED:
-					message = "Error.ConnectionError";
-					break;
-				case ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED:
-					message = "Error.ConnectionClosed";
-					break;
-				case RecorderEvent.CONNECTING:
-					message = "Dialog.Connecting";
-					break;
-				case DeviceDetectionEvent.MIC_DENIED:
-					message = "Error.micDenied";
-					break;
-				case DeviceDetectionEvent.CAMERA_DENIED:
-					message = "Error.cameraDenied";
-					break;
-			}
-			//handle only the MIC_DENIED & CAMERA_DENIED since the UI is not ready for them yet QND
-			if (message && (methodName == DeviceDetectionEvent.MIC_DENIED || methodName == DeviceDetectionEvent.ERROR_MICROPHONE || methodName == DeviceDetectionEvent.CAMERA_DENIED || methodName == DeviceDetectionEvent.ERROR_CAMERA)) {
-				if (!_message) {
-					_message = new TextField();
-					_message.width = this.width;
-					_message.height = this.height;
-					_message.x = _messageX;
-					_message.y = _messageY;
-					//add drop shadow filter to message
-					var my_shadow:DropShadowFilter = new DropShadowFilter();
-					my_shadow.color = 0x000000;
-					my_shadow.blurY = 3;
-					my_shadow.blurX = 3;
-					my_shadow.angle = 45;
-					my_shadow.alpha = 1;
-					my_shadow.distance = 2;
-					var filtersArray:Array = new Array(my_shadow);
-					_message.filters = filtersArray;
-
-				}
-
-				var tf:TextFormat = new TextFormat();
-				tf.color = 0xFFFFFF;
-				_message.text = Global.LOCALE.getString(message);
-				_message.setTextFormat(tf);
-				if (_showErrorMessage) //show this message only if showErrorMessege is set to true 
-					addChild(_message);
+			// print message on screen
+			if (_showErrorMessage)  {  
+				showUIErrorMessage(methodName);
 			}
 		}
 
+		/**
+		 * show a UI error message 
+		 * @param methodName
+		 */		
+		private function showUIErrorMessage(methodName:String):void {
+			var messageText:String = "";
+			switch (methodName) {
+				case DeviceDetectionEvent.ERROR_CAMERA:
+					messageText = "Error.CameraError";
+					break;
+				case DeviceDetectionEvent.ERROR_MICROPHONE:
+					messageText = "Error.MichrophoneError";
+					break;
+				case DeviceDetectionEvent.MIC_DENIED:
+					messageText = "Error.micDenied";
+					break;
+				case DeviceDetectionEvent.CAMERA_DENIED:
+					messageText = "Error.cameraDenied";
+					break;
+				default:
+					// handle only the above since the UI is not ready for them yet QND
+					return;	
+			}
+			if (!_message) {
+				_message = new TextField();
+				_message.width = this.width;
+				_message.height = this.height;
+				_message.x = _messageX;
+				_message.y = _messageY;
+				//add drop shadow filter to message
+				var my_shadow:DropShadowFilter = new DropShadowFilter();
+				my_shadow.color = 0x000000;
+				my_shadow.blurY = 3;
+				my_shadow.blurX = 3;
+				my_shadow.angle = 45;
+				my_shadow.alpha = 1;
+				my_shadow.distance = 2;
+				var filtersArray:Array = new Array(my_shadow);
+				_message.filters = filtersArray;
+			}
+			var tf:TextFormat = new TextFormat();
+			tf.color = 0xFFFFFF;
+			_message.text = Global.LOCALE.getString(messageText);
+			_message.setTextFormat(tf);
+			
+			addChild(_message);
+		}
 
 		private function stageResize(event:Event):void {
 			//set the _view width and height because any view resize by it's parent
@@ -595,17 +602,13 @@ package {
 		private function deviceError(event:DeviceDetectionEvent):void {
 			if (event.type != DeviceDetectionEvent.MIC_ALLOWED && event.type == DeviceDetectionEvent.MIC_DENIED) {
 				// EI for these is triggered in DeviceDetector 
-				callInterfaceDelegate(event.type);
+				notify(event.type);
 			}
 
 			switch (event.type) {
 				case DeviceDetectionEvent.ERROR_CAMERA:
 					_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));
 					break;
-//				case DeviceDetectionEvent.ERROR_MICROPHONE:
-//				case DeviceDetectionEvent.MIC_DENIED:
-//					_recordControl.setActiveMicrophone(_recordControl.getMicrophones()[0]);
-//					break;
 			}
 			dispatchEvent(event.clone());
 		}
@@ -614,16 +617,16 @@ package {
 		private function deviceDetected(event:DeviceDetectionEvent):void {
 			// add the detected mic notification
 			if (event.type == DeviceDetectionEvent.DETECTED_MICROPHONE) {
-				callInterfaceDelegate(DeviceDetectionEvent.DETECTED_MICROPHONE);
+				notify(DeviceDetectionEvent.DETECTED_MICROPHONE);
 			}
 
 			if (event.type == DeviceDetectionEvent.DETECTED_CAMERA) {
 				stageResize(null);
 				setInitialQuality();
 				_recordControl.connectToRecordingServie();
-				callInterfaceDelegate("deviceDetected");
+				notify("deviceDetected");
 				
-				callInterfaceDelegate(DeviceDetectionEvent.DETECTED_CAMERA);
+				notify(DeviceDetectionEvent.DETECTED_CAMERA);
 			}
 			dispatchEvent(event.clone());
 		}
@@ -665,7 +668,7 @@ package {
 					}
 					break;
 			}
-			callInterfaceDelegate(delegateMethod);
+			notify(delegateMethod);
 			dispatchEvent(event.clone());
 		}
 
@@ -699,7 +702,7 @@ package {
 
 
 		private function recordStart(event:RecordNetStreamEvent):void {
-			callInterfaceDelegate("recordStart");
+			notify("recordStart");
 			dispatchEvent(event.clone());
 		}
 
@@ -723,7 +726,7 @@ package {
 		
 		
 		private function recordingCompleteHandler(event:RecorderEvent):void {
-			callInterfaceDelegate(event.type); // RecorderEvent.RECORD_COMPLETE
+			notify(event.type); // RecorderEvent.RECORD_COMPLETE
 			switchToPreview();
 		}
 		
@@ -740,13 +743,13 @@ package {
 			if (Global.DEBUG_MODE)
 				trace(event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
 			
-			callInterfaceDelegate("flushComplete");
+			notify("flushComplete");
 			dispatchEvent(event.clone());
 		}
 
 		
 		private function connectionEventsHandler(event:RecorderEvent):void {
-			callInterfaceDelegate(event.type);
+			notify(event.type);
 			switch (event.type) {
 				case RecorderEvent.CONNECTING:
 					// show loader connecting when needed.
@@ -807,14 +810,14 @@ package {
 			if (entry_name == '')
 				entry_name = 'recorded_entry_pid_' + _recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
 
-			callInterfaceDelegate("beforeAddEntry");
+			notify("beforeAddEntry");
 			_recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data, conversionQuality);
 		}
 
 
 		private function addEntryFailed(event:AddEntryEvent):void {
 			dispatchEvent(event.clone());
-			callInterfaceDelegate("addEntryFailed", {errorCode: event.info.error.errorCode, errorMsg: event.info.error.errorMsg});
+			notify("addEntryFailed", {errorCode: event.info.error.errorCode, errorMsg: event.info.error.errorMsg});
 		}
 
 
@@ -822,13 +825,13 @@ package {
 			var entry:KalturaMediaEntry = event.info as KalturaMediaEntry;
 			if (entry) {
 				_mostRecentEntryId = entry.id;
-				callInterfaceDelegate("addEntryComplete", entry);
+				notify("addEntryComplete", entry);
 				
 				if (Global.DEBUG_MODE)
 					trace("Your new entry is: " + entry.entryId + "\nthumb: " + entry.thumbnailUrl);
 			}
 			else {
-				callInterfaceDelegate("addEntryFailed", event.info);
+				notify("addEntryFailed", event.info);
 				
 				if (Global.DEBUG_MODE)
 					trace(ObjectUtil.toString(event.info));

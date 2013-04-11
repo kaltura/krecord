@@ -51,3 +51,5 @@ credit, "", custom partner credit field, will be used to attribute the contribut
 groupid, "", used to group multiple entries in a group.
 partnerdata, "", special custom data for partners to store.
 conversionQuality, "", conversion profile to be used with entry. if null, partner defult profile is used
+
+delegate, (Optional) JS object that is used to delegate methods, this object should have methods corresponding to the KRecord "events".

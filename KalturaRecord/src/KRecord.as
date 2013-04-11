@@ -600,11 +600,7 @@ package {
 
 
 		private function deviceError(event:DeviceDetectionEvent):void {
-			if (event.type != DeviceDetectionEvent.MIC_ALLOWED && event.type == DeviceDetectionEvent.MIC_DENIED) {
-				// EI for these is triggered in DeviceDetector 
-				notify(event.type);
-			}
-
+			notify(event.type);
 			switch (event.type) {
 				case DeviceDetectionEvent.ERROR_CAMERA:
 					_view.showPopupError(Global.LOCALE.getString("Error.CameraError"));

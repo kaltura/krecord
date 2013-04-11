@@ -10,7 +10,7 @@ package com.kaltura.recording.view
 		{
 			this.themeUrl = themeUrl;
 			this.localeUrl = localeUrl;
-			this.autoPreview = (autoPreview == '1');
+			this.autoPreview = (autoPreview == '1') || autoPreview == "true";
 		}
 
 	}

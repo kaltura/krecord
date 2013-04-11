@@ -418,7 +418,7 @@ package com.kaltura.recording.controller {
 		 * microphone detected.
 		 */
 		private function microphoneDeviceDetected(event:DeviceDetectionEvent):void {
-			removeMicrophoneDetectionListeners();
+//			removeMicrophoneDetectionListeners();
 			microphone = event.detectedDevice as Microphone;
 			dispatchEvent(event.clone());
 			detectCameraDevice();
@@ -437,7 +437,7 @@ package com.kaltura.recording.controller {
 		 * no microphone detected.
 		 */
 		private function microphoneDetectionError(event:DeviceDetectionEvent):void {
-			removeMicrophoneDetectionListeners();
+//			removeMicrophoneDetectionListeners();
 			dispatchEvent(event.clone());
 			detectCameraDevice();
 		}
@@ -529,7 +529,7 @@ package com.kaltura.recording.controller {
 		 * manually select the microphone device to use.
 		 */
 		public function setActiveMicrophone(microphone_name:String):void {
-			removeMicrophoneDetectionListeners();
+//			removeMicrophoneDetectionListeners();
 			var i:int;
 			var found:Boolean = false;
 			for (i = 0; i < Microphone.names.length; ++i) {

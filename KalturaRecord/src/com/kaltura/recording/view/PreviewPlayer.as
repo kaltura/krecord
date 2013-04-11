@@ -24,7 +24,6 @@ package com.kaltura.recording.view
 		public var progressBar:ProgressBar;
 		public var textProgress:TextField;
 		private var _totalTime:Number = 0;
-		private var _autoPreview:Boolean = true;
 
 		public var playheadTime:String;
 		public static const PREVIEW_UPDATE_PLAYHEAD:String = "previewUpdatePlayhead"

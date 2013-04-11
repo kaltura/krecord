@@ -33,22 +33,47 @@ package com.kaltura.recording.controller.events
 
 	public class RecorderEvent extends Event
 	{
-		public static const CONNECTION_ESTABLISHED:String = "connectionEstablished";
-		public static const DEVICE_DETECTED:String = "deviceDetected";
-		public static const CONNECTION_ERROR:String = "connectionError";
-		public static const DEVICE_ERROR:String = "deviceError";
+//		public static const CONNECTION_ESTABLISHED:String = "connectionEstablished";
+//		public static const DEVICE_DETECTED:String = "deviceDetected";
+//		public static const CONNECTION_ERROR:String = "connectionError";
+//		public static const DEVICE_ERROR:String = "deviceError";
 
-		public static const RECORDER_PUBLISH:String = "recorderPublish";
-		public static const RECORDER_BUTTON_CLICK:String = "recorderButtonClick";
-		public static const RECORDER_FLUSH:String = "recorderFlush";
-		public static const RECORDER_PLAY:String = "recorderPlay";
-		public static const RECORDER_STOP:String = "recorderStop";
-		public static const RECORDER_APPROVE:String = "recorderApprove";
-		public static const RECORDER_CANCEL:String = "recorderCancel";
+//		public static const RECORDER_PUBLISH:String = "recorderPublish";
+//		public static const RECORDER_BUTTON_CLICK:String = "recorderButtonClick";
+//		public static const RECORDER_FLUSH:String = "recorderFlush";
+//		public static const RECORDER_PLAY:String = "recorderPlay";
+//		public static const RECORDER_STOP:String = "recorderStop";
+//		public static const RECORDER_APPROVE:String = "recorderApprove";
+//		public static const RECORDER_CANCEL:String = "recorderCancel";
+		
+		/**
+		 * dispatched when the recording stream's buffer is empty after recording has stopped
+		 */
+		public static const RECORD_COMPLETE : String = "recordComplete";
+		
+		/**
+		 * dispatched whenever KRecordControl.connecting is set to true
+		 */
 		public static const CONNECTING : String = "connecting";
+		
+		/**
+		 * dispatched whenever KRecordControl.connecting is set to false
+		 */
 		public static const CONNECTING_FINISH : String = "connectingFinish";
+		
+		/**
+		 * dispatched whenever KRecordControl.streamUid is changed
+		 * event.data is the new value
+		 */
 		public static const STREAM_ID_CHANGE : String = "streamIdChange";
+		
+		/**
+		 * dispatched whenever KRecordControl.recordedTime is changed 
+		 * event.data is the new value
+		 */
 		public static const UPDATE_RECORDED_TIME : String = "updateRecordedTime";
+		
+		
 
 		public var data:Object;
 

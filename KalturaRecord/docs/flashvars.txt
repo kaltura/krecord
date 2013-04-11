@@ -17,7 +17,13 @@ h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashP
 
 timePerMic, number of miliseconds to wait while looking for mic activity before moving to the next microphone, default: 20000.
 
-quality:int, bw:int, width:int, height:int, fps:Number, gop:int=25, bufferTime:Number=70
+quality:int, 
+bw:int, 
+width:int, 
+height:int, 
+fps:Number, 
+gop:int=25, 
+bufferTime:Number=70
 
 pid, partner id
 subpid

@@ -89,9 +89,9 @@ package com.kaltura.recording.controller {
 	[Event(name = "addEntryFault", type = "com.kaltura.recording.controller.events.AddEntryEvent")]
 	
 	/**
-	 * dispatched when the buffer is empty after recording is stopped
+	 * dispatched when the record stream's buffer is empty after recording has stopped
 	 * */
-	[Event(name = "bufferEmpty", type = "flash.events.Event")]
+	[Event(name = "recordComplete", type = "com.kaltura.recording.controller.events.RecorderEvent")]
 	
 	/**
 	 * dispatched when the preview stream starts playing
@@ -265,7 +265,7 @@ package com.kaltura.recording.controller {
 
 		/**
 		 * internal implicit setter to change the published stream uid.
-		 * @param value		the new strea uid.
+		 * @param value		the new stream uid.
 		 */
 		private function setStreamUid(value:String):void {
 			_streamUid = value;
@@ -566,6 +566,7 @@ package com.kaltura.recording.controller {
 		 */
 		private function connectionSuccess(event:NetStatusEvent):void {
 			var exEvent:ExNetConnectionEvent = new ExNetConnectionEvent(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, null, event.info);
+			// the event is dispatched from here:
 			createRecordStream(exEvent);
 			createPreviewStream();
 		}
@@ -656,8 +657,7 @@ package com.kaltura.recording.controller {
 					dispatchEvent(flushEvent);
 					break;
 				case "NetStream.Record.Start":
-					var recordNetStreamEvt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_RECORD_START);
-					recordStarted(recordNetStreamEvt)
+					recordStarted();
 					break;
 			}
 		}
@@ -703,10 +703,7 @@ package com.kaltura.recording.controller {
 					break;
 				case "NetStream.Play.InsufficientBW":
 				case "NetStream.Buffer.Full":
-//					if ((event.target).bufferLength <= EXPANDED_BUFFER_LENGTH)
-//						(event.target).bufferTime = 2 * EXPANDED_BUFFER_LENGTH;
-//					else
-						(event.target).bufferTime = EXPANDED_BUFFER_LENGTH;
+					(event.target).bufferTime = EXPANDED_BUFFER_LENGTH;
 
 					if (_connectionTester.running) {
 						_connectionTester.stop();
@@ -761,11 +758,12 @@ package com.kaltura.recording.controller {
 		/**
 		 * the server confirmed start recording.
 		 */
-		protected function recordStarted(event:RecordNetStreamEvent):void {
+		protected function recordStarted():void {
 			if (debugTrace) 
 				trace("recordStarted");
 			connecting = false;
-			dispatchEvent(event.clone());
+			var recordNetStreamEvt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_RECORD_START);
+			dispatchEvent(recordNetStreamEvt);
 			setBlackRecordTime(getTimer() - _recordStartTime);
 		}
 
@@ -844,7 +842,7 @@ package com.kaltura.recording.controller {
 				clearInterval(inter);
 				_recordStream.close();
 				_recordHalted = false;
-				dispatchEvent(new Event("bufferEmpty"));
+				dispatchEvent(new RecorderEvent(RecorderEvent.RECORD_COMPLETE));
 			}
 		}
 

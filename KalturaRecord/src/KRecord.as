@@ -200,39 +200,12 @@ package {
 			stage.align = StageAlign.TOP_LEFT;
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			
-			// read flashVars for recorder params
-			autoPreview = !(pushParameters.autopreview == "0" || pushParameters.autopreview == "false");
-			_limitRecord = KConfigUtil.getDefaultValue(pushParameters.limitrecord, 0);
-			var hostUrl:String = KConfigUtil.getDefaultValue(pushParameters.host, "http://www.kaltura.com");
-			var rtmpHost:String = KConfigUtil.getDefaultValue(pushParameters.rtmphost, "rtmp://www.kaltura.com");
-			var ks:String = KConfigUtil.getDefaultValue(pushParameters.ks, "");
-			var pid:String = KConfigUtil.getDefaultValue(pushParameters.pid, "");
-			var subpid:String = KConfigUtil.getDefaultValue(pushParameters.subpid, "");
-			var uid:String = KConfigUtil.getDefaultValue(pushParameters.uid, "");
-			var kshowId:String = KConfigUtil.getDefaultValue(pushParameters.kshowid, "-1");
-			var fmsApp:String = KConfigUtil.getDefaultValue(pushParameters.fmsapp, "oflaDemo");
-			_recordControl.initRecorderParameters = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
-			// optional flashvars:
-			_recordControl.debugTrace = Global.DEBUG_MODE;
-			// H264 codec related
-			_recordControl.isH264 = (pushParameters.ish264 == "1" || pushParameters.ish264 == "true");
-			if (pushParameters.hasOwnProperty("h264profile")) {
-				_recordControl.h264Profile = pushParameters.h264profile;
-			}
-			if (pushParameters.hasOwnProperty("h264level")) {
-				_recordControl.h264Level = pushParameters.h264level;
-			}
-			// device detection timer:
-			if (pushParameters.hasOwnProperty("timepermic")) {
-				_recordControl.micCheckInterval = pushParameters.timepermic;
-			}
-			
 			_messageX = KConfigUtil.getDefaultValue(pushParameters.messagex, 0);
 			_messageY = KConfigUtil.getDefaultValue(pushParameters.messagey, 0);
 			
+			// Register External Interface calls
 			if (ExternalInterface.available) {
 				try {
-					// Register External calls
 					ExternalInterface.addCallback("stopRecording", stopRecording);
 					ExternalInterface.addCallback("startRecording", startRecording);
 					ExternalInterface.addCallback("previewRecording", previewRecording);
@@ -261,7 +234,34 @@ package {
 				}
 			}
 			
-			// before recording:
+			// read flashVars for recorder params
+			autoPreview = !(pushParameters.autopreview == "0" || pushParameters.autopreview == "false");
+			_limitRecord = KConfigUtil.getDefaultValue(pushParameters.limitrecord, 0);
+			var hostUrl:String = KConfigUtil.getDefaultValue(pushParameters.host, "http://www.kaltura.com");
+			var rtmpHost:String = KConfigUtil.getDefaultValue(pushParameters.rtmphost, "rtmp://www.kaltura.com");
+			var ks:String = KConfigUtil.getDefaultValue(pushParameters.ks, "");
+			var pid:String = KConfigUtil.getDefaultValue(pushParameters.pid, "");
+			var subpid:String = KConfigUtil.getDefaultValue(pushParameters.subpid, "");
+			var uid:String = KConfigUtil.getDefaultValue(pushParameters.uid, "");
+			var kshowId:String = KConfigUtil.getDefaultValue(pushParameters.kshowid, "-1");
+			var fmsApp:String = KConfigUtil.getDefaultValue(pushParameters.fmsapp, "oflaDemo");
+			_recordControl.initRecorderParameters = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
+			// optional flashvars:
+			_recordControl.debugTrace = Global.DEBUG_MODE;
+			// H264 codec related
+			_recordControl.isH264 = (pushParameters.ish264 == "1" || pushParameters.ish264 == "true");
+			if (pushParameters.hasOwnProperty("h264profile")) {
+				_recordControl.h264Profile = pushParameters.h264profile;
+			}
+			if (pushParameters.hasOwnProperty("h264level")) {
+				_recordControl.h264Level = pushParameters.h264level;
+			}
+			// device detection timer:
+			if (pushParameters.hasOwnProperty("timepermic")) {
+				_recordControl.micCheckInterval = pushParameters.timepermic;
+			}
+			
+			// device detection:
 			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
 			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
 			_recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
@@ -271,31 +271,36 @@ package {
 			_recordControl.addEventListener(DeviceDetectionEvent.MIC_ALLOWED, deviceError);
 			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, deviceError);
 			
-			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, connected);
-			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, connectionError);
-			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, connectionError);
-			_recordControl.addEventListener(FlushStreamEvent.FLUSH_START, flushHandler);
-			_recordControl.addEventListener(FlushStreamEvent.FLUSH_PROGRESS, flushHandler);
+			// net connection:
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS, netConnectionEventsHandler);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED, netConnectionEventsHandler);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_INVALIDAPP, netConnectionEventsHandler);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED, netConnectionEventsHandler);
+			_recordControl.addEventListener(ExNetConnectionEvent.NETCONNECTION_CONNECT_REJECTED, netConnectionEventsHandler);
+			
+			_recordControl.addEventListener(RecorderEvent.CONNECTING, connectionEventsHandler);
+			_recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, connectionEventsHandler);
+			
+			// ?
 			_recordControl.addEventListener(FlushStreamEvent.FLUSH_COMPLETE, flushHandler);
 			
-			_recordControl.addEventListener(RecorderEvent.CONNECTING, onConnecting);
-			_recordControl.addEventListener(RecorderEvent.CONNECTING_FINISH, onConnectingFinish);
-			
-			// adding entry:
-			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
-			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
-			
-			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, streamIdChange);
-			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordedTime);
-			
+			// recording:
 			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_RECORD_START, recordStart);
-			_recordControl.addEventListener("bufferEmpty", switchToPreview);
+			_recordControl.addEventListener(RecorderEvent.RECORD_COMPLETE, recordingCompleteHandler);
 			
+			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, dispatchClone);
+			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, dispatchClone);
+			
+			// preview:
 			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEventsHandler);
 			_recordControl.addEventListener(PreviewEvent.PREVIEW_STARTED, previewEventsHandler);
 			_recordControl.addEventListener(PreviewEvent.PREVIEW_STOPPED, previewEventsHandler);
 			_recordControl.addEventListener(PreviewEvent.PREVIEW_PAUSED, previewEventsHandler);
 			_recordControl.addEventListener(PreviewEvent.PREVIEW_RESUMED, previewEventsHandler);
+			
+			// adding entry:
+			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
+			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
 			
 			if (Global.DEBUG_MODE)
 				trace("call deviceDetection");
@@ -404,6 +409,11 @@ package {
 			catch (err:Error) {
 				trace(err.message)
 			}
+			dispatchEvent(event.clone());
+		}
+		
+		
+		private function dispatchClone(event:RecorderEvent):void {
 			dispatchEvent(event.clone());
 		}
 
@@ -632,29 +642,33 @@ package {
 			setQuality(quality, bw, w, h, fps, gop, bufferTime);
 		}
 
-		private function connected(event:ExNetConnectionEvent):void {
-			_view.setState("start");
+		private function netConnectionEventsHandler(event:ExNetConnectionEvent):void {
 			if (Global.DEBUG_MODE)
 				trace(event.type);
-			
-			callInterfaceDelegate("connected");
-			dispatchEvent(event.clone());
-		}
-
-
-		private function connectionError(event:ExNetConnectionEvent):void {
-			if (Global.DEBUG_MODE)
-				trace(event.type)
+			var delegateMethod:String;
+			switch (event.type) {
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS:
+					_view.setState("start");
+					delegateMethod = "connected"
+					break;
 				
-			callInterfaceDelegate(event.type);
-
-
-			if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED)
-				_view.showPopupError(Global.LOCALE.getString("Error.ConnectionError"));
-			if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED)
-				_view.showPopupError(Global.LOCALE.getString("Error.ConnectionClosed"));
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED:
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_INVALIDAPP: 
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED:
+				case ExNetConnectionEvent.NETCONNECTION_CONNECT_REJECTED:
+					delegateMethod = event.type;
+					if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_FAILED) {
+						_view.showPopupError(Global.LOCALE.getString("Error.ConnectionError"));
+					}
+					else if (event.type == ExNetConnectionEvent.NETCONNECTION_CONNECT_CLOSED) {
+						_view.showPopupError(Global.LOCALE.getString("Error.ConnectionClosed"));
+					}
+					break;
+			}
+			callInterfaceDelegate(delegateMethod);
 			dispatchEvent(event.clone());
 		}
+
 
 
 		/**
@@ -685,12 +699,7 @@ package {
 
 
 		private function recordStart(event:RecordNetStreamEvent):void {
-			try {
-				callInterfaceDelegate("recordStart");
-			}
-			catch (err:Error) {
-				trace(err.message)
-			}
+			callInterfaceDelegate("recordStart");
 			dispatchEvent(event.clone());
 		}
 
@@ -712,10 +721,16 @@ package {
 			_recordControl.stopRecording();
 		}
 		
+		
+		private function recordingCompleteHandler(event:RecorderEvent):void {
+			callInterfaceDelegate(event.type); // RecorderEvent.RECORD_COMPLETE
+			switchToPreview();
+		}
+		
 		/**
 		 * go to "preview" state 
 		 */
-		private function switchToPreview(event:Event) :void {
+		private function switchToPreview() :void {
 			_newViewState = "preview"
 			_view.setState(_newViewState);
 		}
@@ -724,35 +739,24 @@ package {
 		private function flushHandler(event:FlushStreamEvent):void {
 			if (Global.DEBUG_MODE)
 				trace(event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
-			if (event.type == FlushStreamEvent.FLUSH_COMPLETE) {
-				try {
-					callInterfaceDelegate("flushComplete");
-				}
-				catch (err:Error) {
-					trace(err.message);
-				}
-				
-				dispatchEvent(event.clone());
-			}
-		}
-
-
-		/**
-		 * show loader connecting when needed.
-		 */
-		private function onConnecting(event:Event):void {
-			callInterfaceDelegate("connecting");
-			_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));
+			
+			callInterfaceDelegate("flushComplete");
 			dispatchEvent(event.clone());
 		}
 
-
-		/**
-		 * remove loader connecting when needed and get back to the current view state.
-		 */
-		private function onConnectingFinish(event:Event):void {
-			callInterfaceDelegate("connectingFinish");
-			_view.setState(_newViewState);
+		
+		private function connectionEventsHandler(event:RecorderEvent):void {
+			callInterfaceDelegate(event.type);
+			switch (event.type) {
+				case RecorderEvent.CONNECTING:
+					// show loader connecting when needed.
+					_view.showPopupMessage(Global.LOCALE.getString("Dialog.Connecting"));		
+					break;
+				case RecorderEvent.CONNECTING_FINISH:
+					// remove loader connecting when needed and get back to the current view state.
+					_view.setState(_newViewState);		
+					break;
+			}
 			dispatchEvent(event.clone());
 		}
 
@@ -767,7 +771,6 @@ package {
 			if (currentState is ViewStatePreview) {
 				(currentState as ViewStatePreview).player.play(new MouseEvent("click"));
 			}
-
 		}
 
 
@@ -833,14 +836,5 @@ package {
 			dispatchEvent(event.clone());
 		}
 
-
-		private function streamIdChange(event:RecorderEvent):void {
-			dispatchEvent(event.clone());
-		}
-
-
-		private function updateRecordedTime(event:RecorderEvent):void {
-			dispatchEvent(event.clone());
-		}
 	}
 }

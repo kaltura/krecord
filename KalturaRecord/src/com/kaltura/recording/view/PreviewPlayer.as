@@ -33,23 +33,6 @@ package com.kaltura.recording.view
 
 		public function PreviewPlayer(skin:MovieClip) {
 			super(skin);
-			Global.RECORD_CONTROL.addEventListener(NetStatusEvent.NET_STATUS, onNetStatus);
-		}
-
-
-		private function onNetStatus(event:NetStatusEvent):void {
-			switch (event.info.code) {
-				case "NetStream.Unpublish.Success":
-					if (Global.VIEW_PARAMS.autoPreview == true) {
-						stop();
-						play();
-						Global.RECORD_CONTROL.previewRecording(); //need to add it because play was called without mouse event
-					}
-					else {
-						Global.RECORD_CONTROL.stopPreviewRecording()
-					}
-					break;
-			}
 		}
 
 

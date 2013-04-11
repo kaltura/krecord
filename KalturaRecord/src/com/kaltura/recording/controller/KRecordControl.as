@@ -192,18 +192,6 @@ package com.kaltura.recording.controller {
 		}
 
 		
-		
-		private var _autoPreview:Boolean = true;
-
-		public function get autoPreview():Boolean {
-			return _autoPreview;
-		}
-
-		public function set autoPreview(value:Boolean):void {
-			_autoPreview = value;
-		}
-		
-
 		/**
 		 * monitors the connection status to the RTMP recording server.
 		 */

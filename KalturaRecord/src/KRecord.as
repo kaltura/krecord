@@ -76,8 +76,6 @@ package {
 		 */
 		public var pushParameters:Object;
 
-		public var autoPreview:Boolean = false;
-		
 		/**
 		 * the id of the last entry saved 
 		 */
@@ -235,7 +233,6 @@ package {
 			}
 			
 			// read flashVars for recorder params
-			autoPreview = !(pushParameters.autopreview == "0" || pushParameters.autopreview == "false");
 			_limitRecord = KConfigUtil.getDefaultValue(pushParameters.limitrecord, 0);
 			var hostUrl:String = KConfigUtil.getDefaultValue(pushParameters.host, "http://www.kaltura.com");
 			var rtmpHost:String = KConfigUtil.getDefaultValue(pushParameters.rtmphost, "rtmp://www.kaltura.com");
@@ -724,6 +721,9 @@ package {
 		private function recordingCompleteHandler(event:RecorderEvent):void {
 			notify(event.type); // RecorderEvent.RECORD_COMPLETE
 			switchToPreview();
+			if (Global.VIEW_PARAMS.autoPreview) {
+				previewRecording();
+			}
 		}
 		
 		/**

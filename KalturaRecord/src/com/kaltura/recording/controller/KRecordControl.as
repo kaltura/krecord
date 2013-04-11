@@ -81,8 +81,6 @@ package com.kaltura.recording.controller {
 	[Event(name = "netstreamRecordStart", type = "com.kaltura.net.streaming.events.RecordNetStreamEvent")]
 	[Event(name = "netstreamPlayStop", type = "com.kaltura.net.streaming.events.RecordNetStreamEvent")]
 	
-	[Event(name = "flushStart", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
-	[Event(name = "flushProgress", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
 	[Event(name = "flushComplete", type = "com.kaltura.net.streaming.events.FlushStreamEvent")]
 	
 	[Event(name = "addEntryResult", type = "com.kaltura.recording.controller.events.AddEntryEvent")]

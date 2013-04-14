@@ -43,6 +43,7 @@ package {
 	import com.kaltura.recording.view.UIComponent;
 	import com.kaltura.recording.view.View;
 	import com.kaltura.recording.view.ViewEvent;
+	import com.kaltura.recording.view.ViewState;
 	import com.kaltura.recording.view.ViewStatePreview;
 	import com.kaltura.utils.KConfigUtil;
 	import com.kaltura.utils.KUtils;
@@ -286,7 +287,7 @@ package {
 			_recordControl.addEventListener(RecorderEvent.RECORD_COMPLETE, recordingCompleteHandler);
 			
 			_recordControl.addEventListener(RecorderEvent.STREAM_ID_CHANGE, dispatchClone);
-			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, dispatchClone);
+			_recordControl.addEventListener(RecorderEvent.UPDATE_RECORDED_TIME, updateRecordrdTime);
 			
 			// preview:
 			_recordControl.addEventListener(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE, previewEventsHandler);
@@ -409,6 +410,19 @@ package {
 			dispatchEvent(event.clone());
 		}
 		
+		
+		/**
+		 * tell the preview player to update total recording time 
+		 */
+		private function updateRecordrdTime(event:RecorderEvent = null):void {
+			var currentState:ViewState = _view.getState();
+			if (currentState is ViewStatePreview) {
+				(currentState as ViewStatePreview).player.updateTotalTime();
+			}
+			if (event) {
+				dispatchEvent(event.clone());
+			}
+		}
 		
 		private function dispatchClone(event:RecorderEvent):void {
 			dispatchEvent(event.clone());
@@ -724,6 +738,9 @@ package {
 			if (Global.VIEW_PARAMS.autoPreview) {
 				previewRecording();
 			}
+			else {
+				updateRecordrdTime(null);
+			}
 		}
 		
 		/**
@@ -766,9 +783,9 @@ package {
 		public function previewRecording():void {
 			if (Global.DEBUG_MODE)
 				trace("PREVIEW START");
-			var currentState:Object = _view.getState();
+			var currentState:ViewState = _view.getState();
 			if (currentState is ViewStatePreview) {
-				(currentState as ViewStatePreview).player.play(new MouseEvent("click"));
+				(currentState as ViewStatePreview).player.play(new MouseEvent(MouseEvent.CLICK));
 			}
 		}
 
@@ -777,7 +794,7 @@ package {
 		 * stop playing the recorded stream.
 		 */
 		public function stopPreviewRecording():void {
-			var currentState:Object = _view.getState();
+			var currentState:ViewState = _view.getState();
 			if (currentState is ViewStatePreview) {
 				(currentState as ViewStatePreview).player.stop();
 			}

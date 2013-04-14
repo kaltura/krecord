@@ -99,9 +99,8 @@ package com.kaltura.recording.view {
 		}
 
 
-		public function getState():* {
-			if (_currentState)
-				return _currentState;
+		public function getState():ViewState {
+			return _currentState;
 		}
 
 

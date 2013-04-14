@@ -16,6 +16,11 @@ package com.kaltura.recording.view
 	 */
 	public class PreviewPlayer extends UIComponent {
 
+		public static const PREVIEW_UPDATE_PLAYHEAD:String = "previewUpdatePlayhead"
+		public static const PREVIEW_DONE:String = "previewDone"
+		public static const PREVIEW_STOPPED:String = "previewStopped"
+			
+		// ui elements:
 		public var buttonSave:Button;
 		public var buttonReRecord:Button;
 		public var buttonPlay:Button;
@@ -23,14 +28,20 @@ package com.kaltura.recording.view
 		public var buttonStop:Button;
 		public var progressBar:ProgressBar;
 		public var textProgress:TextField;
-		private var _totalTime:Number = 0;
 
-		public var playheadTime:String;
-		public static const PREVIEW_UPDATE_PLAYHEAD:String = "previewUpdatePlayhead"
-		public static const PREVIEW_DONE:String = "previewDone"
-		public static const PREVIEW_STOPPED:String = "previewStopped"
+		private var _playheadTime:String;
+		
+		/**
+		 * formatted representation of current playhead time 
+		 */		
+		public function get playheadTime():String {
+			return _playheadTime;
+		}
 
-
+		/**
+		 * C'tor 
+		 * @param skin
+		 */
 		public function PreviewPlayer(skin:MovieClip) {
 			super(skin);
 		}
@@ -88,7 +99,15 @@ package com.kaltura.recording.view
 				seek(getSeekSeconds());
 		}
 
+		
+		/**
+		 * updates the total recorded time on screen 
+		 */
+		public function updateTotalTime():void {
+			updateProgress();
+		}
 
+		
 		public function play(evt:MouseEvent = null):void {
 			if (!playing) {
 				buttonPlay.visible = false;
@@ -172,19 +191,19 @@ package com.kaltura.recording.view
 
 
 		private function updateProgress(p:Number = -1):void {
-			playheadTime = "00:00:00";
+			_playheadTime = "00:00:00";
 
 			if (p < 0) {
 				p = Global.RECORD_CONTROL.playheadTime * 1000 / Global.RECORD_CONTROL.recordedTime;
-				playheadTime = (formatTime(Global.RECORD_CONTROL.playheadTime * 1000));
+				_playheadTime = (formatTime(Global.RECORD_CONTROL.playheadTime * 1000));
 			}
 
 			var recordedTime:String = formatTime(Global.RECORD_CONTROL.recordedTime);
 			progressBar.setProgress(p);
-			if (playheadTime <= recordedTime)
-				textProgress.text = playheadTime + " / " + recordedTime;
+			if (_playheadTime <= recordedTime)
+				textProgress.text = _playheadTime + " / " + recordedTime;
 			else
-				trace("playheadTime: " + playheadTime);
+				trace("_playheadTime: " + _playheadTime);
 
 			dispatchEvent(new Event(PREVIEW_UPDATE_PLAYHEAD));
 		}

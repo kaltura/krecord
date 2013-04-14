@@ -49,7 +49,7 @@ package com.kaltura.recording.controller {
 	 */
 	[Event(name = "onLastSecond", type = "flash.events.Event")]
 
-	public class KRecordNetClient extends EventDispatcher {
+	public dynamic class KRecordNetClient extends EventDispatcher {
 		public static var ON_METADATA_BUFFER_SIZES:String = "OnMetaData.bufferSizes";
 		public static var ON_STREAM_END:String = "Stream.End";
 		public static var ON_STREAM_SWITCH:String = "Stream.Switch";

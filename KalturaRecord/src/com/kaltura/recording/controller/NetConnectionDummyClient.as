@@ -4,7 +4,7 @@ package com.kaltura.recording.controller
 	 * Dummy class that catches server calls to avoid flash errors
 	 * @author atar.shadmi
 	 */	
-	public class NetConnectionDummyClient {
+	public dynamic class NetConnectionDummyClient {
 		
 		public function NetConnectionDummyClient()
 		{

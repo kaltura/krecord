@@ -39,7 +39,6 @@
 	        var rnd = Math.random();
 	        var initVars = {
 	        	debugmode:"true",
-	        	
 	        	host:"www.kaltura.com",
 	        	rtmphost:"rtmp://www.kaltura.com:1935",
 	        	pid:"",
@@ -61,7 +60,7 @@
 	        	messageX:"50",
 	        	themeUrl:"../deliver/skin.swf",
 	        	localeUrl:"../deliver/locale.xml",
-	        	entryName:"Atar H264 test " + rnd,
+	        	entryName:"Webcam " + rnd,
 	        	entryTags:"entry,webcam",
 	        	categories:"cat1,cat2",
 	        	entryDescription:"this is my testing entry for webcam " + rnd,
@@ -93,7 +92,7 @@
             attributes.align = "middle";
             swfobject.embedSWF(
                 "${swf}.swf", "flashContent", 
-                "${width}", "${height}", 
+                "${width}", "${height}",
                 swfVersionStr, xiSwfUrlStr, 
                 flashvars, params, attributes);
             // JavaScript enabled so display the flashContent div in case it is not replaced with a swf object.
@@ -111,6 +110,11 @@
 			alert("addEntryFailed"+a[0][0]['errorCode']);
 			alert("addEntryFailed"+a[0][0]['errorMsg']);
 		}
+		
+		function addEntryComplete(entry) {
+			alert("new entry id: "+entry.id);
+		}
+		
 		function flushComplete() {
 			//alert("flushComplete");
 		}
@@ -157,6 +161,14 @@
 				break;
 				
 			}
+		}
+		
+		function microphoneDenied() {
+			document.getElementById("delegatorText").value+="\n >> microphoneDenied";
+		}
+		
+		function microphoneAllowed() {
+			document.getElementById("delegatorText").value+="\n >> microphoneAllowed";
 		}
 		
 		function openSettings() {

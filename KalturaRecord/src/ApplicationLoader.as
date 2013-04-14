@@ -10,7 +10,6 @@ import flash.utils.getDefinitionByName;
 public class ApplicationLoader extends MovieClip
 {
 	public var application:Object;
-	//public var parameters:Object = new Object();
 
 	public function ApplicationLoader()
 	{
@@ -40,8 +39,14 @@ public class ApplicationLoader extends MovieClip
 
 	private function onResize (evt:Event):void
 	{
-		Global.PRELOADER.x = int(parent.width / 2);
-		Global.PRELOADER.y = int(parent.height / 2);
+		if (parent == stage) {
+			Global.PRELOADER.x = int(stage.stageWidth / 2);
+			Global.PRELOADER.y = int(stage.stageHeight / 2);
+		}
+		else {
+			Global.PRELOADER.x = int(parent.width / 2);
+			Global.PRELOADER.y = int(parent.height / 2);
+		}
 	}
 
 	private function onLoadComplete():void

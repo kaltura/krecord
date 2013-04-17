@@ -28,6 +28,8 @@
 // ===================================================================================================
 */
 package com.kaltura.recording.controller {
+	// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/events/NetStatusEvent.html#info
+	
 	import com.kaltura.KalturaClient;
 	import com.kaltura.commands.media.MediaAddFromRecordedWebcam;
 	import com.kaltura.devicedetection.DeviceDetectionEvent;
@@ -232,6 +234,13 @@ package com.kaltura.recording.controller {
 		 * NetStream object used for viewing the recorded video 
 		 */		
 		private var _previewStream:NetStream;
+		
+		/**
+		 * holds the name of the last action requested from the preview stream
+		 * while waiting for the stream to catch up (i.e. request preview -> buffer full). <br>
+		 * do not forget to reset to null when stream actio is received!
+		 */
+		private var _waitForPreviewStreamAction:String;
 		
 		private var _connectionTester:ConnectionTester;
 		
@@ -576,7 +585,7 @@ package com.kaltura.recording.controller {
 			}
 			var exEvent:ExNetConnectionEvent = new ExNetConnectionEvent(exEventType, null, event.info)
 			isConnected = false;
-			trace("can't connect to streaming server, " + ObjectUtil.toString(exEvent.connectionInfo));
+			trace("KRecordControl: can't connect to streaming server, " + ObjectUtil.toString(exEvent.connectionInfo));
 			dispatchEvent(exEvent);
 		}
 
@@ -625,14 +634,14 @@ package com.kaltura.recording.controller {
 			else if (event.type == ConnectionTester.FAIL) {
 				stopPreviewRecording();
 				connecting = false;
-				notifyFinish();
+				notifyPreviewEnd();
 			}
 			
 		}
 		
 		private function onRecordNetStatus(evt:NetStatusEvent):void {
 			if (debugTrace) 
-				trace("Record NetStatusEvent: " + evt.info.code);
+				trace("KRecordControl: Record NetStatusEvent: " + evt.info.code);
 			switch (evt.info.code) {
 				case "NetStream.Buffer.Flush":
 					var flushEvent:FlushStreamEvent = new FlushStreamEvent(FlushStreamEvent.FLUSH_COMPLETE, 0, 0);
@@ -650,7 +659,7 @@ package com.kaltura.recording.controller {
 		 */
 		protected function onNetConnectionStatus(event:NetStatusEvent):void {
 			if (debugTrace) 
-				trace("NetConnectionStatus: " + event.info.code);
+				trace("KRecordControl: NetConnectionStatus: " + event.info.code);
 			switch (event.info.code) {
 				case "NetConnection.Connect.Success":
 					connectionSuccess(event);
@@ -673,7 +682,7 @@ package com.kaltura.recording.controller {
 		 */
 		private function onPreviewNetStatus(event:NetStatusEvent):void {
 			if (debugTrace) 
-				trace("Preview NetStatusEvent: " + event.info.code);
+				trace("KRecordControl: Preview NetStatusEvent: " + event.info.code);
 
 			switch (event.info.code) {
 				case "NetStream.Play.Start":
@@ -691,6 +700,13 @@ package com.kaltura.recording.controller {
 						_connectionTester.stop();
 					}
 					connecting = false;
+					if (_waitForPreviewStreamAction == 'previewStart') {
+						dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_STARTED));
+					}
+					else if (_waitForPreviewStreamAction == 'previewResume') {
+						dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_RESUMED));
+					}
+					_waitForPreviewStreamAction = null;
 					break;
 				
 				case "NetStream.Buffer.Empty":
@@ -721,17 +737,16 @@ package com.kaltura.recording.controller {
 		 * if buffer empty, close stream and notify
 		 * */
 		private function checkPreviewBufferFlushed():void {
-			if (debugTrace) 
-				trace("buffer: ", _previewStream.bufferLength);
-			
 			if (_previewStream.bufferLength <= 0) {
 				clearInterval(inter);
 				connecting = false;
-				notifyFinish();
+				notifyPreviewEnd();
 			}
 		}
 
-		private function notifyFinish():void {
+		private function notifyPreviewEnd():void {
+			if (debugTrace) 
+				trace("KRecordControl: notifyPreviewEnd");
 			var evt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE);
 			dispatchEvent(evt);
 		}
@@ -742,7 +757,7 @@ package com.kaltura.recording.controller {
 		 */
 		protected function recordStarted():void {
 			if (debugTrace) 
-				trace("recordStarted");
+				trace("KRecordControl: recordStarted");
 			connecting = false;
 			var recordNetStreamEvt:RecordNetStreamEvent = new RecordNetStreamEvent(RecordNetStreamEvent.NETSTREAM_RECORD_START);
 			dispatchEvent(recordNetStreamEvt);
@@ -754,8 +769,6 @@ package com.kaltura.recording.controller {
 		 * clear the preview and set camera back
 		 */
 		public function clearVideoAndSetCamera():void {
-			if (debugTrace) 
-				trace("clearVideoAndSetCamera");
 			video.attachNetStream(null);
 			createRecordStream();
 			setCamera(camera);
@@ -774,7 +787,7 @@ package com.kaltura.recording.controller {
 					_recordStream.attachAudio(microphone);
 				setStreamUid(UIDUtil.createUID());
 				if (debugTrace) 
-					trace("publishing: " + _streamUid);
+					trace("KRecordControl: publishing: " + _streamUid);
 				connecting = true; //setting loader until the Record.Start is called
 				
 				var metaData:Object = new Object();
@@ -818,7 +831,7 @@ package com.kaltura.recording.controller {
 		 * */
 		private function checkRecordBufferFlushed():void {
 			if (debugTrace) 
-				trace("buffer: ", _recordStream.bufferLength);
+				trace("KRecordControl: buffer: ", _recordStream.bufferLength);
 			
 			if (_recordStream.bufferLength <= 0) {
 				clearInterval(inter);
@@ -849,14 +862,11 @@ package com.kaltura.recording.controller {
 		 * play the recorded stream.
 		 */
 		public function previewRecording():void {
-			if (debugTrace) 
-				trace("previewRecording");
-			
 			if (_previewStream) {
 				connecting = true;
 				video.attachNetStream(_previewStream);
 				if (debugTrace) 
-					trace("playing: " + _streamUid);
+					trace("KRecordControl: playing: " + _streamUid);
 				
 				if (isH264) {
 					_previewStream.play("mp4:" + _streamUid + ".f4v");
@@ -864,7 +874,7 @@ package com.kaltura.recording.controller {
 				else {
 					_previewStream.play(_streamUid);
 				}
-				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_STARTED));
+				_waitForPreviewStreamAction = 'previewStart';
 			}
 		}
 
@@ -873,9 +883,6 @@ package com.kaltura.recording.controller {
 		 * stop the playing stream.
 		 */
 		public function stopPreviewRecording():void {
-			if (debugTrace) 
-				trace("stopPreviewRecording");
-			
 			if (_previewStream) {
 				_previewStream.close();
 				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_STOPPED));
@@ -887,9 +894,6 @@ package com.kaltura.recording.controller {
 		  * pause the playing stream.
 		  */
 		public function pausePreviewRecording():void {
-			if (debugTrace) 
-				trace("pausePreviewRecording");
-			
 			if (_previewStream) {
 				_previewStream.pause();
 				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_PAUSED));
@@ -901,9 +905,6 @@ package com.kaltura.recording.controller {
 		 * seek the playing stream.
 		 */
 		public function seek(offset:Number):void {
-			if (debugTrace) 
-				trace("seek");
-			
 			if (_previewStream)
 				_previewStream.seek(offset);
 		}
@@ -913,12 +914,9 @@ package com.kaltura.recording.controller {
 		 * resume the playing stream.
 		 */
 		public function resume():void {
-			if (debugTrace) 
-				trace("resume");
-			
 			if (_previewStream) {
 				_previewStream.resume();
-				dispatchEvent(new PreviewEvent(PreviewEvent.PREVIEW_RESUMED));
+				_waitForPreviewStreamAction = 'previewResume';
 			}
 		}
 
@@ -1009,14 +1007,14 @@ package com.kaltura.recording.controller {
 
 		private function addEntryResultHandler(data:Object):void {
 			if (debugTrace) 
-				trace("result", ObjectUtil.toString(data));
+				trace("KRecordControl: result, ", ObjectUtil.toString(data));
 			dispatchEvent(new AddEntryEvent(AddEntryEvent.ADD_ENTRY_RESULT, data.data));
 		}
 
 
 		private function addEntryFaultHandler(info:Object):void {
 			if (debugTrace) 
-				trace("fault", ObjectUtil.toString(info));
+				trace("KRecordControl: fault, ", ObjectUtil.toString(info));
 			dispatchEvent(new AddEntryEvent(AddEntryEvent.ADD_ENTRY_FAULT, info));
 		}
 	}

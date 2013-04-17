@@ -107,7 +107,7 @@ package {
 
 		
 
-		public static const VERSION:String = "v1.6.2";
+		public static const VERSION:String = "v1.6.3";
 
 
 		/**
@@ -226,10 +226,10 @@ package {
 					ExternalInterface.marshallExceptions = true;
 					notify("swfReady");
 					if (Global.DEBUG_MODE)
-						trace('JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
+						trace('KRecord: JS functions registered to wrapper.\n' + 'objectId - ' + ExternalInterface.objectID);
 				}
 				catch (err:Error) {
-					trace('Error initializing KRecord via JS: ', err.message);
+					trace('KRecord: Error initializing KRecord via JS: ', err.message);
 				}
 			}
 			
@@ -301,7 +301,7 @@ package {
 			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
 			
 			if (Global.DEBUG_MODE)
-				trace("call deviceDetection");
+				trace("KRecord: call deviceDetection");
 			_recordControl.deviceDetection();
 			
 			if (this.stage == this.root.parent)
@@ -328,7 +328,7 @@ package {
 		 */
 		private function onRecordTimeComplete(evt:TimerEvent):void {
 			if (Global.DEBUG_MODE) 
-				trace("AUTO STOP AFTER ", _limitRecord, " SECONDS")
+				trace("KRecord: AUTO STOP AFTER ", _limitRecord, " SECONDS")
 			stopRecording();
 			notify("autoStopRecord", _limitRecord);
 		}
@@ -380,7 +380,7 @@ package {
 			addEntry(entryName, entryTags, entryDescription, creditsScreenName, creditsSiteUrl, categories, adminTags, licenseType, credit, groupId, partnerData, conversionQuality)
 			
 			if (Global.DEBUG_MODE)
-				trace("SAVE");
+				trace("KRecord: SAVE");
 		}
 
 
@@ -394,18 +394,13 @@ package {
 		private function previewEventsHandler(event:Event):void
 		{
 			if (Global.DEBUG_MODE)
-				trace('preview: ' + event.type);
+				trace('KRecord previewEventsHandler: ' + event.type);
 			
-			try {
-				if (event.type == RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE) {
-					notify("previewEnd");
-				}
-				else {
-					notify(event.type);
-				}
+			if (event.type == RecordNetStreamEvent.NETSTREAM_PLAY_COMPLETE) {
+				notify("previewEnd");
 			}
-			catch (err:Error) {
-				trace(err.message)
+			else {
+				notify(event.type);
 			}
 			dispatchEvent(event.clone());
 		}
@@ -517,7 +512,7 @@ package {
 				ExternalInterface.call("eval(window.delegator)", methodName, args);
 			}
 			catch (error:Error) {
-				trace("delegator: " + error.message);
+				trace("KRecord delegator: " + error.message);
 			}
 		}
 
@@ -535,7 +530,7 @@ package {
 				ExternalInterface.call("eval(" + delegate + "." + methodName + ")", args);
 			}
 			catch (err:Error) {
-				trace("notify: ", err.message);
+				trace("KRecord notify: ", err.message);
 			}
 			// print message on screen
 			if (_showErrorMessage)  {  
@@ -654,7 +649,7 @@ package {
 
 		private function netConnectionEventsHandler(event:ExNetConnectionEvent):void {
 			if (Global.DEBUG_MODE)
-				trace(event.type);
+				trace('KRecord netConnectionEventsHandler: ', event.type);
 			var delegateMethod:String;
 			switch (event.type) {
 				case ExNetConnectionEvent.NETCONNECTION_CONNECT_SUCCESS:
@@ -687,10 +682,6 @@ package {
 		public function startRecording():void {
 			_newViewState = "recording"
 			_view.setState(_newViewState);
-			
-			if (Global.DEBUG_MODE)
-				trace("RECORD START");
-			
 			_recordControl.recordNewStream();
 			limitRecording();
 		}
@@ -726,8 +717,6 @@ package {
 				_limitRecordTimer = null;
 			}
 
-			if (Global.DEBUG_MODE)
-				trace("KRecord==>stopRecording()");
 			_recordControl.stopRecording();
 		}
 		
@@ -754,7 +743,7 @@ package {
 
 		private function flushHandler(event:FlushStreamEvent):void {
 			if (Global.DEBUG_MODE)
-				trace(event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
+				trace("KRecord ", event.type + "  :   " + event.bufferSize + " / " + event.totalBuffer);
 			
 			notify("flushComplete");
 			dispatchEvent(event.clone());
@@ -781,8 +770,6 @@ package {
 		 * play the recorded stream.
 		 */
 		public function previewRecording():void {
-			if (Global.DEBUG_MODE)
-				trace("PREVIEW START");
 			var currentState:ViewState = _view.getState();
 			if (currentState is ViewStatePreview) {
 				(currentState as ViewStatePreview).player.play(new MouseEvent(MouseEvent.CLICK));
@@ -841,13 +828,13 @@ package {
 				notify("addEntryComplete", entry);
 				
 				if (Global.DEBUG_MODE)
-					trace("Your new entry is: " + entry.entryId + "\nthumb: " + entry.thumbnailUrl);
+					trace("KRecord: Your new entry is: " + entry.entryId + "\nthumb: " + entry.thumbnailUrl);
 			}
 			else {
 				notify("addEntryFailed", event.info);
 				
 				if (Global.DEBUG_MODE)
-					trace(ObjectUtil.toString(event.info));
+					trace('KRecord: ', ObjectUtil.toString(event.info));
 			}
 			dispatchEvent(event.clone());
 		}

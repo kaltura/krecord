@@ -675,7 +675,7 @@ package com.kaltura.recording.controller {
 			dispatchEvent(event);
 		}
 
-
+		private var _previewBufferEmptyInterval:int;
 		
 		/**
 		 * the stream report on a net status event while working.
@@ -687,8 +687,8 @@ package com.kaltura.recording.controller {
 			switch (event.info.code) {
 				case "NetStream.Play.Start":
 				case "NetStream.Pause.Notify":
-					if (inter) {
-						clearInterval(inter);
+					if (_previewBufferEmptyInterval) {
+						clearInterval(_previewBufferEmptyInterval);
 					}
 					(event.target).bufferTime = START_BUFFER_LENGTH;
 					break;
@@ -718,11 +718,11 @@ package com.kaltura.recording.controller {
 				case "NetStream.Play.Stop":
 				case "NetStream.Unpause.Notify":
 					// wait until buffer is empty before closing
-					if (inter) {
+					if (_previewBufferEmptyInterval) {
 						// in case we double clicked the "resume preview"
-						clearInterval(inter);
+						clearInterval(_previewBufferEmptyInterval);
 					}
-					inter = setInterval(checkPreviewBufferFlushed, 50);
+					_previewBufferEmptyInterval = setInterval(checkPreviewBufferFlushed, 50);
 					
 					if (_connectionTester.running) {
 						_connectionTester.stop();
@@ -738,7 +738,7 @@ package com.kaltura.recording.controller {
 		 * */
 		private function checkPreviewBufferFlushed():void {
 			if (_previewStream.bufferLength <= 0) {
-				clearInterval(inter);
+				clearInterval(_previewBufferEmptyInterval);
 				connecting = false;
 				notifyPreviewEnd();
 			}
@@ -822,9 +822,7 @@ package com.kaltura.recording.controller {
 			}
 		}
 		
-		private var inter:int;
-		
-		
+		private var _recordBufferEmptyInterval:int;
 		
 		/**
 		 * if buffer empty, close stream and notify
@@ -834,7 +832,7 @@ package com.kaltura.recording.controller {
 				trace("KRecordControl: buffer: ", _recordStream.bufferLength);
 			
 			if (_recordStream.bufferLength <= 0) {
-				clearInterval(inter);
+				clearInterval(_recordBufferEmptyInterval);
 				_recordStream.close();
 				_recordHalted = false;
 				dispatchEvent(new RecorderEvent(RecorderEvent.RECORD_COMPLETE));
@@ -852,7 +850,7 @@ package com.kaltura.recording.controller {
 				_recordHalted = true;
 				_recordStream.attachAudio(null);
 				_recordStream.attachCamera(null);
-				inter = setInterval(checkRecordBufferFlushed, 50);
+				_recordBufferEmptyInterval = setInterval(checkRecordBufferFlushed, 50);
 			}
 		}
 

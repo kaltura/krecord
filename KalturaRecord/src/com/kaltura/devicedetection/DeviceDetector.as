@@ -77,6 +77,11 @@ package com.kaltura.devicedetection {
 
 	public class DeviceDetector extends EventDispatcher {
 		
+		/**
+		 * show "trace"  
+		 */
+		public static var debugTrace:Boolean;
+		
 		private var _micDetector:MicrophoneDetector;
 		
 		
@@ -187,6 +192,9 @@ package com.kaltura.devicedetection {
 				return;
 			}
 
+			if (debugTrace) {
+				trace('DeviceDetector.detectNextCamera testing camera ', _testedCamera.name);
+			}
 			_testedBitmapData.fillRect(_testRect, 0x0);
 			_testedVideo.attachCamera(null);
 			_testedVideo.clear();
@@ -236,7 +244,9 @@ package com.kaltura.devicedetection {
 		private function testCameraImage():void {
 			_testedBitmapData.draw(_testedVideo);
 			var testResult:Object = _testedBitmapData.compare(_blackBitmapData);
-			trace("camera test: " + _testedCameraIndex);
+			if (debugTrace) {
+				trace("DeviceDetector.testCameraImage camera test: " + _testedCameraIndex);
+			}
 
 			// Added currentFPS check to make sure if the camera is active.
 			if (testResult is BitmapData || _testedCamera.currentFPS != 0) {
@@ -301,17 +311,22 @@ package com.kaltura.devicedetection {
 		 */
 		public function detectMicrophone(timePerMic:int = 20000, timePerCheck:int = 1000):void {
 			if (!_micDetector) {
-				ExternalInterface.addCallback("openSettings", openSettings); 
+				ExternalInterface.addCallback("openSettings", openSettings);
+				MicrophoneDetector.dispatchDebugEvents = debugTrace;
 				_micDetector = new MicrophoneDetector();
 				_micDetector.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.MIC_DENIED, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.MIC_ALLOWED, handleMicDetectionEvents);
+				_micDetector.addEventListener(DeviceDetectionEvent.MIC_DEBUG, handleMicDetectionEvents);
 			}
 			_micDetector.detectMicrophone(timePerMic, timePerCheck);
 		}
 		
 		private function handleMicDetectionEvents(event:DeviceDetectionEvent):void {
+			if (debugTrace) {
+				trace('DeviceDetector.handleMicDetectionEvents: ', event.type);
+			}
 			switch (event.type) {
 				case DeviceDetectionEvent.DETECTED_MICROPHONE:
 					ExternalInterface.addCallback("getMicophoneActivityLevel", getMicrophoneActivity);
@@ -347,6 +362,9 @@ package com.kaltura.devicedetection {
 						trace(errObject.message);
 					}
 					break;
+				case DeviceDetectionEvent.MIC_DEBUG:
+					trace('DeviceDetector.handleMicDetectionEvents: ', event.detectedDevice);
+					
 			}
 			dispatchEvent(event.clone());
 			

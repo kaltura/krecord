@@ -34,9 +34,19 @@ package com.kaltura.devicedetection
 	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.MIC_ALLOWED
 	 */
 	[Event(name = "micAllowed", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
+
+	
+	/**
+	 *  dispatched to notify microphone detection steps
+	 *  event.detectedDevice is debug message
+	 *  @eventType com.kaltura.devicedetection.DeviceDetectionEvent.MIC_DEBUG
+	 */
+	[Event(name = "micDebug", type = "com.kaltura.devicedetection.DeviceDetectionEvent")]
 	
 	public class MicrophoneDetector extends EventDispatcher
 	{
+		
+		public static var dispatchDebugEvents:Boolean;
 		
 		/**
 		 * the allowed microphone, once found 
@@ -103,6 +113,9 @@ package com.kaltura.devicedetection
 				_micTimer.removeEventListener(TimerEvent.TIMER, nextMicrophone);
 				_everySecTimer.removeEventListener(TimerEvent.TIMER, checkActivity);
 				return;
+			}
+			if (dispatchDebugEvents) {
+				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_DEBUG, "testing Microphone " + _testedMicrophone.name));
 			}
 			// got a mic, lets see if it works:
 			_testedMicrophone.setUseEchoSuppression(true)
@@ -179,8 +192,17 @@ package com.kaltura.devicedetection
 		 * @param timerEvent
 		 */
 		private function checkActivity(timerEvent:TimerEvent):void {
+			var s:String ;
 			if (_testedMicrophone.activityLevel > 2) {
+				if (dispatchDebugEvents) {
+					s = "activity detected on mic " + _testedMicrophone.name +  " >> " + _testedMicrophone.activityLevel;
+					dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_DEBUG, s));
+				}
 				workingMicFound();
+			}
+			else if (dispatchDebugEvents) {
+				s = "no activity detected on mic " + _testedMicrophone.name +  " >> " + _testedMicrophone.activityLevel;
+				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.MIC_DEBUG, s));
 			}
 		}
 		

@@ -54,6 +54,7 @@ package com.kaltura.recording.controller {
 	import flash.media.H264Profile;
 	import flash.media.H264VideoStreamSettings;
 	import flash.media.Microphone;
+	import flash.media.SoundCodec;
 	import flash.media.Video;
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
@@ -399,6 +400,7 @@ package com.kaltura.recording.controller {
 		 */
 		protected function detectMicrophoneDevice():void {
 			if (!microphone) {
+				DeviceDetector.debugTrace = debugTrace;
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, allowDenyHandler, false, 0, true);
@@ -417,6 +419,7 @@ package com.kaltura.recording.controller {
 		private function microphoneDeviceDetected(event:DeviceDetectionEvent):void {
 //			removeMicrophoneDetectionListeners();
 			microphone = event.detectedDevice as Microphone;
+			//microphone.codec = SoundCodec.SPEEX;
 			dispatchEvent(event.clone());
 			detectCameraDevice();
 		}

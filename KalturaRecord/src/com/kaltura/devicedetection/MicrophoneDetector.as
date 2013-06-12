@@ -211,7 +211,7 @@ package com.kaltura.devicedetection
 			stopActivityTest();
 			dispatchMicrophoneSuccess();
 			
-			trace("working Mic Found")
+			trace("working Mic Found");
 			// clear timer listeners before return
 			_micTimer.removeEventListener(TimerEvent.TIMER, nextMicrophone);
 			_everySecTimer.removeEventListener(TimerEvent.TIMER, checkActivity);

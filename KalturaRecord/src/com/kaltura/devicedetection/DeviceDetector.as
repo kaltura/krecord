@@ -111,11 +111,23 @@ package com.kaltura.devicedetection {
 		private var _testedVideo:Video = new Video(50, 50);
 		
 		/**
-		 * rectangle for testing camera input 
+		 * rectangle for testing camera input (declares sizes)
 		 */
 		private var _testRect:Rectangle = new Rectangle(0, 0, 50, 50);
+		
+		/**
+		 * Bitmap used for drawing camera input
+		 */
 		private var _testedBitmapData:BitmapData = new BitmapData(50, 50, false, 0x0);
+		
+		/**
+		 * Black bitmap used for comparison with camera input
+		 */
 		private var _blackBitmapData:BitmapData = new BitmapData(50, 50, false, 0x0);
+		
+		/**
+		 * container for the camera detection interval 
+		 */
 		private var _delayDetectCameraIndex:uint = 0;
 		
 		/**
@@ -123,6 +135,9 @@ package com.kaltura.devicedetection {
 		 */
 		private var _cameraFails:uint = 0;
 		
+		/**
+		 * number of times to test each camera for activity before moving on to the next 
+		 */
 		public var maxCameraFails:uint = 3;
 
 		
@@ -145,14 +160,25 @@ package com.kaltura.devicedetection {
 		//////
 
 		public function detectCamera(delay:uint = 500):void {
+			if (debugTrace) {
+				trace(new Date(), 'DeviceDetector.detectCamera, total cameras: ', _camerasNumber, Camera.names);
+			}
 			_delayTime = delay;
 			_delayAfterFail = delay * 2;
 			_testedCameraIndex = -1;
+			
+			// cancel any pending camera detection requests
 			if (_delayDetectCameraIndex != 0)
 				clearTimeout(_delayDetectCameraIndex);
+			
+			// create test bitmaps
 			_testedBitmapData = new BitmapData(_testRect.width, _testRect.height, false, 0x0);
+			
+			// create a black square bitmap
 			_blackBitmapData = new BitmapData(_testRect.width, _testRect.height, false, 0x0);
 			_blackBitmapData.fillRect(_testRect, 0x0);
+			
+			// start actual detection 
 			detectNextCamera();
 		}
 
@@ -178,31 +204,32 @@ package com.kaltura.devicedetection {
 
 			if (_testedCamera == null) {
 				if (_camerasNumber > 0) {
-					//there are devices on the system but we don't get access directly to them...
-					//let the user set the access to the default camera:
-					// NOTE: this should never happen here, because we use the specific access to the camera object
-					// rather than using the default getCamera ();
-//					Security.showSettings(SecurityPanel.CAMERA);
+					// there are devices on the system but we don't get access to them...
 					dispatchCameraError(DeviceDetectionEvent.CAMERA_DENIED);
 				}
 				else {
-					//we don't have any camera device!
+					// we don't have any camera device!
 					dispatchCameraError(DeviceDetectionEvent.ERROR_CAMERA);
 				}
 				return;
 			}
 
 			if (debugTrace) {
-				trace('DeviceDetector.detectNextCamera testing camera ', _testedCamera.name);
+				trace(new Date(), 'DeviceDetector.detectNextCamera testing camera ', _testedCamera.name);
 			}
+			// draw a black rect on the test bmp
 			_testedBitmapData.fillRect(_testRect, 0x0);
+			// clear the test video object 
 			_testedVideo.attachCamera(null);
 			_testedVideo.clear();
+			
 			_testedCamera.addEventListener(StatusEvent.STATUS, statusCameraHandler);
 			_testedVideo.attachCamera(_testedCamera);
 
 			if (!_testedCamera.muted) {
-				trace("User selected Accept already.");
+				if (debugTrace) {
+					trace("User selected Accept already.");
+				}
 				delay_testCameraImage();
 			}
 		/*else {
@@ -231,7 +258,7 @@ package com.kaltura.devicedetection {
 		/**
 		 * delays the image test.
 		 * <p>the system takes abit of time to initialize the connection to the physical camera and return image
-		 * so we give the camera 1.5 seconds to actually be attached and return an image
+		 * so we give the camera 1.5 seconds to actually be attached and return an image. 
 		 * unfortunatly we don't have any event from the flash player that notify a physical initialization and that image was given.
 		 * we additionaly give more time for slower machines (or cameras) if we fail.
 		 * you can set the maximum fail tryouts by setting the maxFails variable.</p>
@@ -242,20 +269,21 @@ package com.kaltura.devicedetection {
 
 
 		private function testCameraImage():void {
-			_testedBitmapData.draw(_testedVideo);
-			var testResult:Object = _testedBitmapData.compare(_blackBitmapData);
 			if (debugTrace) {
-				trace("DeviceDetector.testCameraImage camera test: " + _testedCameraIndex);
+				trace(new Date(), "DeviceDetector.testCameraImage camera test: " + _testedCameraIndex);
 			}
-
+			// draw video contents to the test rect
+			_testedBitmapData.draw(_testedVideo);
+			// compare the drawing to the black bitmap
+			var testResult:Object = _testedBitmapData.compare(_blackBitmapData);
 			// Added currentFPS check to make sure if the camera is active.
-			if (testResult is BitmapData || _testedCamera.currentFPS != 0) {
-				//it's different, we have an image!
+			if (_testedCamera.currentFPS != 0 && testResult is BitmapData) {
+				// it's different, we have an image!
 				dispatchCameraSuccess();
 			}
 			else {
-				//camera is not available for some reson, we don't get any image.
-				// move to check the next camera
+				// camera is not available for some reason, we don't get any image.
+				// move-on to the next camera
 				if ((++_cameraFails) < maxCameraFails) {
 					delay_testCameraImage();
 				}
@@ -269,6 +297,9 @@ package com.kaltura.devicedetection {
 		private function dispatchCameraSuccess():void {
 			disposeCamera();
 			webCam = Camera.getCamera(_testedCameraIndex.toString());
+			if (debugTrace) {
+				trace(new Date(), 'DeviceDetector.dispatchCameraSuccess: detected active camera -', webCam.name , ' - index ', _testedCameraIndex);
+			}
 			dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DETECTED_CAMERA, webCam));
 		}
 
@@ -276,6 +307,9 @@ package com.kaltura.devicedetection {
 		private function dispatchCameraError(errorEventType:String):void {
 			disposeCamera();
 			webCam = null;
+			if (debugTrace) {
+				trace(new Date(), 'DeviceDetector.dispatchCameraError: no cameras found');
+			}
 			dispatchEvent(new DeviceDetectionEvent(errorEventType, webCam));
 			ExternalInterface.call("noCamerasFound")
 		}
@@ -325,47 +359,34 @@ package com.kaltura.devicedetection {
 		
 		private function handleMicDetectionEvents(event:DeviceDetectionEvent):void {
 			if (debugTrace) {
-				trace('DeviceDetector.handleMicDetectionEvents: ', event.type);
+				trace(new Date(), 'DeviceDetector.handleMicDetectionEvents: ', event.type);
 			}
-			switch (event.type) {
-				case DeviceDetectionEvent.DETECTED_MICROPHONE:
-					ExternalInterface.addCallback("getMicophoneActivityLevel", getMicrophoneActivity);
-					try {
+			
+			try {
+				switch (event.type) {
+					case DeviceDetectionEvent.DETECTED_MICROPHONE:
+						ExternalInterface.addCallback("getMicophoneActivityLevel", getMicrophoneActivity);
 						ExternalInterface.call("workingMicFound");
-					}
-					catch (errObject:Error) {
-						trace(errObject.message);
-					}
-					break;
-				case DeviceDetectionEvent.ERROR_MICROPHONE:
-					try {
+						break;
+					case DeviceDetectionEvent.ERROR_MICROPHONE:
 						openSettings();
 						ExternalInterface.call("noMicsFound");
-					}
-					catch (errObject:Error) {
-						trace(errObject.message);
-					}
-					break;
-				case DeviceDetectionEvent.MIC_DENIED:
-					try {
+						break;
+					case DeviceDetectionEvent.MIC_DENIED:
 						ExternalInterface.call("micDenied");
-					}
-					catch (errObject:Error) {
-						trace(errObject.message);
-					}
-					break;
-				case DeviceDetectionEvent.MIC_ALLOWED:
-					try {
+						break;
+					case DeviceDetectionEvent.MIC_ALLOWED:
 						ExternalInterface.call("micAllowed");
-					}
-					catch (errObject:Error) {
-						trace(errObject.message);
-					}
-					break;
-				case DeviceDetectionEvent.MIC_DEBUG:
-					trace('DeviceDetector.handleMicDetectionEvents: ', event.detectedDevice);
-					
+						break;
+					case DeviceDetectionEvent.MIC_DEBUG:
+						trace(new Date(), 'DeviceDetector.handleMicDetectionEvents: ', event.detectedDevice);
+
+				}
 			}
+			catch (errObject:Error) {
+				trace(errObject.message);
+			}
+			
 			dispatchEvent(event.clone());
 			
 		}

@@ -15,6 +15,8 @@ ish264,  if ("1" || "true") set to true, encode video in h264 codec
 h264profile,	profile to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Profile.html) 
 h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Level.html)
 
+soundcodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html) 
+
 timePerMic, number of miliseconds to wait while looking for mic activity before moving to the next microphone, default: 20000.
 
 quality:int, 

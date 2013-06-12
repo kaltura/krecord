@@ -107,7 +107,7 @@ package {
 
 		
 
-		public static const VERSION:String = "v1.6.3";
+		public static const VERSION:String = "v1.6.4";
 
 
 		/**
@@ -254,10 +254,15 @@ package {
 			if (pushParameters.hasOwnProperty("h264level")) {
 				_recordControl.h264Level = pushParameters.h264level;
 			}
+			// sound codec to use:
+			if (pushParameters.hasOwnProperty("soundcodec")) {
+				_recordControl.soundCodec = pushParameters.soundcodec;
+			}
 			// device detection timer:
 			if (pushParameters.hasOwnProperty("timepermic")) {
 				_recordControl.micCheckInterval = pushParameters.timepermic;
 			}
+			
 			
 			// device detection:
 			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);

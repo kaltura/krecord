@@ -133,6 +133,12 @@ package com.kaltura.recording.controller {
 		private const START_BUFFER_LENGTH:int = 2;
 		private const MAX_BUFFER_LENGTH:int = 40;
 
+		/**
+		 * sound codec to use for recording audio
+		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html
+		 * @default SoundCodec.NELLYMOSER
+		 */
+		public var soundCodec:String = SoundCodec.NELLYMOSER;
 		
 		/**
 		 * should recording and playback use H264 codec
@@ -419,7 +425,7 @@ package com.kaltura.recording.controller {
 		private function microphoneDeviceDetected(event:DeviceDetectionEvent):void {
 //			removeMicrophoneDetectionListeners();
 			microphone = event.detectedDevice as Microphone;
-			//microphone.codec = SoundCodec.SPEEX;
+			microphone.codec = soundCodec;
 			dispatchEvent(event.clone());
 			detectCameraDevice();
 		}

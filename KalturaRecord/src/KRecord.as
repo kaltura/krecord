@@ -265,6 +265,8 @@ package {
 			
 			
 			// device detection:
+			_recordControl.addEventListener(DeviceDetectionEvent.DEBUG, deviceDetectionDebug);
+			
 			_recordControl.addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, deviceDetected);
 			_recordControl.addEventListener(DeviceDetectionEvent.ERROR_CAMERA, deviceError);
 			_recordControl.addEventListener(DeviceDetectionEvent.CAMERA_DENIED, deviceError);
@@ -314,7 +316,11 @@ package {
 			
 			dispatchEvent(new ViewEvent(ViewEvent.VIEW_READY, true));
 		}
-
+		
+		private function deviceDetectionDebug(event:DeviceDetectionEvent):void
+		{
+			notify(event.type, event.detectedDevice);
+		}
 		
 		/**
 		 * handler for view evens that should start new recording (record, re-record) 

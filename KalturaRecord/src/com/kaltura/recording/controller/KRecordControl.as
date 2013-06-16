@@ -411,13 +411,18 @@ package com.kaltura.recording.controller {
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, allowDenyHandler, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_ALLOWED, allowDenyHandler, false, 0, true);
+				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DEBUG, deviceDebugHandler, false, 0, true);
 				DeviceDetector.getInstance().detectMicrophone(micCheckInterval);
 			}
 			else {
 				detectCameraDevice();
 			}
 		}
-
+		
+		private function deviceDebugHandler(event:Event):void
+		{
+			dispatchEvent(event.clone());
+		}
 
 		/**
 		 * microphone detected.
@@ -454,6 +459,7 @@ package com.kaltura.recording.controller {
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_DENIED, allowDenyHandler);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.MIC_ALLOWED, allowDenyHandler);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DEBUG, deviceDebugHandler);
 		}
 
 
@@ -464,6 +470,7 @@ package com.kaltura.recording.controller {
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected, false, 0, true);
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.CAMERA_DENIED, allowDenyHandler, false, 0, true);
 			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError, false, 0, true);
+			DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DEBUG, deviceDebugHandler, false, 0, true);
 			if (Global.DETECTION_DELAY != 0) {
 				DeviceDetector.getInstance().detectCamera(Global.DETECTION_DELAY);
 			}
@@ -495,6 +502,7 @@ package com.kaltura.recording.controller {
 		private function removeCameraDetectionListeners():void {
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DETECTED_CAMERA, cameraDeviceDetected);
 			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.ERROR_CAMERA, cameraDetectionError);
+			DeviceDetector.getInstance().removeEventListener(DeviceDetectionEvent.DEBUG, deviceDebugHandler);
 		}
 
 

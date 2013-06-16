@@ -93,7 +93,7 @@ package com.kaltura.devicedetection {
 		/**
 		 * total number of cameras on the user's system 
 		 */
-		private var _camerasNumber:int = Camera.names.length;
+		private var _camerasNumber:int;// = Camera.names.length;
 		
 		/**
 		 * test index 
@@ -160,8 +160,11 @@ package com.kaltura.devicedetection {
 		//////
 
 		public function detectCamera(delay:uint = 500):void {
+			_camerasNumber = Camera.names.length;
 			if (debugTrace) {
-				trace(new Date(), 'DeviceDetector.detectCamera, total cameras: ', _camerasNumber, Camera.names);
+				var s:String = 'DeviceDetector.detectCamera, total cameras: ' +  _camerasNumber+ ". [" + Camera.names + "]";
+				trace(new Date(), s);
+				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DEBUG, s));
 			}
 			_delayTime = delay;
 			_delayAfterFail = delay * 2;
@@ -195,7 +198,7 @@ package com.kaltura.devicedetection {
 				_testedCamera.removeEventListener(StatusEvent.STATUS, statusCameraHandler);
 
 			if ((++_testedCameraIndex) >= _camerasNumber) {
-				//we didn't find any camera on the system..
+				// we didn't find any camera on the system..
 				dispatchCameraError(DeviceDetectionEvent.ERROR_CAMERA);
 				return;
 			}
@@ -215,7 +218,9 @@ package com.kaltura.devicedetection {
 			}
 
 			if (debugTrace) {
-				trace(new Date(), 'DeviceDetector.detectNextCamera testing camera ', _testedCamera.name);
+				var s:String = 'DeviceDetector.detectNextCamera testing camera '+ _testedCamera.name;
+				trace(new Date(), s);
+				dispatchEvent(new DeviceDetectionEvent(DeviceDetectionEvent.DEBUG, s));
 			}
 			// draw a black rect on the test bmp
 			_testedBitmapData.fillRect(_testRect, 0x0);
@@ -270,7 +275,7 @@ package com.kaltura.devicedetection {
 
 		private function testCameraImage():void {
 			if (debugTrace) {
-				trace(new Date(), "DeviceDetector.testCameraImage camera test: " + _testedCameraIndex);
+				trace(new Date(), "DeviceDetector.testCameraImage testing index: " + _testedCameraIndex + " for the " + _cameraFails + "th time");
 			}
 			// draw video contents to the test rect
 			_testedBitmapData.draw(_testedVideo);
@@ -352,7 +357,7 @@ package com.kaltura.devicedetection {
 				_micDetector.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.MIC_DENIED, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.MIC_ALLOWED, handleMicDetectionEvents);
-				_micDetector.addEventListener(DeviceDetectionEvent.MIC_DEBUG, handleMicDetectionEvents);
+				_micDetector.addEventListener(DeviceDetectionEvent.DEBUG, handleMicDetectionEvents);
 			}
 			_micDetector.detectMicrophone(timePerMic, timePerCheck);
 		}
@@ -378,9 +383,10 @@ package com.kaltura.devicedetection {
 					case DeviceDetectionEvent.MIC_ALLOWED:
 						ExternalInterface.call("micAllowed");
 						break;
-					case DeviceDetectionEvent.MIC_DEBUG:
+					case DeviceDetectionEvent.DEBUG:
 						trace(new Date(), 'DeviceDetector.handleMicDetectionEvents: ', event.detectedDevice);
-
+						dispatchEvent(event.clone()); // "notify" this event to the HTML log box
+						break;
 				}
 			}
 			catch (errObject:Error) {

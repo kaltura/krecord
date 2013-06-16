@@ -196,6 +196,7 @@ package {
 			_view.addEventListener(ViewEvent.PREVIEW_SAVE, onSave);
 			_view.addEventListener(ViewEvent.PREVIEW_RERECORD, onStartRecord);
 			
+			
 			stage.align = StageAlign.TOP_LEFT;
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			
@@ -313,8 +314,6 @@ package {
 			
 			if (this.stage == this.root.parent)
 				stage.addEventListener(Event.RESIZE, stageResize);
-			
-			dispatchEvent(new ViewEvent(ViewEvent.VIEW_READY, true));
 		}
 		
 		private function deviceDetectionDebug(event:DeviceDetectionEvent):void

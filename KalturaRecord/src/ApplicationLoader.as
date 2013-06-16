@@ -58,10 +58,8 @@ public class ApplicationLoader extends MovieClip
 		var MainApp:Class = Class(getDefinitionByName(currentLabels[1].name));
 		application = new MainApp();
 		
-		//TODO: Change to recevice the parameters from outside
-		//////////////////////////////////////////////////////////
+		// recevice the parameters from outside
 		application.pushParameters = stage.loaderInfo.parameters;
-		//////////////////////////////////////////////////////////
 		addChildAt(application as DisplayObject, 0);
 	}
 }

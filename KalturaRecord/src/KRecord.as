@@ -377,8 +377,8 @@ package {
 			var entryName:String = KConfigUtil.getDefaultValue(pushParameters.entryname, "");
 			var entryTags:String = KConfigUtil.getDefaultValue(pushParameters.entrytags, "");
 			var entryDescription:String = KConfigUtil.getDefaultValue(pushParameters.entrydescription, "");
-			var creditsScreenName:String = KConfigUtil.getDefaultValue(pushParameters.creditsscreenName, "");
-			var creditsSiteUrl:String = KConfigUtil.getDefaultValue(pushParameters.creditssiteUrl, "");
+			var creditsScreenName:String = KConfigUtil.getDefaultValue(pushParameters.creditsscreenname, "");
+			var creditsSiteUrl:String = KConfigUtil.getDefaultValue(pushParameters.creditssiteurl, "");
 			var categories:String = KConfigUtil.getDefaultValue(pushParameters.categories, "");
 			var adminTags:String = KConfigUtil.getDefaultValue(pushParameters.admintags, "");
 			var licenseType:String = KConfigUtil.getDefaultValue(pushParameters.licensetype, "");

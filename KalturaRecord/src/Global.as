@@ -16,8 +16,21 @@ package {
 		static public var RECORD_CONTROL:IRecordControl;
 		static public var KALTURA_CLIENT:KalturaClient;
 		static public var DISABLE_GLOBAL_CLICK:Boolean = false;
+		
+		/**
+		 * hide ui controls of the preview player 
+		 */
 		static public var REMOVE_PLAYER:Boolean = false;
+		
+		/**
+		 * show timer during preview 
+		 */
 		static public var SHOW_PREVIEW_TIMER:Boolean = false;
+		
+		/**
+		 * delay before initial camera test (allowing hardware to activate).
+		 * the delay after a failed test is double.
+		 */
 		static public var DETECTION_DELAY:uint;
 		
 		/**

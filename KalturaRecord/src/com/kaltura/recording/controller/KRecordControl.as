@@ -981,7 +981,7 @@ package com.kaltura.recording.controller {
 		 * @param categories				categories of entry
 		 * @param admin_tags				admin tags for the newly created entry.
 		 * @param license_type				the content license type to use (this is arbitrary to be set by the partner).
-		 * @param credit					custom partner credit feild, will be used to attribute the contributing source.
+		 * @param credit					custom partner credit field, NOT USED.
 		 * @param group_id					used to group multiple entries in a group.
 		 * @param partner_data				special custom data for partners to store.
 		 * @param conversionQuality			conversion profile to be used with entry. if null, partner defult profile is used

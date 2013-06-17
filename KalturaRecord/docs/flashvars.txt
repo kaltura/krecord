@@ -1,22 +1,17 @@
 KRecord flashvars
 =================
-showui, default: "false"
-showerrormessage, if ("true" || "1") set to true
-themeurl
-localeurl
-autopreview "1"
-showpreviewtimer, if ("true" || "1") set to true
-removeplayer, if ("1" || "true") set to true
-detectiondelay, default: 0
-disableglobalclick,  if ("1" || "true") set to true
-debugmode, if any value set to true
+debugmode, default:false, if any value set to true
 
-ish264,  if ("1" || "true") set to true, encode video in h264 codec
-h264profile,	profile to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Profile.html) 
-h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Level.html)
+ks, REQUIRED
+pid, partner id, REQUIRED
+host, default: "www.kaltura.com"
+rtmphost, default: "rtmp://www.kaltura.com"
+httpprotocol, http protocol used for API calls. if not specified, the same protocol that was used to load KRecord.swf is used. values of format "https" (no slashes)
 
-soundcodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html) 
+themeurl, default: locale.xml
+localeurl, default:skin.swf
 
+detectiondelay, delay before initial camera test (allowing hardware to activate), the delay after a failed test is double. default: 0
 timePerMic, number of miliseconds to wait while looking for mic activity before moving to the next microphone, default: 20000.
 
 quality:int, 
@@ -27,16 +22,18 @@ fps:Number,
 gop:int=25, 
 bufferTime:Number=70
 
-pid, partner id
-subpid
-uid, Partner User id
-host, "www.kaltura.com"
-rtmphost, "rtmp://www.kaltura.com"
-ks
-httpprotocol
+ish264, encode video in h264 codec. default:false, if ("1" || "true") set to true
+h264profile, profile to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Profile.html) 
+h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Level.html)
 
-limitrecord, 0, in seconds
-kshowid, "-1", kshow to associate the recordings to
+soundcodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html) 
+
+showui, default: "false"
+showerrormessage, default: false, if ("true" || "1") set to true, 
+autopreview, default: "1"/ "true". any other value will set to false.
+showpreviewtimer, default: false, if ("true" || "1") set to true
+removeplayer, hides the ui controls of the preview player. default: false, if ("1" || "true") set to true
+limitrecord, automatically stop recording after limitrecord seconds. default: no limit (0), value given in seconds
 fmsapp, "oflaDemo"
 messagex, 0, x position of messages
 messagey, 0, y position of messages
@@ -44,14 +41,19 @@ messagey, 0, y position of messages
 entryname, "", the name for the new added entry.
 entrytags, "", user tags for the newly created entry
 entrydescription, "", description of the newly created entry
-creditsscreenName, "", for anonymous user applications - the screen name of the user that contributed the entry
-creditssiteUrl, "", for anonymous user applications - the website url of the user that contributed the entry
-categories, "", comma seperated string of category full names
-admintags, "", admin tags for the newly created entry 
-licensetype, "", the content license type to use (this is arbitrary to be set by the partner)
-credit, "", custom partner credit field, will be used to attribute the contributing source
-groupid, "", used to group multiple entries in a group.
-partnerdata, "", special custom data for partners to store.
-conversionQuality, "", conversion profile to be used with entry. if null, partner defult profile is used
+creditsscreenname, "", for anonymous user applications - the screen name of the user that contributed the entry (KalturaMediaEntry.creditUserName)
+creditssiteurl, "", for anonymous user applications - the website url of the user that contributed the entry (KalturaMediaEntry.creditUrl)
+categories, "", comma separated string of category full names. DO NOT use if entitlements are enabled for the account!
+admintags, "", admin tags for the newly created entry (KalturaBaseEntry.adminTags)
+licensetype, "", the content license type to use, values enumerated in KalturaLicenseType (this is arbitrary to be set by the partner)
+groupid, "", used to group multiple entries in a group (KalturaBaseEntry.groupId)
+partnerdata, "", specific data for partners to store (KalturaBaseEntry.partnerData)
+conversionQuality, "", conversion profile to be used with entry. if null, partner default profile is used
 
-delegate, (Optional) JS object that is used to delegate methods, this object should have methods corresponding to the KRecord "events".
+delegate, JS object that is used to delegate methods, this object should have methods corresponding to the KRecord "events".
+
+disableglobalclick, default:false, if ("1" || "true") set to true, and then you will not be able to start recording via flash UI!
+subpid // NOT USED
+uid, Partner User id // NOT USED
+kshowid, "-1", kshow to associate the recordings to // NOT USED
+credit, "", custom partner credit field // NOT USED

@@ -38,7 +38,7 @@ fmsapp, "oflaDemo"
 messagex, 0, x position of messages
 messagey, 0, y position of messages
 
-entryname, "", the name for the new added entry.
+entryname, the name for the new added entry. default: recorded_entry_pid_<partner_id><random number>
 entrytags, "", user tags for the newly created entry
 entrydescription, "", description of the newly created entry
 creditsscreenname, "", for anonymous user applications - the screen name of the user that contributed the entry (KalturaMediaEntry.creditUserName)

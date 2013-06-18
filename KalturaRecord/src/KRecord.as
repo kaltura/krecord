@@ -434,7 +434,7 @@ package {
 		}
 
 		/**
-		 *sets camera recording quality.
+		 * sets camera recording quality.
 		 * @param quality		An integer that specifies the required level of picture quality,
 		 * 						as determined by the amount of compression being applied to each video frame. Acceptable values range from 1
 		 * 						(lowest quality, maximum compression) to 100 (highest quality, no compression).

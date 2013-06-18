@@ -361,7 +361,8 @@ package com.kaltura.recording.controller {
 
 
 		/**
-		 * activity level measured on the microphone.
+		 * activity level measured on the microphone: The amount of sound the microphone is detecting. 
+		 * Values range from 0 (no sound is detected) to 100 (very loud sound is detected)
 		 */
 		public function get micophoneActivityLevel():Number {
 			if (microphone)
@@ -372,9 +373,8 @@ package com.kaltura.recording.controller {
 
 
 		/**
-		 * Returns the gain of the microphone
-		 * @return
-		 *
+		 * The amount by which the microphone boosts the signal. Valid values are 0 to 100. 
+		 * @default 50
 		 */
 		public function get microphoneGain():Number {
 			if (microphone)

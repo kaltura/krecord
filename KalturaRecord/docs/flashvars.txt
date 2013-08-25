@@ -49,6 +49,7 @@ licensetype, "", the content license type to use, values enumerated in KalturaLi
 groupid, "", used to group multiple entries in a group (KalturaBaseEntry.groupId)
 partnerdata, "", specific data for partners to store (KalturaBaseEntry.partnerData)
 conversionQuality, "", conversion profile to be used with entry. if null, partner default profile is used
+skipDetection, if "true" device detection is skipped and default devices are used. default: false
 
 delegate, JS object that is used to delegate methods, this object should have methods corresponding to the KRecord "events".
 

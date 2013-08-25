@@ -310,9 +310,11 @@ package {
 			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_RESULT, addEntryComplete);
 			_recordControl.addEventListener(AddEntryEvent.ADD_ENTRY_FAULT, addEntryFailed);
 			
+			var skipDeviceDetection:Boolean = pushParameters.hasOwnProperty("skipdetection") ? (pushParameters.skipdetection == "true") : false;
 			if (Global.DEBUG_MODE)
-				trace("KRecord: call deviceDetection");
-			_recordControl.deviceDetection();
+				trace("KRecord: call deviceDetection. skip detection: ", skipDeviceDetection);
+			
+			_recordControl.deviceDetection(skipDeviceDetection);
 			
 			if (this.stage == this.root.parent)
 				stage.addEventListener(Event.RESIZE, stageResize);

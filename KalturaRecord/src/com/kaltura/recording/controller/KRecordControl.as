@@ -216,6 +216,11 @@ package com.kaltura.recording.controller {
 		 */
 		protected var camera:Camera;
 		
+		/**
+		 * if true, default camera/microphone will be used.
+		 */
+		protected var _skipDeviceDetection:Boolean = false;
+		
 		public var video:Video = new Video();
 
 
@@ -395,8 +400,8 @@ package com.kaltura.recording.controller {
 		/**
 		 * locate active input devices.
 		 */
-		public function deviceDetection():void {
-
+		public function deviceDetection(skip:Boolean = false):void {
+			_skipDeviceDetection = skip;
 			detectMicrophoneDevice();
 		}
 
@@ -407,6 +412,7 @@ package com.kaltura.recording.controller {
 		protected function detectMicrophoneDevice():void {
 			if (!microphone) {
 				DeviceDetector.debugTrace = debugTrace;
+				DeviceDetector.useDefaultDevices = _skipDeviceDetection;
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, microphoneDeviceDetected, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, microphoneDetectionError, false, 0, true);
 				DeviceDetector.getInstance().addEventListener(DeviceDetectionEvent.MIC_DENIED, allowDenyHandler, false, 0, true);
@@ -476,7 +482,7 @@ package com.kaltura.recording.controller {
 			}
 			else {
 				DeviceDetector.getInstance().detectCamera();
-		}
+			}
 		}
 
 

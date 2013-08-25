@@ -82,6 +82,12 @@ package com.kaltura.devicedetection {
 		 */
 		public static var debugTrace:Boolean;
 		
+		/**
+		 * if true, detection is skipped and default devices are assigned to mic/cam 
+		 */
+		public static var useDefaultDevices:Boolean = false;
+		
+		
 		private var _micDetector:MicrophoneDetector;
 		
 		
@@ -189,6 +195,11 @@ package com.kaltura.devicedetection {
 		private function detectNextCamera():void {
 			_cameraFails = 0;
 
+			if (DeviceDetector.useDefaultDevices) {
+				webCam = Camera.getCamera();
+				_testedCameraIndex = webCam.index;
+			}
+			
 			if (webCam) {
 				dispatchCameraSuccess();
 				return;
@@ -353,6 +364,7 @@ package com.kaltura.devicedetection {
 				ExternalInterface.addCallback("openSettings", openSettings);
 				MicrophoneDetector.dispatchDebugEvents = debugTrace;
 				_micDetector = new MicrophoneDetector();
+				MicrophoneDetector.useDefaultMicrophone = DeviceDetector.useDefaultDevices;
 				_micDetector.addEventListener(DeviceDetectionEvent.DETECTED_MICROPHONE, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.ERROR_MICROPHONE, handleMicDetectionEvents);
 				_micDetector.addEventListener(DeviceDetectionEvent.MIC_DENIED, handleMicDetectionEvents);

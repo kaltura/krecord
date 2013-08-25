@@ -49,6 +49,11 @@ package com.kaltura.devicedetection
 		public static var dispatchDebugEvents:Boolean;
 		
 		/**
+		 * if true, detection is skipped and default microphone is selected 
+		 */
+		public static var useDefaultMicrophone:Boolean = false;
+		
+		/**
 		 * the allowed microphone, once found 
 		 */
 		public var microphone:Microphone = null;
@@ -89,13 +94,20 @@ package com.kaltura.devicedetection
 			// add listener to default microphone
 			_defaultMicrophoneIndex = Microphone.getMicrophone().index; 
 			Microphone.getMicrophone().addEventListener(StatusEvent.STATUS, statusHandler);
-			// create check timers
-			_micTimer = new Timer(timePerMic, 1);
-			_micTimer.addEventListener(TimerEvent.TIMER, nextMicrophone); 
-			_everySecTimer = new Timer(timePerCheck, 0);
-			_everySecTimer.addEventListener(TimerEvent.TIMER, checkActivity);
-			// start detection
-			detectMicrophone2(timePerMic, timePerCheck);
+			if (MicrophoneDetector.useDefaultMicrophone) {
+				// use default microphone
+				_testedMicrophoneIndex = _defaultMicrophoneIndex;
+				dispatchMicrophoneSuccess();
+			}
+			else {
+				// create check timers
+				_micTimer = new Timer(timePerMic, 1);
+				_micTimer.addEventListener(TimerEvent.TIMER, nextMicrophone); 
+				_everySecTimer = new Timer(timePerCheck, 0);
+				_everySecTimer.addEventListener(TimerEvent.TIMER, checkActivity);
+				// start detection
+				detectMicrophone2(timePerMic, timePerCheck);
+			}
 		}
 		
 		

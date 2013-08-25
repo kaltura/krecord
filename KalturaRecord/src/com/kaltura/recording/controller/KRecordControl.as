@@ -476,7 +476,7 @@ package com.kaltura.recording.controller {
 			}
 			else {
 				DeviceDetector.getInstance().detectCamera();
-			}
+		}
 		}
 
 
@@ -529,6 +529,10 @@ package com.kaltura.recording.controller {
 			}
 			setCamera(Camera.getCamera(found == true ? i.toString() : null));
 		}
+		
+		public function getActiveCameraName():String {
+			return camera.name;
+		}
 
 
 		/**
@@ -553,6 +557,11 @@ package com.kaltura.recording.controller {
 				}
 			}
 			microphone = Microphone.getMicrophone(found == true ? i : null);
+		}
+		
+		
+		public function getActiveMicrophoneName():String {
+			return microphone.name;
 		}
 
 

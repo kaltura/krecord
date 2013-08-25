@@ -216,10 +216,12 @@ package {
 					ExternalInterface.addCallback("getRecordedTime", getRecordedTime);
 					ExternalInterface.addCallback("setQuality", setQuality);
 					ExternalInterface.addCallback("getMicrophones", getMicrophones);
+					ExternalInterface.addCallback("getActiveMicrophone", getActiveMicrophone);
 					ExternalInterface.addCallback("getMicrophoneActivityLevel", getMicrophoneActivityLevel);
 					ExternalInterface.addCallback("getMicrophoneGain", getMicrophoneGain);
 					ExternalInterface.addCallback("setMicrophoneGain", setMicrophoneGain);
 					ExternalInterface.addCallback("getCameras", getCameras);
+					ExternalInterface.addCallback("getActiveCamera", getActiveCamera);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
 					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
 					ExternalInterface.addCallback("getMostRecentEntryId", getMostRecentEntryId);
@@ -315,6 +317,7 @@ package {
 			if (this.stage == this.root.parent)
 				stage.addEventListener(Event.RESIZE, stageResize);
 		}
+		
 		
 		private function deviceDetectionDebug(event:DeviceDetectionEvent):void
 		{
@@ -462,15 +465,10 @@ package {
 		public function getMicrophones():String {
 			return _recordControl.getMicrophones().toString();
 		}
-
-
-		public function getCameras():String {
-			return _recordControl.getCameras().toString();
-		}
-
-
-		public function setActiveCamera(cameraName:String):void {
-			_recordControl.setActiveCamera(cameraName);
+		
+		public function getActiveMicrophone():String {
+			return _recordControl.getActiveMicrophoneName();
+			
 		}
 
 
@@ -503,6 +501,21 @@ package {
 			_recordControl.microphoneGain = parseFloat(val);
 		}
 
+		
+		public function getCameras():String {
+			return _recordControl.getCameras().toString();
+		}
+		
+		
+		public function getActiveCamera():String {
+			return _recordControl.getActiveCameraName();
+			
+		}
+		
+		
+		public function setActiveCamera(cameraName:String):void {
+			_recordControl.setActiveCamera(cameraName);
+		}
 
 		/**
 		 *the duration of the recording in milliseconds.

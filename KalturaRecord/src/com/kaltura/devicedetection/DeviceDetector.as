@@ -197,7 +197,9 @@ package com.kaltura.devicedetection {
 
 			if (DeviceDetector.useDefaultDevices) {
 				webCam = Camera.getCamera();
-				_testedCameraIndex = webCam.index;
+				if (webCam) {
+					_testedCameraIndex = webCam.index;
+				}
 			}
 			
 			if (webCam) {

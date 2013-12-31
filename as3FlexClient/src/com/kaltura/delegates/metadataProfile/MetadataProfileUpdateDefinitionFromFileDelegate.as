@@ -1,3 +1,30 @@
+// ===================================================================================================
+//                           _  __     _ _
+//                          | |/ /__ _| | |_ _  _ _ _ __ _
+//                          | ' </ _` | |  _| || | '_/ _` |
+//                          |_|\_\__,_|_|\__|\_,_|_| \__,_|
+//
+// This file is part of the Kaltura Collaborative Media Suite which allows users
+// to do with audio, video, and animation what Wiki platfroms allow them to do with
+// text.
+//
+// Copyright (C) 2006-2011  Kaltura Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// @ignore
+// ===================================================================================================
 package com.kaltura.delegates.metadataProfile
 {
 	import com.kaltura.config.KalturaConfig;
@@ -50,8 +77,8 @@ package com.kaltura.delegates.metadataProfile
 				var urlRequest:URLRequest = new URLRequest(req);
 				((call as MetadataProfileUpdateDefinitionFromFile).xsdFile as FileReference).upload(urlRequest,"xsdFile");
 			}
-			else{
-				mrloader.addFile(((call as MetadataProfileUpdateDefinitionFromFile).xsdFile as ByteArray), UIDUtil.createUID(), 'xsdFile');	
+			else {
+				mrloader.addFile(((call as MetadataProfileUpdateDefinitionFromFile).xsdFile as ByteArray), UIDUtil.createUID(), 'xsdFile'); 
 				mrloader.dataFormat = URLLoaderDataFormat.TEXT;
 				mrloader.load(req);
 			}
@@ -59,19 +86,19 @@ package com.kaltura.delegates.metadataProfile
 
 		// Event Handlers
 		override protected function onDataComplete(event:Event):void {
-			try{
+			try {
 				if ((call as MetadataProfileUpdateDefinitionFromFile).xsdFile is FileReference) {
 					handleResult( XML(event["data"]) );
 				}
 				else {
 					handleResult( XML(event.target.loader.data) );
-				}
+ 				}
 			}
-			catch( e:Error ){
-				var kErr : KalturaError = new KalturaError();
-				kErr.errorCode = String(e.errorID);
-				kErr.errorMsg = e.message;
-				_call.handleError( kErr );
+ 			catch( e:Error ){
+ 				var kErr : KalturaError = new KalturaError();
+ 				kErr.errorCode = String(e.errorID);
+ 				kErr.errorMsg = e.message;
+ 				_call.handleError( kErr );
 			}
 		}
 

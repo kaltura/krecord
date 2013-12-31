@@ -1,3 +1,30 @@
+// ===================================================================================================
+//                           _  __     _ _
+//                          | |/ /__ _| | |_ _  _ _ _ __ _
+//                          | ' </ _` | |  _| || | '_/ _` |
+//                          |_|\_\__,_|_|\__|\_,_|_| \__,_|
+//
+// This file is part of the Kaltura Collaborative Media Suite which allows users
+// to do with audio, video, and animation what Wiki platfroms allow them to do with
+// text.
+//
+// Copyright (C) 2006-2011  Kaltura Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// @ignore
+// ===================================================================================================
 package com.kaltura.vo
 {
 	import com.kaltura.vo.KalturaFilter;
@@ -5,108 +32,124 @@ package com.kaltura.vo
 	[Bindable]
 	public dynamic class KalturaDropFolderBaseFilter extends KalturaFilter
 	{
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var idEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var idIn : String;
+		/**
+		**/
+		public var idIn : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var partnerIdEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var partnerIdIn : String;
+		/**
+		**/
+		public var partnerIdIn : String = null;
 
-		/** 
-		* 		* */ 
-		public var nameLike : String;
+		/**
+		**/
+		public var nameLike : String = null;
 
-		/** 
-		* 		* */ 
-		public var typeEqual : String;
+		/**
+		* @see com.kaltura.types.KalturaDropFolderType
+		**/
+		public var typeEqual : String = null;
 
-		/** 
-		* 		* */ 
-		public var typeIn : String;
+		/**
+		**/
+		public var typeIn : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		* @see com.kaltura.types.KalturaDropFolderStatus
+		**/
 		public var statusEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var statusIn : String;
+		/**
+		**/
+		public var statusIn : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var conversionProfileIdEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var conversionProfileIdIn : String;
+		/**
+		**/
+		public var conversionProfileIdIn : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var dcEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var dcIn : String;
+		/**
+		**/
+		public var dcIn : String = null;
 
-		/** 
-		* 		* */ 
-		public var pathLike : String;
+		/**
+		**/
+		public var pathEqual : String = null;
 
-		/** 
-		* 		* */ 
-		public var fileHandlerTypeEqual : String;
+		/**
+		**/
+		public var pathLike : String = null;
 
-		/** 
-		* 		* */ 
-		public var fileHandlerTypeIn : String;
+		/**
+		* @see com.kaltura.types.KalturaDropFolderFileHandlerType
+		**/
+		public var fileHandlerTypeEqual : String = null;
 
-		/** 
-		* 		* */ 
-		public var fileNamePatternsLike : String;
+		/**
+		**/
+		public var fileHandlerTypeIn : String = null;
 
-		/** 
-		* 		* */ 
-		public var fileNamePatternsMultiLikeOr : String;
+		/**
+		**/
+		public var fileNamePatternsLike : String = null;
 
-		/** 
-		* 		* */ 
-		public var fileNamePatternsMultiLikeAnd : String;
+		/**
+		**/
+		public var fileNamePatternsMultiLikeOr : String = null;
 
-		/** 
-		* 		* */ 
-		public var tagsLike : String;
+		/**
+		**/
+		public var fileNamePatternsMultiLikeAnd : String = null;
 
-		/** 
-		* 		* */ 
-		public var tagsMultiLikeOr : String;
+		/**
+		**/
+		public var tagsLike : String = null;
 
-		/** 
-		* 		* */ 
-		public var tagsMultiLikeAnd : String;
+		/**
+		**/
+		public var tagsMultiLikeOr : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
+		public var tagsMultiLikeAnd : String = null;
+
+		/**
+		* @see com.kaltura.types.KalturaDropFolderErrorCode
+		**/
+		public var errorCodeEqual : String = null;
+
+		/**
+		**/
+		public var errorCodeIn : String = null;
+
+		/**
+		**/
 		public var createdAtGreaterThanOrEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var createdAtLessThanOrEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var updatedAtGreaterThanOrEqual : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var updatedAtLessThanOrEqual : int = int.MIN_VALUE;
 
 		override public function getUpdateableParamKeys():Array
@@ -126,6 +169,7 @@ package com.kaltura.vo
 			arr.push('conversionProfileIdIn');
 			arr.push('dcEqual');
 			arr.push('dcIn');
+			arr.push('pathEqual');
 			arr.push('pathLike');
 			arr.push('fileHandlerTypeEqual');
 			arr.push('fileHandlerTypeIn');
@@ -135,6 +179,8 @@ package com.kaltura.vo
 			arr.push('tagsLike');
 			arr.push('tagsMultiLikeOr');
 			arr.push('tagsMultiLikeAnd');
+			arr.push('errorCodeEqual');
+			arr.push('errorCodeIn');
 			arr.push('createdAtGreaterThanOrEqual');
 			arr.push('createdAtLessThanOrEqual');
 			arr.push('updatedAtGreaterThanOrEqual');
@@ -149,5 +195,15 @@ package com.kaltura.vo
 			return arr;
 		}
 
+		override public function getElementType(arrayName:String):String
+		{
+			var result:String = '';
+			switch (arrayName) {
+				default:
+					result = super.getElementType(arrayName);
+					break;
+			}
+			return result;
+		}
 	}
 }

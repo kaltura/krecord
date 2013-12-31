@@ -1,110 +1,147 @@
+// ===================================================================================================
+//                           _  __     _ _
+//                          | |/ /__ _| | |_ _  _ _ _ __ _
+//                          | ' </ _` | |  _| || | '_/ _` |
+//                          |_|\_\__,_|_|\__|\_,_|_| \__,_|
+//
+// This file is part of the Kaltura Collaborative Media Suite which allows users
+// to do with audio, video, and animation what Wiki platfroms allow them to do with
+// text.
+//
+// Copyright (C) 2006-2011  Kaltura Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// @ignore
+// ===================================================================================================
 package com.kaltura.vo
 {
 	import com.kaltura.vo.KalturaAuditTrailInfo;
 
 	import com.kaltura.vo.BaseFlexVo;
+
 	[Bindable]
 	public dynamic class KalturaAuditTrail extends BaseFlexVo
 	{
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var id : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var createdAt : int = int.MIN_VALUE;
 
-		/** 
-		* Indicates when the data was parsed		* */ 
+		/**
+		* Indicates when the data was parsed
+		* 
+		**/
 		public var parsedAt : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
+		/**
+		* @see com.kaltura.types.KalturaAuditTrailStatus
+		**/
 		public var status : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var auditObjectType : String;
+		/**
+		* @see com.kaltura.types.KalturaAuditTrailObjectType
+		**/
+		public var auditObjectType : String = null;
 
-		/** 
-		* 		* */ 
-		public var objectId : String;
+		/**
+		**/
+		public var objectId : String = null;
 
-		/** 
-		* 		* */ 
-		public var relatedObjectId : String;
+		/**
+		**/
+		public var relatedObjectId : String = null;
 
-		/** 
-		* 		* */ 
-		public var relatedObjectType : String;
+		/**
+		* @see com.kaltura.types.KalturaAuditTrailObjectType
+		**/
+		public var relatedObjectType : String = null;
 
-		/** 
-		* 		* */ 
-		public var entryId : String;
+		/**
+		**/
+		public var entryId : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var masterPartnerId : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var partnerId : int = int.MIN_VALUE;
 
-		/** 
-		* 		* */ 
-		public var requestId : String;
+		/**
+		**/
+		public var requestId : String = null;
 
-		/** 
-		* 		* */ 
-		public var userId : String;
+		/**
+		**/
+		public var userId : String = null;
 
-		/** 
-		* 		* */ 
-		public var action : String;
+		/**
+		* @see com.kaltura.types.KalturaAuditTrailAction
+		**/
+		public var action : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		**/
 		public var data : KalturaAuditTrailInfo;
 
-		/** 
-		* 		* */ 
-		public var ks : String;
+		/**
+		**/
+		public var ks : String = null;
 
-		/** 
-		* 		* */ 
+		/**
+		* @see com.kaltura.types.KalturaAuditTrailContext
+		**/
 		public var context : int = int.MIN_VALUE;
 
-		/** 
-		* The API service and action that called and caused this audit		* */ 
-		public var entryPoint : String;
+		/**
+		* The API service and action that called and caused this audit
+		* 
+		**/
+		public var entryPoint : String = null;
 
-		/** 
-		* 		* */ 
-		public var serverName : String;
+		/**
+		**/
+		public var serverName : String = null;
 
-		/** 
-		* 		* */ 
-		public var ipAddress : String;
+		/**
+		**/
+		public var ipAddress : String = null;
 
-		/** 
-		* 		* */ 
-		public var userAgent : String;
+		/**
+		**/
+		public var userAgent : String = null;
 
-		/** 
-		* 		* */ 
-		public var clientTag : String;
+		/**
+		**/
+		public var clientTag : String = null;
 
-		/** 
-		* 		* */ 
-		public var description : String;
+		/**
+		**/
+		public var description : String = null;
 
-		/** 
-		* 		* */ 
-		public var errorDescription : String;
+		/**
+		**/
+		public var errorDescription : String = null;
 
 		/** 
 		* a list of attributes which may be updated on this object 
-		* */ 
+		**/ 
 		public function getUpdateableParamKeys():Array
 		{
 			var arr : Array;
@@ -124,7 +161,7 @@ package com.kaltura.vo
 
 		/** 
 		* a list of attributes which may only be inserted when initializing this object 
-		* */ 
+		**/ 
 		public function getInsertableParamKeys():Array
 		{
 			var arr : Array;
@@ -132,5 +169,20 @@ package com.kaltura.vo
 			return arr;
 		}
 
+		/** 
+		* get the expected type of array elements 
+		* @param arrayName 	 name of an attribute of type array of the current object 
+		* @return 	 un-qualified class name 
+		**/ 
+		public function getElementType(arrayName:String):String
+		{
+			var result:String = '';
+			switch (arrayName) {
+				case 'data':
+					result = '';
+					break;
+			}
+			return result;
+		}
 	}
 }

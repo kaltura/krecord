@@ -240,13 +240,11 @@ package {
 			_limitRecord = KConfigUtil.getDefaultValue(pushParameters.limitrecord, 0);
 			var hostUrl:String = KConfigUtil.getDefaultValue(pushParameters.host, "http://www.kaltura.com");
 			var rtmpHost:String = KConfigUtil.getDefaultValue(pushParameters.rtmphost, "rtmp://www.kaltura.com");
-			var ks:String = KConfigUtil.getDefaultValue(pushParameters.ks, "");
-			var pid:String = KConfigUtil.getDefaultValue(pushParameters.pid, "");
-			var subpid:String = KConfigUtil.getDefaultValue(pushParameters.subpid, "");
-			var uid:String = KConfigUtil.getDefaultValue(pushParameters.uid, "");
-			var kshowId:String = KConfigUtil.getDefaultValue(pushParameters.kshowid, "-1");
 			var fmsApp:String = KConfigUtil.getDefaultValue(pushParameters.fmsapp, "oflaDemo");
-			_recordControl.initRecorderParameters = new BaseRecorderParams(hostUrl, rtmpHost, ks, pid, subpid, uid, kshowId, fmsApp);
+			var isLive:Boolean = pushParameters.hasOwnProperty("islive") ? (pushParameters.islive == "1" || pushParameters.islive == "true") : false;
+			var streamName:String = pushParameters.hasOwnProperty("streamname") ? pushParameters.streamname : '';
+			_recordControl.initRecorderParameters = new BaseRecorderParams(hostUrl, rtmpHost, fmsApp, isLive, streamName);
+			
 			// optional flashvars:
 			_recordControl.debugTrace = Global.DEBUG_MODE;
 			// H264 codec related
@@ -833,7 +831,7 @@ package {
 		public function addEntry(entry_name:String = '', entry_tags:String = '', entry_description:String = '', credits_screen_name:String = '', credits_site_url:String = '', categories:String = "", admin_tags:String = '',
 			license_type:String = '', credit:String = '', group_id:String = '', partner_data:String = '', conversionQuality:String = ''):void {
 			if (entry_name == '')
-				entry_name = 'recorded_entry_pid_' + _recordControl.initRecorderParameters.baseRequestData.partner_id + (Math.floor(Math.random() * 1000000)).toString();
+				entry_name = 'recorded_entry_pid' + Global.KALTURA_CLIENT.partnerId + '_' + (Math.floor(Math.random() * 1000000)).toString();
 
 			notify("beforeAddEntry");
 			_recordControl.addEntry(entry_name, entry_tags, entry_description, credits_screen_name, credits_site_url, categories, admin_tags, license_type, credit, group_id, partner_data, conversionQuality);

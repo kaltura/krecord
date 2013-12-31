@@ -2,18 +2,30 @@ KRecord flashvars
 =================
 debugmode, default:false, if any value set to true
 
+# base parameters
+#-----------------
 ks, REQUIRED
 pid, partner id, REQUIRED
 host, default: "www.kaltura.com"
 rtmphost, default: "rtmp://www.kaltura.com"
 httpprotocol, http protocol used for API calls. if not specified, the same protocol that was used to load KRecord.swf is used. values of format "https" (no slashes)
 
-themeurl, default: locale.xml
-localeurl, default:skin.swf
 
+# appearance
+#-----------------
+themeurl, default: locale.xml
+localeurl, default: skin.swf
+
+
+# device detection
+#-----------------
 detectiondelay, delay before initial camera test (allowing hardware to activate), the delay after a failed test is double. default: 0
 timePerMic, number of miliseconds to wait while looking for mic activity before moving to the next microphone, default: 20000.
+skipDetection, if "true" device detection is skipped and default devices are used. default: false
 
+
+# published video parameters
+#-----------------
 quality:int, 
 bw:int, 
 width:int, 
@@ -26,8 +38,17 @@ ish264, encode video in h264 codec. default:false, if ("1" || "true") set to tru
 h264profile, profile to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Profile.html) 
 h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Level.html)
 
-soundcodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html) 
+soundcodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html)
 
+
+# record live streams (note - UI is not supported for live streams)
+#-----------------
+isLive, treat published stream as a live stream rather than recorded stream
+streamName, name for published live stream 
+
+
+# other parameters
+#-----------------
 showui, default: "false"
 showerrormessage, default: false, if ("true" || "1") set to true, 
 autopreview, default: "1"/ "true". any other value will set to false.
@@ -37,7 +58,12 @@ limitrecord, automatically stop recording after limitrecord seconds. default: no
 fmsapp, "oflaDemo"
 messagex, 0, x position of messages
 messagey, 0, y position of messages
+disableglobalclick, default:false, if ("1" || "true") set to true, and then you will not be able to start recording via flash UI!
+delegate, JS object that is used to delegate methods, this object should have methods corresponding to the KRecord "events".
 
+
+# entry data
+#-----------------
 entryname, the name for the new added entry. default: recorded_entry_pid_<partner_id><random number>
 entrytags, "", user tags for the newly created entry
 entrydescription, "", description of the newly created entry
@@ -49,11 +75,8 @@ licensetype, "", the content license type to use, values enumerated in KalturaLi
 groupid, "", used to group multiple entries in a group (KalturaBaseEntry.groupId)
 partnerdata, "", specific data for partners to store (KalturaBaseEntry.partnerData)
 conversionQuality, "", conversion profile to be used with entry. if null, partner default profile is used
-skipDetection, if "true" device detection is skipped and default devices are used. default: false
 
-delegate, JS object that is used to delegate methods, this object should have methods corresponding to the KRecord "events".
 
-disableglobalclick, default:false, if ("1" || "true") set to true, and then you will not be able to start recording via flash UI!
 subpid // NOT USED
 uid, Partner User id // NOT USED
 kshowid, "-1", kshow to associate the recordings to // NOT USED

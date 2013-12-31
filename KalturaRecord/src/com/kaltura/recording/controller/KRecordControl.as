@@ -133,6 +133,7 @@ package com.kaltura.recording.controller {
 		private const START_BUFFER_LENGTH:int = 2;
 		private const MAX_BUFFER_LENGTH:int = 40;
 
+		
 		/**
 		 * sound codec to use for recording audio
 		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html
@@ -813,11 +814,21 @@ package com.kaltura.recording.controller {
 		public function recordNewStream():void {
 			if (_recordStream) {
 				setCamera(camera);
-				if (camera)
+				if (camera) {
 					_recordStream.attachCamera(camera);
-				if (microphone)
+				}
+				if (microphone) {
 					_recordStream.attachAudio(microphone);
-				setStreamUid(UIDUtil.createUID());
+				}
+				
+				if (_initRecorderParameters.isLive && _initRecorderParameters.streamName) {
+					setStreamUid(_initRecorderParameters.streamName);
+				}
+				else {
+					setStreamUid(UIDUtil.createUID());
+				}
+				
+				
 				if (debugTrace) 
 					trace(new Date(), "KRecordControl: publishing: " + _streamUid);
 				connecting = true; //setting loader until the Record.Start is called
@@ -827,7 +838,14 @@ package com.kaltura.recording.controller {
 					var h264Settings:H264VideoStreamSettings = new H264VideoStreamSettings();
 					h264Settings.setProfileLevel(h264Profile, h264Level);
 					_recordStream.videoStreamSettings = h264Settings;
-					_recordStream.publish("mp4:" + _streamUid + ".f4v", RecordNetStream.PUBLISH_METHOD_RECORD);
+					if (_initRecorderParameters.isLive) {
+						// live - don't add .f4v					
+						_recordStream.publish("mp4:" + _streamUid , RecordNetStream.PUBLISH_METHOD_RECORD);
+					}
+					else {
+						// recording - add .f4v
+						_recordStream.publish("mp4:" + _streamUid + ".f4v", RecordNetStream.PUBLISH_METHOD_RECORD);
+					}
 					
 					metaData.codec = _recordStream.videoStreamSettings.codec; 
 					metaData.profile = h264Settings.profile; 

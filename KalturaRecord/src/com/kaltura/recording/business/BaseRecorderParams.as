@@ -32,40 +32,51 @@ package com.kaltura.recording.business
 	public class BaseRecorderParams
 	{
 		public var host:String;
+		
+		/**
+		 * stream is published to this url
+		 */
 		public var rtmpHost:String;
-		public var baseRequestData:Object;
-		public var kshowid:String;
+		
+		/**
+		 * is the published stream a live stream or a recorded stream?
+		 */
+		public var isLive:Boolean;
+		
+		/**
+		 * preferred name for the published stream (live stream only) 
+		 */
+		public var streamName:String = '';
 
 		/**
 		 * Constructor.
 		 * @param _host						Kaltura api host.
 		 * @param rtmp_host					Streaming service for the recording.
-		 * @param _ks						Kaltura Session id.
-		 * @param _partnerid				Kaltura Partner id.
-		 * @param _subpid					Kaltura Sub Partner id.
-		 * @param _uid						Partner User id.
-		 * @param _kshowid					kshow to associate the recordings to.
 		 * @param recording_application		the name of the recording application on the streaming server.
+		 * @param is_live					if true, the outgoing stream will be treated as a live stream, not as a recorded stream.
+		 * @param stream_name				for live streams, name of the published stream. if not passed, a random UID will be used.
 		 */
-		public function BaseRecorderParams (_host:String, rtmp_host:String, _ks:String, _partnerid:String,
-										_subpid:String, _uid:String, _kshowid:String, recording_application:String = "oflaDemo"):void
-		{
+		public function BaseRecorderParams (_host:String, rtmp_host:String, recording_application:String, 
+											is_live:Boolean = false, stream_name:String = ''):void {
 			host = _host;
 			var hasHttp:Boolean = host.indexOf("http://") > -1;
+			
 			if (rtmp_host == '')
 				rtmpHost = hasHttp ? "rtmp://" + host.substr(7) + "/" + recording_application : "rtmp://" + host + "/" + recording_application;
-			else
+			else if (recording_application) {
 				rtmpHost = rtmp_host + "/" + recording_application;
-			if (!hasHttp)
+			}
+			else {
+				rtmpHost = rtmp_host;
+			}
+			
+			if (!hasHttp) {
 				host = "http://" + host;
-			baseRequestData =
-				{
-					ks: 		_ks,
-					partner_id: _partnerid,
-					subp_id: 	_subpid,
-					uid: 		_uid
-				};
-			kshowid = _kshowid;
+			}
+			
+			isLive = is_live;
+			streamName = stream_name;
+				
 		}
 	}
 }

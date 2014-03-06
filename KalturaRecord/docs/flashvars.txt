@@ -38,7 +38,8 @@ ish264, encode video in h264 codec. default:false, if ("1" || "true") set to tru
 h264profile, profile to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Profile.html) 
 h264level, level to use (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/H264Level.html)
 
-soundcodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html)
+soundCodec, sound codec to use, default is NellyMoser (values enumerated in http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html)
+soundRate, the audio sample rate measured in kilohertz (kHz), default 8. Higher sample rates increase sound quality but require more resources for transmission and storage. rates depend on selected codec; NellyMoser can do 5, 8, 11, 16, 22 and 44, speex can only do 16 Khz
 
 
 # record live streams (note - UI is not supported for live streams)

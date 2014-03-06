@@ -142,6 +142,13 @@ package com.kaltura.recording.controller {
 		public var soundCodec:String = SoundCodec.NELLYMOSER;
 		
 		/**
+		 * The rate at which the microphone is capturing sound, in kHz.
+		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/Microphone.html#rate
+		 */
+		public var soundRate:int = 0;
+		
+		
+		/**
 		 * should recording and playback use H264 codec
 		 */
 		public var isH264:Boolean;
@@ -438,6 +445,10 @@ package com.kaltura.recording.controller {
 //			removeMicrophoneDetectionListeners();
 			microphone = event.detectedDevice as Microphone;
 			microphone.codec = soundCodec;
+			if (soundRate) {
+				microphone.rate = soundRate;
+			}
+			trace(microphone.name, ' rate: ', microphone.rate);
 			dispatchEvent(event.clone());
 			detectCameraDevice();
 		}

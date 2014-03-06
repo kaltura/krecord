@@ -107,7 +107,7 @@ package {
 
 		
 
-		public static const VERSION:String = "v1.7";
+		public static const VERSION:String = "v1.7.1";
 
 
 		/**
@@ -258,6 +258,10 @@ package {
 			// sound codec to use:
 			if (pushParameters.hasOwnProperty("soundcodec")) {
 				_recordControl.soundCodec = pushParameters.soundcodec;
+			}
+			// sound rate to use:
+			if (pushParameters.hasOwnProperty("soundrate")) {
+				_recordControl.soundRate = pushParameters.soundrate;
 			}
 			// device detection timer:
 			if (pushParameters.hasOwnProperty("timepermic")) {

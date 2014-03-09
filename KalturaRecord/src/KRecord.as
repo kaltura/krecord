@@ -217,13 +217,15 @@ package {
 					ExternalInterface.addCallback("setQuality", setQuality);
 					ExternalInterface.addCallback("getMicrophones", getMicrophones);
 					ExternalInterface.addCallback("getActiveMicrophone", getActiveMicrophone);
+					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
 					ExternalInterface.addCallback("getMicrophoneActivityLevel", getMicrophoneActivityLevel);
 					ExternalInterface.addCallback("getMicrophoneGain", getMicrophoneGain);
 					ExternalInterface.addCallback("setMicrophoneGain", setMicrophoneGain);
+					ExternalInterface.addCallback("getMicrophoneRate", getMicrophoneRate);
+					ExternalInterface.addCallback("setMicrophoneRate", setMicrophoneRate);
 					ExternalInterface.addCallback("getCameras", getCameras);
 					ExternalInterface.addCallback("getActiveCamera", getActiveCamera);
 					ExternalInterface.addCallback("setActiveCamera", setActiveCamera);
-					ExternalInterface.addCallback("setActiveMicrophone", setActiveMicrophone);
 					ExternalInterface.addCallback("getMostRecentEntryId", getMostRecentEntryId);
 					
 					ExternalInterface.marshallExceptions = true;
@@ -503,6 +505,24 @@ package {
 		 */
 		public function setMicrophoneGain(val:String):void {
 			_recordControl.microphoneGain = parseFloat(val);
+		}
+
+		
+		/**
+		 * returns the sample rate of the microphone
+		 */
+		public function getMicrophoneRate():Number {
+			return _recordControl.soundRate;
+		}
+
+
+		/**
+		 * sets microphone's sample rate
+		 * @param val the required rate
+		 * @see Microphone.rate 
+		 */
+		public function setMicrophoneRate(val:String):void {
+			_recordControl.soundRate = parseInt(val);
 		}
 
 		

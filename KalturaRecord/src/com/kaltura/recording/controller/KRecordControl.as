@@ -135,17 +135,56 @@ package com.kaltura.recording.controller {
 
 		
 		/**
+		 * container for soundCodec property
+		 */
+		private var _soundCodec:String = SoundCodec.NELLYMOSER;
+
+		/**
 		 * sound codec to use for recording audio
 		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/SoundCodec.html
 		 * @default SoundCodec.NELLYMOSER
 		 */
-		public var soundCodec:String = SoundCodec.NELLYMOSER;
+		public function get soundCodec():String
+		{
+			return _soundCodec;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set soundCodec(value:String):void
+		{
+			_soundCodec = value;
+			if (microphone) {
+				microphone.codec = value;
+			}
+		}
+
 		
+		/**
+		 * container for _soundRate property
+		 */
+		private var _soundRate:int = 0;
+
 		/**
 		 * The rate at which the microphone is capturing sound, in kHz.
 		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/Microphone.html#rate
 		 */
-		public var soundRate:int = 0;
+		public function get soundRate():int
+		{
+			return _soundRate;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set soundRate(value:int):void
+		{
+			_soundRate = value;
+			if (microphone) {
+				microphone.rate = value;
+			}
+		}
 		
 		
 		/**
@@ -444,11 +483,10 @@ package com.kaltura.recording.controller {
 		private function microphoneDeviceDetected(event:DeviceDetectionEvent):void {
 //			removeMicrophoneDetectionListeners();
 			microphone = event.detectedDevice as Microphone;
-			microphone.codec = soundCodec;
-			if (soundRate) {
-				microphone.rate = soundRate;
+			microphone.codec = _soundCodec;
+			if (_soundRate) {
+				microphone.rate = _soundRate;
 			}
-			trace(microphone.name, ' rate: ', microphone.rate);
 			dispatchEvent(event.clone());
 			detectCameraDevice();
 		}

@@ -887,14 +887,7 @@ package com.kaltura.recording.controller {
 					var h264Settings:H264VideoStreamSettings = new H264VideoStreamSettings();
 					h264Settings.setProfileLevel(h264Profile, h264Level);
 					_recordStream.videoStreamSettings = h264Settings;
-					if (_initRecorderParameters.isLive) {
-						// live - don't add .f4v					
-						_recordStream.publish("mp4:" + _streamUid , RecordNetStream.PUBLISH_METHOD_RECORD);
-					}
-					else {
-						// recording - add .f4v
-						_recordStream.publish("mp4:" + _streamUid + ".f4v", RecordNetStream.PUBLISH_METHOD_RECORD);
-					}
+					
 					
 					metaData.codec = _recordStream.videoStreamSettings.codec; 
 					metaData.profile = h264Settings.profile; 
@@ -905,16 +898,25 @@ package com.kaltura.recording.controller {
 					metaData.width = camera.width;
 					metaData.keyFrameInterval = camera.keyFrameInterval;
 					_recordStream.send( "@setDataFrame", "onMetaData", metaData);
+					
+					if (_initRecorderParameters.isLive) {
+						// live - don't add .f4v					
+						_recordStream.publish("mp4:" + _streamUid , RecordNetStream.PUBLISH_METHOD_RECORD);
+					}
+					else {
+						// recording - add .f4v
+						_recordStream.publish("mp4:" + _streamUid + ".f4v", RecordNetStream.PUBLISH_METHOD_RECORD);
+					}
 				}
 				else {
-					_recordStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
-					
 					metaData.fps = camera.fps; 
 					metaData.bandwidth = camera.bandwidth; 
 					metaData.height = camera.height;
 					metaData.width = camera.width;
 					metaData.keyFrameInterval = camera.keyFrameInterval;
 					_recordStream.send( "@setDataFrame", "onMetaData", metaData);
+					
+					_recordStream.publish(_streamUid, RecordNetStream.PUBLISH_METHOD_RECORD);
 				}
 				
 				_recordStartTime = getTimer();

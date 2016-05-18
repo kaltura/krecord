@@ -107,7 +107,7 @@ package {
 
 		
 
-		public static const VERSION:String = "v1.7.1";
+		public static const VERSION:String = "v1.7.2";
 
 
 		/**
